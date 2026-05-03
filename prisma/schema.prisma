@@ -1,0 +1,65 @@
+// This is your Prisma schema file.
+// It defines the shape of your database tables.
+// After editing this file, run: npx prisma migrate dev
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Models ────────────────────────────────────────────────────────────────
+
+// Stores registered users (synced from Clerk on first login)
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique // Clerk's user ID (e.g. "user_2abc...")
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  vehicles Vehicle[]
+  accesses VehicleAccess[]
+}
+
+// A vehicle owned by a user
+model Vehicle {
+  id          String    @id @default(cuid())
+  name        String // e.g. "Company Van 01"
+  plateNumber String // e.g. "WXY 1234"
+  type        String // "Car" | "Van" | "Truck" | "Motorcycle"
+  status      String    @default("offline") // "active" | "idle" | "offline"
+  fuelLevel   Int? // percentage 0–100
+  mileage     Int? // in km
+  latitude    Float? // last known GPS latitude
+  longitude   Float? // last known GPS longitude
+  lastSeenAt  DateTime?
+  driverName  String?
+  notes       String?
+  imageUrl    String?
+
+  ownerId  String
+  owner    User            @relation(fields: [ownerId], references: [id])
+  accesses VehicleAccess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction table: who has access to which vehicle and at what role
+model VehicleAccess {
+  id        String @id @default(cuid())
+  vehicleId String
+  userId    String
+  role      String // "viewer" | "editor" | "owner"
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([vehicleId, userId])
+}
