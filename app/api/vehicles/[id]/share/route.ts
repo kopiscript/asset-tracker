@@ -4,7 +4,7 @@
  * POST — invite a user by email OR update an existing user's role (owner only)
  */
 import type { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canShare } from "@/lib/permissions";
@@ -15,8 +15,8 @@ export async function GET(
   ctx: RouteContext<"/api/vehicles/[id]/share">
 ) {
   const { id } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,8 +50,8 @@ export async function POST(
   ctx: RouteContext<"/api/vehicles/[id]/share">
 ) {
   const { id } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -76,7 +76,6 @@ export async function POST(
     );
   }
 
-  // Resolve target user — either by email (invite) or userId (role change)
   let targetUser: { id: string } | null = null;
 
   if (body.userId) {
@@ -106,7 +105,6 @@ export async function POST(
     return Response.json({ data: null, error: "User not found." }, { status: 404 });
   }
 
-  // Don't allow changing the owner's role
   const existing = await prisma.vehicleAccess.findUnique({
     where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
   });
@@ -117,7 +115,6 @@ export async function POST(
     );
   }
 
-  // Upsert the access record
   const access = await prisma.vehicleAccess.upsert({
     where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
     update: { role },

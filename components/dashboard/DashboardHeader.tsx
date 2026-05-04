@@ -1,16 +1,36 @@
 /**
  * components/dashboard/DashboardHeader.tsx
  * Top bar shown on all dashboard pages.
- * Contains: page title area, language toggle (EN/BM), notification bell, user avatar.
+ * Contains: language toggle, notification bell, user avatar (initials).
  */
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/components/LanguageProvider";
 import type { Lang } from "@/lib/translations";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+function UserAvatar() {
+  const { data: session } = useSession();
+  const display = session?.user?.name ?? session?.user?.email ?? "?";
+  const initials = display
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <div
+      className="h-8 w-8 rounded-full bg-[#00c2cc] flex items-center justify-center text-xs font-bold text-[#0f1923] select-none"
+      title={session?.user?.email ?? undefined}
+    >
+      {initials}
+    </div>
+  );
+}
 
 export function DashboardHeader() {
   const { lang, setLang } = useLang();
@@ -61,14 +81,8 @@ export function DashboardHeader() {
           <TooltipContent>Notifications (coming soon)</TooltipContent>
         </Tooltip>
 
-        {/* Clerk user avatar / account menu */}
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-8 w-8",
-            },
-          }}
-        />
+        {/* User avatar — shows initials from session */}
+        <UserAvatar />
       </div>
     </header>
   );

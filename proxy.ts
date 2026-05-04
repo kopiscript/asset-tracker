@@ -1,23 +1,15 @@
 /**
  * proxy.ts
  * Next.js 16 Proxy (formerly called Middleware).
- * Runs on every matching request before the page renders.
- * Protects /dashboard routes so only logged-in users can access them.
- * Clerk handles the redirect to /sign-in automatically.
- *
- * Docs: https://nextjs.org/docs/app/getting-started/proxy
+ * Uses the edge-safe NextAuth config to protect /dashboard routes.
+ * The authorized() callback in auth.config.ts handles the redirect to /sign-in.
  */
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
 
-// All routes under /dashboard require authentication
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+const { auth } = NextAuth(authConfig);
 
-// Export as "proxy" — the new name in Next.js 16
-export const proxy = clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
-});
+export const proxy = auth;
 
 export const config = {
   // Run on all routes except Next.js internals and static files

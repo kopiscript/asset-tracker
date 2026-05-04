@@ -1,13 +1,13 @@
 /**
  * app/dashboard/settings/page.tsx
  * User account settings page.
- * Shows profile info (from Clerk), language toggle, and appearance settings.
+ * Shows profile info (from NextAuth session), language toggle, and support.
  */
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { SettingsClient } from "./SettingsClient";
 
 export default async function SettingsPage() {
-  const user = await currentUser();
+  const session = await auth();
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -19,12 +19,8 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsClient
-        userName={
-          user
-            ? [user.firstName, user.lastName].filter(Boolean).join(" ") || null
-            : null
-        }
-        userEmail={user?.emailAddresses[0]?.emailAddress ?? null}
+        userName={session?.user?.name ?? null}
+        userEmail={session?.user?.email ?? null}
         // ✏️ EDIT: Replace with your support email address
         supportEmail="support@yourcompany.com"
       />

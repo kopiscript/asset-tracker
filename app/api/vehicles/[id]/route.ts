@@ -3,11 +3,9 @@
  * GET    — get one vehicle (requires view access)
  * PATCH  — update vehicle details (requires edit access)
  * DELETE — delete vehicle (requires owner access)
- *
- * In Next.js 16, RouteContext params is a Promise — must be awaited.
  */
 import type { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canView, canEdit, canDelete } from "@/lib/permissions";
@@ -18,8 +16,8 @@ export async function GET(
   ctx: RouteContext<"/api/vehicles/[id]">
 ) {
   const { id } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -47,8 +45,8 @@ export async function PATCH(
   ctx: RouteContext<"/api/vehicles/[id]">
 ) {
   const { id } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -69,7 +67,6 @@ export async function PATCH(
     return Response.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Build update payload — only include fields that were sent
   type UpdateData = Parameters<typeof prisma.vehicle.update>[0]["data"];
   const data: UpdateData = {};
   if (typeof body.name === "string") data.name = body.name;
@@ -81,7 +78,6 @@ export async function PATCH(
   if (body.driverName !== undefined) data.driverName = (body.driverName as string | null);
   if (body.notes !== undefined) data.notes = (body.notes as string | null);
   if (body.imageUrl !== undefined) data.imageUrl = (body.imageUrl as string | null);
-
   if (body.latitude !== undefined) data.latitude = typeof body.latitude === "number" ? body.latitude : null;
   if (body.longitude !== undefined) data.longitude = typeof body.longitude === "number" ? body.longitude : null;
   if (body.latitude != null) data.lastSeenAt = new Date();
@@ -97,8 +93,8 @@ export async function DELETE(
   ctx: RouteContext<"/api/vehicles/[id]">
 ) {
   const { id } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 

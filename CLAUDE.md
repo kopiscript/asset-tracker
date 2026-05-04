@@ -37,13 +37,32 @@ npm run db:studio    # Open Prisma Studio (visual DB browser)
 - To use a trigger (Dialog, Sheet, Tooltip) with a custom element: `<DialogTrigger render={<Button variant="outline" />}>text</DialogTrigger>`.
 - `Select.onValueChange` receives `string | null` — always guard: `onValueChange={(v) => v && setState(v)}`.
 
-### Clerk v7
-- `SignedIn` / `SignedOut` components do not exist. Use `<Show when="signed-in">` / `<Show when="signed-out">` from `@clerk/nextjs` (client-only).
-- Server-side auth: `import { auth, currentUser } from "@clerk/nextjs/server"` and `await auth()`.
+### NextAuth v5 (Auth.js v5 — `next-auth@5.0.0-beta.31`)
+- **Import from `@/auth`, not from `next-auth`** — `auth`, `handlers`, `signIn`, `signOut` are all exported from `auth.ts` at the project root.
+- **Server-side auth**: `const session = await auth()` — returns `null` when not signed in. The session carries `session.user.id` (database primary key).
+- **Client-side auth**: `useSession()` from `next-auth/react`; `signIn()`/`signOut()` also from `next-auth/react`.
+- **Two config files**: `auth.config.ts` (edge-safe, no Node.js imports — used by `proxy.ts`) and `auth.ts` (full config with Prisma + bcrypt — used everywhere else).
+- **`AUTH_SECRET` env var is required** — add to `.env.local`: generate with `openssl rand -base64 32`.
+- **User creation**: users are created at sign-up via `POST /api/auth/register`. `getOrCreateDbUser()` in `lib/user-sync.ts` now only does a DB lookup (no Clerk sync).
+
+## Environment variables
+
+Two separate env files are required because Prisma CLI and Next.js read from different files.
+
+`.env` (Prisma CLI only):
+```
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+```
+
+`.env.local` (Next.js runtime):
+```
+AUTH_SECRET="run: openssl rand -base64 32"
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+```
 
 ## Architecture
 
-**Auth flow**: `proxy.ts` protects `/dashboard/*`. On any authenticated request, `lib/user-sync.ts:getOrCreateDbUser()` upserts a `User` row keyed on Clerk's `userId` as `clerkId`. Every API route and server component that touches the DB calls this first.
+**Auth flow**: `proxy.ts` (edge-safe) uses `auth.config.ts` to protect `/dashboard/*` — redirects to `/sign-in` when unauthenticated. Sign-up POSTs to `/api/auth/register` (creates user + hashes password), then auto-signs in via NextAuth credentials. The NextAuth JWT stores the database `User.id`, so every API route and server component calls `getOrCreateDbUser()` which looks up the user by `session.user.id`.
 
 **Permission model**: Three roles (`owner`, `editor`, `viewer`) stored in `VehicleAccess`. All access checks go through `lib/permissions.ts` (`canView`, `canEdit`, `canShare`, `canDelete`). Checks must be applied in both API routes (return 403) and UI (hide buttons). The `@@unique([vehicleId, userId])` constraint means one row per user-vehicle pair.
 
@@ -56,3 +75,11 @@ npm run db:studio    # Open Prisma Studio (visual DB browser)
 **Database URL routing**:
 - `.env` → read by `prisma.config.ts` via `dotenv/config` → used by Prisma CLI
 - `.env.local` → read by Next.js → used by `lib/prisma.ts` at runtime
+
+**IoT location endpoint**: `PATCH /api/vehicles/[id]/location` accepts `{ latitude, longitude }` and is designed for GPS hardware/IoT devices to push location updates. Any user with `editor` role or higher can call it.
+
+**Dark mode**: The app is always dark. `"dark"` is hard-coded as a class on `<html>` in `app/layout.tsx`. There is no light mode.
+
+**Tailwind v4**: Theme customization lives in `app/globals.css` (CSS variables), not in `tailwind.config.ts`. The accent color is `--color-accent: #00c2cc`.
+
+**Shared utilities**: `lib/format.ts` exports `timeAgo(date)`, `formatNumber(n)`, and `clamp(n, min, max)` — use these before writing new formatting logic.

@@ -1,13 +1,13 @@
 /**
  * app/layout.tsx
  * Root layout — wraps every page in the app.
- * Sets up fonts, ClerkProvider (auth), and TooltipProvider (shadcn/ui).
+ * Sets up fonts, AuthProvider (NextAuth SessionProvider), and TooltipProvider.
  * Forces the dark theme by adding the "dark" class to <html>.
  */
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,18 +31,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // ClerkProvider must wrap the whole app so auth works everywhere
-    <ClerkProvider>
-      {/* "dark" class enables the dark colour scheme from globals.css */}
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col bg-background text-foreground">
+    // "dark" class enables the dark colour scheme from globals.css
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* AuthProvider wraps the app so useSession() works in client components */}
+        <AuthProvider>
           {/* TooltipProvider is required by shadcn/ui tooltip components */}
           <TooltipProvider>{children}</TooltipProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

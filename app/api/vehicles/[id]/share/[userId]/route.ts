@@ -3,7 +3,7 @@
  * DELETE — remove a user's access to a vehicle (owner only)
  */
 import type { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canShare } from "@/lib/permissions";
@@ -13,8 +13,8 @@ export async function DELETE(
   ctx: RouteContext<"/api/vehicles/[id]/share/[userId]">
 ) {
   const { id, userId: targetUserId } = await ctx.params;
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,7 +24,6 @@ export async function DELETE(
   const allowed = await canShare(dbUser.id, id);
   if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
 
-  // Can't remove the owner
   const target = await prisma.vehicleAccess.findUnique({
     where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
   });

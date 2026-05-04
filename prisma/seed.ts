@@ -2,37 +2,37 @@
  * prisma/seed.ts
  * Seeds the database with sample data for development and testing.
  *
- * Run with: npx prisma db seed
+ * Run with: npm run db:seed
  *
- * ✏️ EDIT: Change DEMO_CLERK_ID below to your real Clerk user ID so the
- *          demo vehicles are linked to your account.
- *          Find your Clerk user ID in: Clerk Dashboard → Users → click your user → User ID
+ * ✏️ EDIT: Change DEMO_EMAIL / DEMO_PASSWORD below to your preferred dev credentials.
  */
 import { PrismaClient } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-// ✏️ EDIT: Replace with your real Clerk user ID to see the demo vehicles
-const DEMO_CLERK_ID = "user_REPLACE_WITH_YOUR_CLERK_ID";
-const DEMO_EMAIL = "demo@fleettrack.my"; // ✏️ EDIT: Replace with your real email
+const DEMO_EMAIL = "demo@fleettrack.my"; // ✏️ EDIT: your dev email
+const DEMO_PASSWORD = "fleettrack123";    // ✏️ EDIT: your dev password
 
 async function main() {
   console.log("🌱 Seeding database...");
 
+  const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, 12);
+
   // Create (or find) the demo user
   const user = await prisma.user.upsert({
-    where: { clerkId: DEMO_CLERK_ID },
+    where: { email: DEMO_EMAIL },
     update: {},
     create: {
-      clerkId: DEMO_CLERK_ID,
       email: DEMO_EMAIL,
       name: "Fleet Admin", // ✏️ EDIT: Your name
+      password: hashedPassword,
     },
   });
 
-  console.log(`✅ User: ${user.email}`);
+  console.log(`✅ User: ${user.email} (password: ${DEMO_PASSWORD})`);
 
   // 5 realistic Malaysian vehicles with locations spread around Malaysia
   const vehiclesData = [
@@ -104,7 +104,6 @@ async function main() {
   ];
 
   for (const v of vehiclesData) {
-    // Create vehicle
     const vehicle = await prisma.vehicle.upsert({
       where: { id: `seed-${v.plateNumber.replace(/\s/g, "").toLowerCase()}` },
       update: {
@@ -128,7 +127,6 @@ async function main() {
       },
     });
 
-    // Grant the demo user owner access
     await prisma.vehicleAccess.upsert({
       where: {
         vehicleId_userId: { vehicleId: vehicle.id, userId: user.id },
@@ -145,9 +143,7 @@ async function main() {
   }
 
   console.log("\n✅ Seed complete! 5 vehicles created.");
-  console.log(
-    `\n⚠️  Remember to set DEMO_CLERK_ID in prisma/seed.ts to your real Clerk user ID!`
-  );
+  console.log(`\n🔑 Sign in with: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
 }
 
 main()

@@ -1,11 +1,10 @@
 /**
  * app/dashboard/settings/SettingsClient.tsx
  * Client component for the settings page.
- * Handles language selection, and shows profile info.
+ * Handles language selection and shows profile info from the session.
  */
 "use client";
 
-import { UserProfile } from "@clerk/nextjs";
 import { useLang } from "@/components/LanguageProvider";
 import type { Lang } from "@/lib/translations";
 
@@ -54,19 +53,17 @@ export function SettingsClient({
       <div className="bg-card border border-border/50 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-white mb-1">Profile</h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Your profile is managed by Clerk. Click below to edit your name,
-          email, or password.
+          Your account information.
         </p>
-        <div className="text-sm text-muted-foreground mb-3">
+        <div className="text-sm space-y-1 text-muted-foreground">
           <p>
-            <span className="text-white">Name:</span> {userName ?? "Not set"}
+            <span className="text-white">Name:</span>{" "}
+            {userName ?? <span className="italic">Not set</span>}
           </p>
           <p>
             <span className="text-white">Email:</span> {userEmail ?? "Unknown"}
           </p>
         </div>
-        {/* Clerk's built-in profile management UI */}
-        <UserProfile routing="hash" />
       </div>
 
       {/* Support section */}

@@ -2,7 +2,7 @@
  * components/dashboard/DashboardSidebar.tsx
  * Fixed left sidebar with navigation links.
  * On desktop: always visible.
- * On mobile: hidden, opened via a hamburger button in the header using Sheet.
+ * On mobile: hidden, opened via a hamburger button using Sheet.
  */
 "use client";
 
@@ -16,7 +16,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { useClerk } from "@clerk/nextjs";
+import { signOut } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
 import {
   Sheet,
@@ -69,7 +69,6 @@ function NavLink({
 /** The actual sidebar content — used in both desktop and mobile Sheet */
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { tr } = useLang();
-  const { signOut } = useClerk();
 
   return (
     <div className="flex flex-col h-full">
@@ -96,7 +95,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Sign out at the bottom */}
       <div className="px-3 pb-4 border-t border-border/50 pt-3">
         <button
-          onClick={() => signOut({ redirectUrl: "/" })}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/5 transition-all w-full"
         >
           <LogOut className="h-4 w-4" />
@@ -116,7 +115,6 @@ export function DashboardSidebar() {
       </aside>
 
       {/* Mobile: hamburger + Sheet drawer */}
-      {/* The trigger button is rendered inside DashboardHeader via MobileSidebarTrigger */}
       <MobileSidebarSheet />
     </>
   );

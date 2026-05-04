@@ -2,16 +2,15 @@
  * app/api/vehicles/route.ts
  * GET  — list all vehicles the current user can access
  * POST — create a new vehicle (user becomes the owner)
- *
- * All responses use the shape: { data: ..., error: null } or { data: null, error: "message" }
  */
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 
 // GET /api/vehicles
 export async function GET() {
-  const { userId } = await auth();
+  const session = await auth();
+  const userId = session?.user?.id;
   if (!userId) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
@@ -38,7 +37,8 @@ export async function GET() {
 
 // POST /api/vehicles
 export async function POST(request: Request) {
-  const { userId } = await auth();
+  const session = await auth();
+  const userId = session?.user?.id;
   if (!userId) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
@@ -55,7 +55,6 @@ export async function POST(request: Request) {
     return Response.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Basic validation
   if (!body.name || typeof body.name !== "string") {
     return Response.json({ data: null, error: "Vehicle name is required." }, { status: 400 });
   }
@@ -97,7 +96,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Grant the creator "owner" role
     await tx.vehicleAccess.create({
       data: {
         vehicleId: v.id,
