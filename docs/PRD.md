@@ -1,6 +1,6 @@
 # Atlas — Product Requirements Document
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Audience:** Developers  
 **Status:** Validated  
 **Last updated:** 2026-05-10
@@ -13,11 +13,17 @@ Atlas is a web-based vehicle asset tracking platform. It receives GPS location d
 
 Atlas is mobile-friendly (responsive web, not a native app).
 
+**Go-to-market:**
+- **Plan A (primary):** Purpose-built for Perodua car dealerships. Perodua dealerships operate vehicle fleets (demo cars, service loaners, staff vehicles) that need tracking.
+- **Plan B (fallback):** If Perodua does not proceed, Atlas pivots to a commercial SaaS product open to any fleet operator. Multi-tenancy (Organisation model) becomes a hard requirement in this path.
+
 ---
 
 ## 2. Problem Statement
 
-The client operates a vehicle fleet with GPS hardware installed. They have no software layer to receive, store, or visualise that data. Atlas fills that gap.
+Perodua car dealerships operate vehicle fleets with GPS hardware installed but have no software layer to receive, store, or visualise that data. Atlas fills that gap.
+
+If Plan B is activated, the same problem applies to any fleet operator without an existing tracking software layer.
 
 ---
 
@@ -25,11 +31,13 @@ The client operates a vehicle fleet with GPS hardware installed. They have no so
 
 | User | Description | Status |
 |---|---|---|
-| Fleet manager / operations | Primary day-to-day user — monitors all vehicles | To be confirmed with client |
-| Team members | May have viewer or editor access to specific vehicles | To be confirmed with client |
+| Dealership manager / operations | Primary day-to-day user — monitors all vehicles at a dealership | To be confirmed with Perodua |
+| Dealership staff | May have viewer or editor access to specific vehicles | To be confirmed with Perodua |
 | GPS hardware | IoT device pushing location pings via API key | Technical user — not human |
+| (Plan B) Org admin | Manages users and vehicles across a commercial tenant | Required only if Plan B activates |
 
-> **Open:** Exact user roles and org structure to be confirmed with client before v2 planning.
+> **Open:** Exact user roles and org structure to be confirmed with Perodua before v2 planning.  
+> **Plan B note:** If commercial, each dealership or fleet operator becomes a separate tenant — multi-tenancy moves from deferred to required.
 
 ---
 
@@ -86,6 +94,8 @@ model LocationHistory {
 
 ### Multi-tenancy path
 The current `ownerId` + `VehicleAccess` model supports single-tenant. Adding multi-tenancy later requires one additive migration: an `Organization` model with `organizationId` on `Vehicle` and an `OrganizationMember` table. No structural rework needed.
+
+**Plan B trigger:** If Atlas goes commercial, each dealership or fleet company becomes an `Organization`. This migration must be ready to ship quickly — keep the path clear.
 
 ---
 
@@ -219,11 +229,13 @@ Trip 2 — 11:30 to 12:05 (35 min)      ← expanded
 
 | # | Question | Owner |
 |---|---|---|
-| 1 | How many vehicles does the client need to track? | Client |
-| 2 | Who are the day-to-day users — one fleet manager or multiple? | Client |
-| 3 | Is there a phased delivery deadline? | Client |
-| 4 | Does the GPS hardware send `speed` and hardware `recordedAt`? | Client / hardware vendor |
-| 5 | Is multi-tenant (multiple client organisations) a near-term requirement? | Client |
+| 1 | How many vehicles does a typical Perodua dealership need to track? | Perodua |
+| 2 | Who are the day-to-day users — dealership manager only, or multiple staff? | Perodua |
+| 3 | Is there a phased delivery deadline or demo date with Perodua? | Perodua |
+| 4 | Does the GPS hardware send `speed` and hardware `recordedAt`? | Perodua / hardware vendor |
+| 5 | Is Perodua expecting a single shared deployment or one instance per dealership? | Perodua |
+| 6 | If Plan B activates, what is the target market beyond dealerships (any fleet operator, or still auto industry)? | Internal |
+| 7 | If Plan B activates, is self-serve sign-up required or invite-only onboarding? | Internal |
 
 ---
 
@@ -233,5 +245,5 @@ Trip 2 — 11:30 to 12:05 (35 min)      ← expanded
 |---|---|
 | **v2** | Alerts (speeding, geofencing, idle too long), email/push notifications |
 | **v3** | Fleet health dashboard (fuel trends, mileage, maintenance reminders) |
-| **v4** | Multi-tenancy (Organisation model, org admin, billing) |
+| **v4 / Plan B** | Multi-tenancy (Organisation model, org admin, billing) — becomes v1 priority if Plan B activates |
 | **v5** | Driver mobile app, driver-side trip logging |

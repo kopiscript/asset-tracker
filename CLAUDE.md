@@ -4,6 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Session Management
+
+### On session start
+At the start of every developer session, read these two files before doing anything else:
+1. `docs/TODO.md` — current task status, what is open and what is done
+2. `docs/PRD.md` — product requirements and scope
+
+After reading, greet the developer with:
+- How many tasks are open vs complete, grouped by phase
+- Any unresolved decision gates (marked ⚠️ in the TODO)
+- Then ask: **"What are you working on today?"**
+
+### On session end
+When the developer says **"session end"**, do all of the following:
+1. Update `docs/TODO.md` — mark completed tasks `[x]`, add a one-line note beneath any task where implementation diverged from the plan
+2. Update `docs/PRD.md` — record any design decisions made or open questions resolved during the session
+3. Update this file (`CLAUDE.md`) — if any new stack conventions, gotchas, or architectural patterns were established
+4. Print a 3–5 bullet summary of what was accomplished this session
+
+> All `.md` files must be up to date at all times. Never end a session without running the above checklist.
+
 ## Commands
 
 ```bash
@@ -42,23 +63,20 @@ npm run db:studio    # Open Prisma Studio (visual DB browser)
 - **Server-side auth**: `const session = await auth()` — returns `null` when not signed in. The session carries `session.user.id` (database primary key).
 - **Client-side auth**: `useSession()` from `next-auth/react`; `signIn()`/`signOut()` also from `next-auth/react`.
 - **Two config files**: `auth.config.ts` (edge-safe, no Node.js imports — used by `proxy.ts`) and `auth.ts` (full config with Prisma + bcrypt — used everywhere else).
-- **`AUTH_SECRET` env var is required** — add to `.env.local`: generate with `openssl rand -base64 32`.
+- **`AUTH_SECRET` env var is required** — add to `.env`: generate with `openssl rand -base64 32`.
 - **User creation**: users are created at sign-up via `POST /api/auth/register`. `getOrCreateDbUser()` in `lib/user-sync.ts` now only does a DB lookup (no Clerk sync).
 
 ## Environment variables
 
-Two separate env files are required because Prisma CLI and Next.js read from different files.
+A single `.env` file is sufficient — Next.js reads `.env` in addition to `.env.local`, and `prisma.config.ts` loads it via `dotenv/config`.
 
-`.env` (Prisma CLI only):
-```
-DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-```
-
-`.env.local` (Next.js runtime):
+`.env`:
 ```
 AUTH_SECRET="run: openssl rand -base64 32"
 DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 ```
+
+> Do not create `.env.local` unless you specifically need to override `.env` values per environment.
 
 ## Architecture
 
@@ -74,9 +92,13 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
 **Database URL routing**:
 - `.env` → read by `prisma.config.ts` via `dotenv/config` → used by Prisma CLI
-- `.env.local` → read by Next.js → used by `lib/prisma.ts` at runtime
+- `.env` → also read by Next.js at runtime → used by `lib/prisma.ts`
 
-**IoT location endpoint**: `PATCH /api/vehicles/[id]/location` accepts `{ latitude, longitude }` and is designed for GPS hardware/IoT devices to push location updates. Any user with `editor` role or higher can call it.
+**IoT location endpoint**: `PATCH /api/vehicles/[id]/location` is for GPS hardware only. It authenticates via API key (`Authorization: Bearer <key>`) — not session auth. The key is stored as `apiKey` on the `Vehicle` model and set manually via Prisma Studio for v1. The endpoint writes atomically to both `Vehicle` (last position) and `LocationHistory` (append-only) using `prisma.$transaction()`. See `docs/TODO.md` Phase 2 for the full implementation.
+
+**Trip history endpoint**: `GET /api/vehicles/[id]/history?from=ISO&to=ISO` returns GPS pings grouped into trips by a 10-minute gap threshold. Max query window is 30 days. Uses cursor-based batching (500 rows at a time) to avoid loading all pings into memory. See `docs/TODO.md` Phase 3 for the full implementation.
+
+**LocationHistory**: Append-only table storing every GPS ping. Indexed on `[vehicleId, recordedAt]`. Never update or delete rows — only insert. Cascade-deleted when a Vehicle is deleted.
 
 **Dark mode**: The app is always dark. `"dark"` is hard-coded as a class on `<html>` in `app/layout.tsx`. There is no light mode.
 
