@@ -64,10 +64,16 @@ export async function GET(
   try {
     // DISTINCT ON deduplicates same-minute duplicates from the hardware.
     // We filter and order on timestamp_my (MY local time, stored as fake-UTC).
+    //
+    // timestamp_my is TIMESTAMP WITHOUT TIME ZONE. Returning it as a raw Date
+    // causes JS to re-interpret it in the local server timezone, shifting the
+    // value on non-UTC machines (e.g. UTC+8 dev environments). Using to_char
+    // returns a plain text string with an explicit Z suffix so the client
+    // always reads the digits as-is, with no timezone shift applied.
     type Row = {
       latitude: number;
       longitude: number;
-      timestamp_my: Date;
+      timestamp_my: string;   // text from to_char — MY time digits + literal Z
       speed_kmh: number | null;
     };
 
@@ -76,7 +82,7 @@ export async function GET(
       SELECT DISTINCT ON (date_trunc('minute', timestamp_my))
         latitude,
         longitude,
-        timestamp_my,
+        to_char(timestamp_my, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS timestamp_my,
         speed_kmh
       FROM telemetry_records
       WHERE vehicle_id = $1
@@ -96,7 +102,7 @@ export async function GET(
     const data = rows.map((r) => ({
       latitude:    r.latitude,
       longitude:   r.longitude,
-      timestampMy: r.timestamp_my.toISOString(),
+      timestampMy: r.timestamp_my,   // already a clean ISO string, no .toISOString() needed
       speedKmh:    r.speed_kmh,
     }));
 
