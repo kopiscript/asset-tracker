@@ -38,10 +38,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.usertype = user.usertype ?? "user";
+        // Re-fetch from DB at sign-in so changes to usertype take effect immediately
+        // on the next login without needing a code deploy.
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { usertype: true },
+        });
+        token.usertype = (dbUser?.usertype ?? "user").trim();
       }
       return token;
     },
