@@ -28,7 +28,7 @@ export async function GET(
 
   try {
     const accesses = await prisma.vehicleAccess.findMany({
-      where: { vehicleId: id },
+      where: { vehicleId: BigInt(id) },
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "asc" },
     });
@@ -109,8 +109,9 @@ export async function POST(
   }
 
   try {
+    const vehicleIdBig = BigInt(id);
     const existing = await prisma.vehicleAccess.findUnique({
-      where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
+      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUser.id } },
     });
     if (existing?.role === "owner") {
       return Response.json(
@@ -120,11 +121,11 @@ export async function POST(
     }
 
     const access = await prisma.vehicleAccess.upsert({
-      where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
+      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUser.id } },
       update: { role },
-      create: { vehicleId: id, userId: targetUser.id, role },
+      create: { vehicleId: vehicleIdBig, userId: targetUser.id, role },
     });
-    return Response.json({ data: access, error: null }, { status: 200 });
+    return Response.json({ data: { ...access, vehicleId: access.vehicleId.toString() }, error: null });
   } catch (e) {
     console.error("[POST /api/vehicles/[id]/share]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });

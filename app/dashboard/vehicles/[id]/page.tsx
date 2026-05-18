@@ -1,61 +1,76 @@
 /**
  * app/dashboard/vehicles/[id]/page.tsx
  * Single vehicle detail page.
- * Shows a full-width map centred on the vehicle, plus all its details below.
  * In Next.js 16, params is a Promise — must be awaited.
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Share2, Trash2, MapPin, Gauge, User, Clock, FileText } from "lucide-react";
+import { ArrowLeft, Edit, Share2, MapPin, User, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DynamicMap } from "@/components/map/DynamicMap";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FuelBar } from "@/components/FuelBar";
 import { DeleteVehicleButton } from "./DeleteVehicleButton";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canEdit, canShare } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { timeAgo, formatNumber } from "@/lib/format";
+import { timeAgo } from "@/lib/format";
+
+function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
+  if (!isActive) return "offline";
+  if (!lastSeenAt) return "idle";
+  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
+  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
+}
 
 export default async function VehicleDetailPage(
   props: PageProps<"/dashboard/vehicles/[id]">
 ) {
-  // In Next.js 16, params is a Promise
   const { id } = await props.params;
 
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return notFound();
 
-  // Fetch the vehicle
   const vehicle = await prisma.vehicle.findUnique({
-    where: { id },
-    include: { owner: { select: { name: true, email: true } } },
+    where: { id: BigInt(id) },
+    include: {
+      owner: { select: { name: true, email: true } },
+      telemetryRecords: {
+        orderBy: { timestampUtc: "desc" },
+        take: 1,
+        select: { latitude: true, longitude: true, timestampUtc: true },
+      },
+    },
   });
   if (!vehicle) return notFound();
 
-  // Check the current user has access
   const access = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId: id, userId: dbUser.id } },
+    where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
   });
-  if (!access) return notFound(); // treat no-access same as not found (security)
+  if (!access) return notFound();
 
   const userCanEdit = await canEdit(dbUser.id, id);
   const userCanShare = await canShare(dbUser.id, id);
   const userRole = access.role;
 
+  const latest = vehicle.telemetryRecords[0] ?? null;
+  const latitude = latest?.latitude ?? null;
+  const longitude = latest?.longitude ?? null;
+  const lastSeenAt = latest?.timestampUtc ?? null;
+  const status = deriveStatus(vehicle.isActive, lastSeenAt);
+
   const mapVehicles =
-    vehicle.latitude != null && vehicle.longitude != null
+    latitude != null && longitude != null
       ? [
           {
-            id: vehicle.id,
-            name: vehicle.name,
-            plateNumber: vehicle.plateNumber,
-            status: vehicle.status,
-            latitude: vehicle.latitude,
-            longitude: vehicle.longitude,
-            lastSeenAt: vehicle.lastSeenAt?.toISOString() ?? null,
+            id,
+            name: vehicle.name ?? id,
+            plateNumber: vehicle.plateNumber ?? "",
+            status,
+            latitude,
+            longitude,
+            lastSeenAt: lastSeenAt?.toISOString() ?? null,
           },
         ]
       : [];
@@ -69,20 +84,21 @@ export default async function VehicleDetailPage(
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-foreground">{vehicle.name}</h1>
+            <h1 className="text-xl font-bold text-foreground">{vehicle.name ?? id}</h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="font-mono text-xs bg-muted text-foreground px-2 py-0.5 rounded border border-border">
                 {vehicle.plateNumber}
               </span>
-              <Badge variant="secondary" className="text-xs">
-                {vehicle.type}
-              </Badge>
-              <StatusBadge status={vehicle.status} />
+              {vehicle.type && (
+                <Badge variant="secondary" className="text-xs">
+                  {vehicle.type}
+                </Badge>
+              )}
+              <StatusBadge status={status} />
             </div>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
           {userCanEdit && (
             <Button variant="outline" size="sm" className="gap-1.5" render={<Link href={`/dashboard/vehicles/${id}/edit`} />}>
@@ -97,21 +113,21 @@ export default async function VehicleDetailPage(
             </Button>
           )}
           {userRole === "owner" && (
-            <DeleteVehicleButton vehicleId={id} vehicleName={vehicle.name} />
+            <DeleteVehicleButton vehicleId={id} vehicleName={vehicle.name ?? id} />
           )}
         </div>
       </div>
 
-      {/* ── Map (full width) ────────────────────────────────────────────── */}
+      {/* ── Map ────────────────────────────────────────────────────────── */}
       <div className="flex-shrink-0 px-4 sm:px-6 pb-4">
         <div className="h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden border border-border/50">
           <DynamicMap
             vehicles={mapVehicles}
-            focusVehicleId={vehicle.id}
+            focusVehicleId={id}
             className="h-full w-full"
           />
         </div>
-        {vehicle.latitude == null && (
+        {latitude == null && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
             <MapPin className="h-3 w-3" />
             No GPS location recorded yet. Map is centred on Kuala Lumpur.
@@ -122,74 +138,39 @@ export default async function VehicleDetailPage(
       {/* ── Details grid ────────────────────────────────────────────────── */}
       <div className="px-4 sm:px-6 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Vehicle info card */}
           <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">
-              Vehicle Info
-            </h2>
+            <h2 className="text-sm font-semibold text-foreground mb-4">Vehicle Info</h2>
             <div className="space-y-3">
-              <DetailRow icon={<Gauge className="h-4 w-4" />} label="Mileage">
-                {vehicle.mileage != null
-                  ? `${formatNumber(vehicle.mileage)} km`
-                  : "—"}
-              </DetailRow>
-              <Separator className="bg-border/50" />
-              <DetailRow
-                icon={<div className="h-4 w-4 text-center text-xs">⛽</div>}
-                label="Fuel Level"
-              >
-                <div className="w-32">
-                  <FuelBar level={vehicle.fuelLevel} />
-                </div>
-              </DetailRow>
-              <Separator className="bg-border/50" />
               <DetailRow icon={<User className="h-4 w-4" />} label="Driver">
                 {vehicle.driverName ?? "No driver assigned"}
               </DetailRow>
               <Separator className="bg-border/50" />
               <DetailRow icon={<Clock className="h-4 w-4" />} label="Last Seen">
-                {vehicle.lastSeenAt
-                  ? timeAgo(vehicle.lastSeenAt)
-                  : "Never"}
+                {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
+              </DetailRow>
+              <Separator className="bg-border/50" />
+              <DetailRow icon={<FileText className="h-4 w-4" />} label="IMEI">
+                <span className="font-mono text-xs">{vehicle.imei}</span>
               </DetailRow>
             </div>
           </div>
 
-          {/* Notes + owner card */}
           <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">
-              Additional Info
-            </h2>
+            <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
             <div className="space-y-3">
-              <DetailRow
-                icon={<FileText className="h-4 w-4" />}
-                label="Notes"
-              >
-                <span className="text-sm text-muted-foreground">
-                  {vehicle.notes ?? "No notes"}
-                </span>
-              </DetailRow>
-              <Separator className="bg-border/50" />
               <DetailRow icon={<User className="h-4 w-4" />} label="Owner">
-                {vehicle.owner.name ?? vehicle.owner.email}
+                {vehicle.owner?.name ?? vehicle.owner?.email ?? "—"}
               </DetailRow>
               <Separator className="bg-border/50" />
-              <DetailRow
-                icon={<div className="h-4 w-4 text-xs">👤</div>}
-                label="Your Role"
-              >
+              <DetailRow icon={<div className="h-4 w-4 text-xs">👤</div>} label="Your Role">
                 <span className="capitalize">{userRole}</span>
               </DetailRow>
-              {vehicle.latitude != null && (
+              {latitude != null && (
                 <>
                   <Separator className="bg-border/50" />
-                  <DetailRow
-                    icon={<MapPin className="h-4 w-4" />}
-                    label="Coordinates"
-                  >
+                  <DetailRow icon={<MapPin className="h-4 w-4" />} label="Coordinates">
                     <span className="font-mono text-xs">
-                      {vehicle.latitude.toFixed(5)},{" "}
-                      {vehicle.longitude?.toFixed(5)}
+                      {latitude.toFixed(5)}, {longitude?.toFixed(5)}
                     </span>
                   </DetailRow>
                 </>
@@ -202,7 +183,6 @@ export default async function VehicleDetailPage(
   );
 }
 
-// ─── Detail row helper ────────────────────────────────────────────────────
 function DetailRow({
   icon,
   label,

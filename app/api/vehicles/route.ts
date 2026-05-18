@@ -7,6 +7,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 
+function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
+  if (!isActive) return "offline";
+  if (!lastSeenAt) return "idle";
+  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
+  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
+}
+
 // GET /api/vehicles
 export async function GET() {
   const session = await auth();
@@ -23,9 +30,37 @@ export async function GET() {
   try {
     const accesses = await prisma.vehicleAccess.findMany({
       where: { userId: dbUser.id },
-      include: { vehicle: true },
+      include: {
+        vehicle: {
+          include: {
+            telemetryRecords: {
+              orderBy: { timestampUtc: "desc" },
+              take: 1,
+              select: { latitude: true, longitude: true, timestampUtc: true },
+            },
+          },
+        },
+      },
     });
-    const vehicles = accesses.map((a) => ({ ...a.vehicle, userRole: a.role }));
+
+    const vehicles = accesses.map((a) => {
+      const latest = a.vehicle.telemetryRecords[0] ?? null;
+      return {
+        id: a.vehicle.id.toString(),
+        imei: a.vehicle.imei,
+        name: a.vehicle.name,
+        plateNumber: a.vehicle.plateNumber,
+        type: a.vehicle.type,
+        driverName: a.vehicle.driverName,
+        isActive: a.vehicle.isActive,
+        latitude: latest?.latitude ?? null,
+        longitude: latest?.longitude ?? null,
+        lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+        status: deriveStatus(a.vehicle.isActive, latest?.timestampUtc ?? null),
+        userRole: a.role,
+      };
+    });
+
     return Response.json({ data: vehicles, error: null });
   } catch (e) {
     console.error("[GET /api/vehicles]", e);
@@ -53,49 +88,30 @@ export async function POST(request: Request) {
     return Response.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
   }
 
+  if (!body.imei || typeof body.imei !== "string") {
+    return Response.json({ data: null, error: "IMEI is required." }, { status: 400 });
+  }
   if (!body.name || typeof body.name !== "string") {
     return Response.json({ data: null, error: "Vehicle name is required." }, { status: 400 });
   }
   if (!body.plateNumber || typeof body.plateNumber !== "string") {
     return Response.json({ data: null, error: "Plate number is required." }, { status: 400 });
   }
-  if (!body.type || typeof body.type !== "string") {
-    return Response.json({ data: null, error: "Vehicle type is required." }, { status: 400 });
-  }
 
   try {
-  // Create vehicle + owner access in a transaction
-  const vehicle = await prisma.$transaction(async (tx) => {
-    const v = await tx.vehicle.create({
+    const v = await prisma.vehicle.create({
       data: {
+        imei: (body.imei as string).trim().toUpperCase(),
         name: body.name as string,
         plateNumber: (body.plateNumber as string).toUpperCase(),
-        type: body.type as string,
-        status: (body.status as string) ?? "offline",
-        fuelLevel:
-          typeof body.fuelLevel === "number" ? body.fuelLevel : null,
-        mileage: typeof body.mileage === "number" ? body.mileage : null,
-        driverName:
-          body.driverName && typeof body.driverName === "string"
-            ? body.driverName
-            : null,
-        notes:
-          body.notes && typeof body.notes === "string" ? body.notes : null,
-        imageUrl:
-          body.imageUrl && typeof body.imageUrl === "string"
-            ? body.imageUrl
-            : null,
-        latitude:
-          typeof body.latitude === "number" ? body.latitude : null,
-        longitude:
-          typeof body.longitude === "number" ? body.longitude : null,
-        lastSeenAt:
-          body.latitude != null ? new Date() : null,
-        ownerId: dbUser.id,
+        type: body.type && typeof body.type === "string" ? body.type : null,
+        driverName: body.driverName && typeof body.driverName === "string" ? body.driverName : null,
+        isActive: true,
+        userId: dbUser.id,
       },
     });
 
-    await tx.vehicleAccess.create({
+    await prisma.vehicleAccess.create({
       data: {
         vehicleId: v.id,
         userId: dbUser.id,
@@ -103,10 +119,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return v;
-  });
-
-  return Response.json({ data: vehicle, error: null }, { status: 201 });
+    return Response.json(
+      { data: { ...v, id: v.id.toString() }, error: null },
+      { status: 201 }
+    );
   } catch (e) {
     console.error("[POST /api/vehicles]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });

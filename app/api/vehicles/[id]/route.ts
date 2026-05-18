@@ -10,6 +10,13 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canView, canEdit, canDelete } from "@/lib/permissions";
 
+function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
+  if (!isActive) return "offline";
+  if (!lastSeenAt) return "idle";
+  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
+  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
+}
+
 // GET /api/vehicles/[id]
 export async function GET(
   _req: NextRequest,
@@ -30,10 +37,32 @@ export async function GET(
     const allowed = await canView(dbUser.id, id);
     if (!allowed) return Response.json({ data: null, error: "Not found" }, { status: 404 });
 
-    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: BigInt(id) },
+      include: {
+        owner: { select: { name: true, email: true } },
+        telemetryRecords: {
+          orderBy: { timestampUtc: "desc" },
+          take: 1,
+          select: { latitude: true, longitude: true, timestampUtc: true },
+        },
+      },
+    });
     if (!vehicle) return Response.json({ data: null, error: "Not found" }, { status: 404 });
 
-    return Response.json({ data: vehicle, error: null });
+    const latest = vehicle.telemetryRecords[0] ?? null;
+    return Response.json({
+      data: {
+        ...vehicle,
+        id: vehicle.id.toString(),
+        latitude: latest?.latitude ?? null,
+        longitude: latest?.longitude ?? null,
+        lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+        status: deriveStatus(vehicle.isActive, latest?.timestampUtc ?? null),
+        telemetryRecords: undefined,
+      },
+      error: null,
+    });
   } catch (e) {
     console.error("[GET /api/vehicles/[id]]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
@@ -74,18 +103,11 @@ export async function PATCH(
     if (typeof body.name === "string") data.name = body.name;
     if (typeof body.plateNumber === "string") data.plateNumber = body.plateNumber.toUpperCase();
     if (typeof body.type === "string") data.type = body.type;
-    if (typeof body.status === "string") data.status = body.status;
-    if (body.fuelLevel !== undefined) data.fuelLevel = typeof body.fuelLevel === "number" ? body.fuelLevel : null;
-    if (body.mileage !== undefined) data.mileage = typeof body.mileage === "number" ? body.mileage : null;
     if (body.driverName !== undefined) data.driverName = (body.driverName as string | null);
-    if (body.notes !== undefined) data.notes = (body.notes as string | null);
-    if (body.imageUrl !== undefined) data.imageUrl = (body.imageUrl as string | null);
-    if (body.latitude !== undefined) data.latitude = typeof body.latitude === "number" ? body.latitude : null;
-    if (body.longitude !== undefined) data.longitude = typeof body.longitude === "number" ? body.longitude : null;
-    if (body.latitude != null) data.lastSeenAt = new Date();
+    if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
 
-    const updated = await prisma.vehicle.update({ where: { id }, data });
-    return Response.json({ data: updated, error: null });
+    const updated = await prisma.vehicle.update({ where: { id: BigInt(id) }, data });
+    return Response.json({ data: { ...updated, id: updated.id.toString() }, error: null });
   } catch (e) {
     console.error("[PATCH /api/vehicles/[id]]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
@@ -114,7 +136,7 @@ export async function DELETE(
   }
 
   try {
-    await prisma.vehicle.delete({ where: { id } });
+    await prisma.vehicle.delete({ where: { id: BigInt(id) } });
     return Response.json({ data: { id }, error: null });
   } catch (e) {
     console.error("[DELETE /api/vehicles/[id]]", e);

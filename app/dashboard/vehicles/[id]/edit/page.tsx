@@ -1,7 +1,6 @@
 /**
  * app/dashboard/vehicles/[id]/edit/page.tsx
  * Edit vehicle details page.
- * Pre-fills the form with existing values. Calls PATCH /api/vehicles/[id].
  * In Next.js 16, params is a Promise — must be awaited.
  */
 import { notFound } from "next/navigation";
@@ -21,11 +20,10 @@ export default async function EditVehiclePage(
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return notFound();
 
-  // Only editors and owners can access this page
   const allowed = await canEdit(dbUser.id, id);
   if (!allowed) return notFound();
 
-  const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+  const vehicle = await prisma.vehicle.findUnique({ where: { id: BigInt(id) } });
   if (!vehicle) return notFound();
 
   return (
@@ -36,25 +34,19 @@ export default async function EditVehiclePage(
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Edit Vehicle</h1>
-          <p className="text-sm text-muted-foreground">{vehicle.name}</p>
+          <p className="text-sm text-muted-foreground">{vehicle.name ?? vehicle.imei}</p>
         </div>
       </div>
 
-      {/* Client component handles the form interaction */}
       <EditVehicleClient
         vehicleId={id}
         defaultValues={{
-          name: vehicle.name,
-          plateNumber: vehicle.plateNumber,
-          type: vehicle.type,
-          status: vehicle.status,
-          fuelLevel: vehicle.fuelLevel?.toString() ?? "",
-          mileage: vehicle.mileage?.toString() ?? "",
+          imei: vehicle.imei,
+          name: vehicle.name ?? "",
+          plateNumber: vehicle.plateNumber ?? "",
+          type: vehicle.type ?? "",
           driverName: vehicle.driverName ?? "",
-          notes: vehicle.notes ?? "",
-          imageUrl: vehicle.imageUrl ?? "",
-          latitude: vehicle.latitude?.toString() ?? "",
-          longitude: vehicle.longitude?.toString() ?? "",
+          isActive: vehicle.isActive ?? true,
         }}
       />
     </div>

@@ -1,7 +1,6 @@
 /**
  * app/dashboard/vehicles/page.tsx
  * Lists all vehicles the current user owns or has access to.
- * Fetches data from the /api/vehicles API route (server-side).
  */
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -10,8 +9,14 @@ import { VehiclesClient } from "./VehiclesClient";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
+function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
+  if (!isActive) return "offline";
+  if (!lastSeenAt) return "idle";
+  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
+  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
+}
+
 export default async function VehiclesPage() {
-  // Ensure the current user exists in our DB and get their record
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) {
     return (
@@ -21,40 +26,49 @@ export default async function VehiclesPage() {
     );
   }
 
-  // Fetch all vehicle accesses for this user, including vehicle details
   const accesses = await prisma.vehicleAccess.findMany({
     where: { userId: dbUser.id },
     include: {
       vehicle: {
         select: {
           id: true,
+          imei: true,
           name: true,
           plateNumber: true,
           type: true,
-          status: true,
-          fuelLevel: true,
-          mileage: true,
+          isActive: true,
           driverName: true,
-          lastSeenAt: true,
-          imageUrl: true,
-          latitude: true,
-          longitude: true,
+          telemetryRecords: {
+            orderBy: { timestampUtc: "desc" },
+            take: 1,
+            select: { latitude: true, longitude: true, timestampUtc: true },
+          },
         },
       },
     },
     orderBy: { createdAt: "asc" },
   });
 
-  // Shape data for the client component
-  const vehicles = accesses.map((a) => ({
-    ...a.vehicle,
-    lastSeenAt: a.vehicle.lastSeenAt?.toISOString() ?? null,
-    userRole: a.role,
-  }));
+  const vehicles = accesses.map((a) => {
+    const latest = a.vehicle.telemetryRecords[0] ?? null;
+    return {
+      id: a.vehicle.id.toString(),
+      imei: a.vehicle.imei,
+      name: a.vehicle.name,
+      plateNumber: a.vehicle.plateNumber,
+      type: a.vehicle.type,
+      driverName: a.vehicle.driverName,
+      isActive: a.vehicle.isActive,
+      latitude: latest?.latitude ?? null,
+      longitude: latest?.longitude ?? null,
+      lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+      status: deriveStatus(a.vehicle.isActive, latest?.timestampUtc ?? null),
+      userRole: a.role,
+    };
+  });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Vehicles</h1>
@@ -71,7 +85,6 @@ export default async function VehiclesPage() {
         </Button>
       </div>
 
-      {/* Vehicles grid — client component handles filtering/search */}
       <VehiclesClient initialVehicles={vehicles} />
     </div>
   );

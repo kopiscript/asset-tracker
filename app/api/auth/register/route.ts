@@ -39,11 +39,16 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(body.password as string, 12);
+    // name is NOT NULL in the schema — fall back to the email prefix
+    const name =
+      body.name && typeof body.name === "string"
+        ? body.name
+        : (body.email as string).split("@")[0];
 
     const user = await prisma.user.create({
       data: {
         email: body.email as string,
-        name: body.name && typeof body.name === "string" ? body.name : null,
+        name,
         password: hashedPassword,
       },
     });

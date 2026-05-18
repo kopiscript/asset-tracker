@@ -25,8 +25,9 @@ export async function DELETE(
   if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
 
   try {
+    const vehicleIdBig = BigInt(id);
     const target = await prisma.vehicleAccess.findUnique({
-      where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
+      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUserId } },
     });
     if (target?.role === "owner") {
       return Response.json(
@@ -36,7 +37,7 @@ export async function DELETE(
     }
 
     await prisma.vehicleAccess.delete({
-      where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
+      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUserId } },
     });
     return Response.json({ data: { userId: targetUserId }, error: null });
   } catch (e) {

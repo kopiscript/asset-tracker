@@ -16,7 +16,7 @@ export async function getRole(
   vehicleId: string
 ): Promise<string | null> {
   const access = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId, userId } },
+    where: { vehicleId_userId: { vehicleId: BigInt(vehicleId), userId } },
     select: { role: true },
   });
   return access?.role ?? null;

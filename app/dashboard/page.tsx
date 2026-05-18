@@ -7,6 +7,13 @@ import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
 
+function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
+  if (!isActive) return "offline";
+  if (!lastSeenAt) return "idle";
+  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
+  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
+}
+
 export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return null;
@@ -19,21 +26,33 @@ export default async function DashboardPage() {
           id: true,
           name: true,
           plateNumber: true,
-          status: true,
-          latitude: true,
-          longitude: true,
-          lastSeenAt: true,
           type: true,
+          isActive: true,
+          telemetryRecords: {
+            orderBy: { timestampUtc: "desc" },
+            take: 1,
+            select: { latitude: true, longitude: true, timestampUtc: true },
+          },
         },
       },
     },
   });
 
-  const vehicles = accesses.map((a) => ({
-    ...a.vehicle,
-    lastSeenAt: a.vehicle.lastSeenAt?.toISOString() ?? null,
-    userRole: a.role,
-  }));
+  const vehicles = accesses.map((a) => {
+    const latest = a.vehicle.telemetryRecords[0] ?? null;
+    return {
+      id: a.vehicle.id.toString(),
+      name: a.vehicle.name,
+      plateNumber: a.vehicle.plateNumber,
+      type: a.vehicle.type,
+      isActive: a.vehicle.isActive,
+      latitude: latest?.latitude ?? null,
+      longitude: latest?.longitude ?? null,
+      lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+      status: deriveStatus(a.vehicle.isActive, latest?.timestampUtc ?? null),
+      userRole: a.role,
+    };
+  });
 
   const activeCount  = vehicles.filter((v) => v.status === "active").length;
   const idleCount    = vehicles.filter((v) => v.status === "idle").length;
@@ -43,8 +62,8 @@ export default async function DashboardPage() {
     .filter((v) => v.latitude != null && v.longitude != null)
     .map((v) => ({
       id: v.id,
-      name: v.name,
-      plateNumber: v.plateNumber,
+      name: v.name ?? v.id,
+      plateNumber: v.plateNumber ?? "",
       status: v.status,
       latitude: v.latitude!,
       longitude: v.longitude!,
@@ -57,7 +76,6 @@ export default async function DashboardPage() {
       <div className="flex-shrink-0 px-5 sm:px-6 pt-5 pb-4">
         <div className="flex items-center justify-between mb-5">
           <div>
-            {/* DM Serif Display for the page title — editorial touch */}
             <h1 className="font-display text-2xl text-foreground leading-none tracking-tight">
               Dashboard
             </h1>
@@ -75,8 +93,6 @@ export default async function DashboardPage() {
           </Button>
         </div>
 
-        {/* ── Stat cards — "financial terminal" style ──────────────────── */}
-        {/* Large number → hairline rule → label + icon. Distinctive, not generic. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard
             icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -107,7 +123,6 @@ export default async function DashboardPage() {
 
       {/* ── Map + side panel ─────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden px-5 sm:px-6 pb-5 gap-4 min-h-0">
-        {/* Live map */}
         <div className="flex-1 min-h-[300px] min-w-0">
           <LiveMap
             initialVehicles={mapVehicles}
@@ -115,7 +130,6 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Vehicle list — only on xl+ */}
         <aside className="hidden xl:flex flex-col w-68 flex-shrink-0 overflow-y-auto gap-1.5">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -152,7 +166,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate leading-none mb-1">
-                    {v.name}
+                    {v.name ?? v.id}
                   </p>
                   <p className="text-xs font-mono text-muted-foreground">
                     {v.plateNumber}
@@ -173,8 +187,6 @@ export default async function DashboardPage() {
   );
 }
 
-/* ─── Stat card — financial terminal style ──────────────────────────────── */
-/* To reskin: change className values here only. Structure stays the same.  */
 function StatCard({
   icon,
   label,
@@ -188,13 +200,10 @@ function StatCard({
 }) {
   return (
     <div className="bg-card border border-border rounded-xl px-4 py-3.5">
-      {/* Large number — Space Grotesk tabular numerals */}
       <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
         {value}
       </p>
-      {/* Hairline rule — the distinctive design anchor */}
       <div className="h-px bg-border my-3" />
-      {/* Label row */}
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {label}

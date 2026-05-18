@@ -35,14 +35,14 @@ export default async function SharePage(
   }
 
   const vehicle = await prisma.vehicle.findUnique({
-    where: { id },
+    where: { id: BigInt(id) },
     select: { id: true, name: true, plateNumber: true },
   });
   if (!vehicle) return notFound();
 
   // Current access list
   const accesses = await prisma.vehicleAccess.findMany({
-    where: { vehicleId: id },
+    where: { vehicleId: BigInt(id) },
     include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: "asc" },
   });

@@ -31,8 +31,8 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
   const filtered = initialVehicles.filter((v) => {
     const matchesSearch =
       search === "" ||
-      v.name.toLowerCase().includes(search.toLowerCase()) ||
-      v.plateNumber.toLowerCase().includes(search.toLowerCase()) ||
+      (v.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (v.plateNumber ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (v.driverName ?? "").toLowerCase().includes(search.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || v.status === statusFilter;

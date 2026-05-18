@@ -19,24 +19,17 @@ export default function NewVehiclePage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        imei: data.imei,
         name: data.name,
         plateNumber: data.plateNumber,
         type: data.type,
-        status: data.status,
-        fuelLevel: data.fuelLevel ? parseInt(data.fuelLevel) : null,
-        mileage: data.mileage ? parseInt(data.mileage) : null,
         driverName: data.driverName || null,
-        notes: data.notes || null,
-        imageUrl: data.imageUrl || null,
-        latitude: data.latitude ? parseFloat(data.latitude) : null,
-        longitude: data.longitude ? parseFloat(data.longitude) : null,
       }),
     });
 
     const json = await res.json().catch(() => null) as { error?: string; data?: { id: string } } | null;
     if (!res.ok) return { error: json?.error ?? "Failed to create vehicle." };
 
-    // Redirect to the new vehicle's detail page
     router.push(`/dashboard/vehicles/${json?.data?.id}`);
     router.refresh();
     return {};
@@ -44,7 +37,6 @@ export default function NewVehiclePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      {/* Back button + title */}
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" render={<Link href="/dashboard/vehicles" />}>
           <ArrowLeft className="h-4 w-4" />

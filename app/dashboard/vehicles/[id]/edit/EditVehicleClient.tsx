@@ -27,14 +27,8 @@ export function EditVehicleClient({
         name: data.name,
         plateNumber: data.plateNumber,
         type: data.type,
-        status: data.status,
-        fuelLevel: data.fuelLevel ? parseInt(data.fuelLevel) : null,
-        mileage: data.mileage ? parseInt(data.mileage) : null,
         driverName: data.driverName || null,
-        notes: data.notes || null,
-        imageUrl: data.imageUrl || null,
-        latitude: data.latitude ? parseFloat(data.latitude) : null,
-        longitude: data.longitude ? parseFloat(data.longitude) : null,
+        isActive: data.isActive,
       }),
     });
 
