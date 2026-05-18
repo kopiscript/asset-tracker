@@ -5,7 +5,7 @@ import { DynamicMap } from "@/components/map/DynamicMap";
 import type { MapVehicle } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
 
-const POLL_MS = 60_000; // poll every 60 seconds
+const POLL_MS = 10_000; // poll every 10 seconds
 
 function useLiveVehicles(initial: MapVehicle[]) {
   const [vehicles, setVehicles] = useState(initial);
