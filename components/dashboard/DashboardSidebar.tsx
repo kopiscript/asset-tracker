@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, Globe2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
-import { useLang } from "@/components/LanguageProvider";
 import {
   Sheet,
   SheetContent,
@@ -15,10 +14,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, labelKey: "dashboard" as const, href: "/dashboard" },
-  { icon: Car,             labelKey: "vehicles"  as const, href: "/dashboard/vehicles" },
-  { icon: Settings,        labelKey: "settings"  as const, href: "/dashboard/settings" },
+const USER_NAV = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Car,             label: "Vehicles",  href: "/dashboard/vehicles" },
+  { icon: Settings,        label: "Settings",  href: "/dashboard/settings" },
+];
+
+const ADMIN_NAV = [
+  { icon: Globe2,   label: "Fleet Overview", href: "/dashboard/admin" },
+  { icon: Settings, label: "Settings",       href: "/dashboard/settings" },
 ];
 
 function NavLink({
@@ -56,9 +60,9 @@ function NavLink({
 }
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
-  const { tr } = useLang();
   const { data: session } = useSession();
   const isAdmin = session?.user?.usertype === "admin";
+  const navItems = isAdmin ? ADMIN_NAV : USER_NAV;
 
   return (
     <div className="flex flex-col h-full">
@@ -72,30 +76,22 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             Atlas
           </span>
           <span className="text-[10px] text-muted-foreground tracking-wide mt-0.5">
-            Fleet Tracking
+            {isAdmin ? "Admin" : "Fleet Tracking"}
           </span>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV_ITEMS.map(({ icon, labelKey, href }) => (
+        {navItems.map(({ icon, label, href }) => (
           <NavLink
             key={href}
             icon={icon}
-            label={tr(labelKey)}
+            label={label}
             href={href}
             onClick={onNavClick}
           />
         ))}
-        {isAdmin && (
-          <NavLink
-            icon={ShieldCheck}
-            label="Admin"
-            href="/dashboard/admin"
-            onClick={onNavClick}
-          />
-        )}
       </nav>
 
       {/* Sign out */}
@@ -105,7 +101,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all w-full border-l-2 border-transparent"
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
-          {tr("signOut")}
+          Sign Out
         </button>
       </div>
     </div>

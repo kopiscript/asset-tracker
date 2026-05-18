@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Activity, Clock, WifiOff, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { deriveStatus } from "@/lib/status";
 export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return null;
+  if (dbUser.usertype === "admin") redirect("/dashboard/admin");
 
   const accesses = await prisma.vehicleAccess.findMany({
     where: { userId: dbUser.id },
