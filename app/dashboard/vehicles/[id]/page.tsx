@@ -32,6 +32,7 @@ export default async function VehicleDetailPage(
     include: {
       owner: { select: { name: true, email: true } },
       telemetryRecords: {
+        where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { timestampUtc: "desc" },
         take: 1,
         select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },

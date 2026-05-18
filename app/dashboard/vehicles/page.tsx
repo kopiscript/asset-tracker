@@ -8,13 +8,7 @@ import { Button } from "@/components/ui/button";
 import { VehiclesClient } from "./VehiclesClient";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
-
-function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
-  if (!isActive) return "offline";
-  if (!lastSeenAt) return "idle";
-  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
-  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
-}
+import { deriveStatus } from "@/lib/status";
 
 export default async function VehiclesPage() {
   const dbUser = await getOrCreateDbUser();
@@ -39,6 +33,7 @@ export default async function VehiclesPage() {
           isActive: true,
           driverName: true,
           telemetryRecords: {
+            where: { latitude: { not: null }, longitude: { not: null } },
             orderBy: { timestampUtc: "desc" },
             take: 1,
             select: { latitude: true, longitude: true, timestampUtc: true },

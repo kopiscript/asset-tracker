@@ -28,6 +28,7 @@ export async function GET() {
         vehicle: {
           include: {
             telemetryRecords: {
+              where: { latitude: { not: null }, longitude: { not: null } },
               orderBy: { timestampUtc: "desc" },
               take: 1,
               select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },

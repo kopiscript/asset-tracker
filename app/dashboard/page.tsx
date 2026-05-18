@@ -25,6 +25,7 @@ export default async function DashboardPage() {
           type: true,
           isActive: true,
           telemetryRecords: {
+            where: { latitude: { not: null }, longitude: { not: null } },
             orderBy: { timestampUtc: "desc" },
             take: 1,
             select: { latitude: true, longitude: true, timestampUtc: true },

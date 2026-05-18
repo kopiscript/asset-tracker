@@ -39,6 +39,7 @@ function useLiveVehicles(initial: MapVehicle[]) {
   }, []);
 
   useEffect(() => {
+    refresh(); // fetch immediately so stale server-side data is updated right away
     const poll = setInterval(refresh, POLL_MS);
     const label = setInterval(() => forceLabel((n) => n + 1), 10_000);
     return () => {
