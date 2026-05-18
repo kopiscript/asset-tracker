@@ -1,21 +1,8 @@
-/**
- * components/dashboard/DashboardSidebar.tsx
- * Fixed left sidebar with navigation links.
- * On desktop: always visible.
- * On mobile: hidden, opened via a hamburger button using Sheet.
- */
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Car,
-  Settings,
-  MapPin,
-  LogOut,
-  Menu,
-} from "lucide-react";
+import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
 import {
@@ -30,11 +17,10 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, labelKey: "dashboard" as const, href: "/dashboard" },
-  { icon: Car, labelKey: "vehicles" as const, href: "/dashboard/vehicles" },
-  { icon: Settings, labelKey: "settings" as const, href: "/dashboard/settings" },
+  { icon: Car,             labelKey: "vehicles"  as const, href: "/dashboard/vehicles" },
+  { icon: Settings,        labelKey: "settings"  as const, href: "/dashboard/settings" },
 ];
 
-/** Individual nav link — highlights when on the current page */
 function NavLink({
   icon: Icon,
   label,
@@ -47,40 +33,50 @@ function NavLink({
   onClick?: () => void;
 }) {
   const pathname = usePathname();
-  const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+  const isActive =
+    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
     <Link
       href={href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+        // Base
+        "group flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
+        // Active: left border accent, no fill — Apple-style precision indicator
         isActive
-          ? "bg-[#00c2cc]/15 text-[#00c2cc]" /* ✏️ EDIT: active link colour */
-          : "text-muted-foreground hover:text-white hover:bg-white/5"
+          ? "border-l-2 border-primary text-primary pl-[10px] pr-3 bg-primary/5"
+          : "pl-3 pr-3 border-l-2 border-transparent text-muted-foreground hover:text-foreground hover:bg-black/[0.04]"
       )}
     >
-      <Icon className={cn("h-4 w-4", isActive && "text-[#00c2cc]")} />
+      <Icon className={cn("h-4 w-4 flex-shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
       {label}
     </Link>
   );
 }
 
-/** The actual sidebar content — used in both desktop and mobile Sheet */
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { tr } = useLang();
 
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5 border-b border-border/50">
-        <MapPin className="h-5 w-5 text-[#00c2cc]" />
-        {/* ✏️ EDIT: Replace with your product/company name */}
-        <span className="text-lg font-bold text-white">FleetTrack</span>
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+        </div>
+        <div className="flex flex-col leading-none">
+          <span className="text-xs font-semibold tracking-[0.2em] text-foreground uppercase">
+            Atlas
+          </span>
+          <span className="text-[10px] text-muted-foreground tracking-wide mt-0.5">
+            Fleet Tracking
+          </span>
+        </div>
       </div>
 
-      {/* Navigation links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map(({ icon, labelKey, href }) => (
           <NavLink
             key={href}
@@ -92,13 +88,13 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         ))}
       </nav>
 
-      {/* Sign out at the bottom */}
-      <div className="px-3 pb-4 border-t border-border/50 pt-3">
+      {/* Sign out */}
+      <div className="px-3 pb-5 pt-3 border-t border-sidebar-border">
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/5 transition-all w-full"
+          className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all w-full border-l-2 border-transparent"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 flex-shrink-0" />
           {tr("signOut")}
         </button>
       </div>
@@ -109,18 +105,17 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 export function DashboardSidebar() {
   return (
     <>
-      {/* Desktop sidebar — visible on lg+ screens */}
-      <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-border/50 bg-[#131f2e] flex-shrink-0">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-sidebar-border bg-sidebar flex-shrink-0">
         <SidebarContent />
       </aside>
 
-      {/* Mobile: hamburger + Sheet drawer */}
+      {/* Mobile: hamburger + Sheet */}
       <MobileSidebarSheet />
     </>
   );
 }
 
-/** Mobile sheet sidebar — opens from the left */
 export function MobileSidebarSheet() {
   return (
     <Sheet>
@@ -129,15 +124,14 @@ export function MobileSidebarSheet() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-3.5 left-4 z-50 text-muted-foreground"
+            className="lg:hidden fixed top-3.5 left-4 z-50 text-muted-foreground hover:text-foreground"
             aria-label="Open menu"
-            id="mobile-sidebar-trigger"
           />
         }
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-56 bg-[#131f2e] border-border/50">
+      <SheetContent side="left" className="p-0 w-56 bg-sidebar border-sidebar-border">
         <SheetHeader className="sr-only">
           <SheetTitle>Navigation</SheetTitle>
         </SheetHeader>

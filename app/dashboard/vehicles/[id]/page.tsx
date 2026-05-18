@@ -69,9 +69,9 @@ export default async function VehicleDetailPage(
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-white">{vehicle.name}</h1>
+            <h1 className="text-xl font-bold text-foreground">{vehicle.name}</h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="font-mono text-xs bg-white/10 text-white px-2 py-0.5 rounded border border-white/10">
+              <span className="font-mono text-xs bg-muted text-foreground px-2 py-0.5 rounded border border-border">
                 {vehicle.plateNumber}
               </span>
               <Badge variant="secondary" className="text-xs">
@@ -124,7 +124,7 @@ export default async function VehicleDetailPage(
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Vehicle info card */}
           <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-4">
+            <h2 className="text-sm font-semibold text-foreground mb-4">
               Vehicle Info
             </h2>
             <div className="space-y-3">
@@ -157,7 +157,7 @@ export default async function VehicleDetailPage(
 
           {/* Notes + owner card */}
           <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-4">
+            <h2 className="text-sm font-semibold text-foreground mb-4">
               Additional Info
             </h2>
             <div className="space-y-3">
@@ -217,7 +217,7 @@ function DetailRow({
       <span className="text-muted-foreground mt-0.5 flex-shrink-0">{icon}</span>
       <div className="flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <div className="text-sm text-white mt-0.5">{children}</div>
+        <div className="text-sm text-foreground mt-0.5">{children}</div>
       </div>
     </div>
   );

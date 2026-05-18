@@ -44,11 +44,27 @@ model Vehicle {
   imageUrl    String?
 
   ownerId  String
-  owner    User            @relation(fields: [ownerId], references: [id])
+  owner    User              @relation(fields: [ownerId], references: [id])
   accesses VehicleAccess[]
+  locationHistory LocationHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Append-only GPS ping log. Never update or delete rows.
+model LocationHistory {
+  id         String   @id @default(cuid())
+  vehicleId  String
+  latitude   Float
+  longitude  Float
+  speed      Float?   // km/h
+  heading    Float?   // degrees 0–360
+  recordedAt DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, recordedAt])
 }
 
 // Junction table: who has access to which vehicle and at what role

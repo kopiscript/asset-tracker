@@ -42,9 +42,9 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const canShare = vehicle.userRole === "owner";
 
   return (
-    <div className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-[#00c2cc]/30 hover:shadow-[0_0_20px_rgba(0,194,204,0.05)] transition-all duration-300 flex flex-col">
+    <div className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/20 transition-all duration-300 flex flex-col">
       {/* ── Vehicle image / placeholder ─────────────────────────────── */}
-      <div className="h-32 bg-[#1e2d3d] flex items-center justify-center relative flex-shrink-0">
+      <div className="h-32 bg-secondary flex items-center justify-center relative flex-shrink-0">
         {vehicle.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -53,7 +53,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <Car className="h-12 w-12 text-[#00c2cc]/30" />
+          <Car className="h-12 w-12 text-primary/30" />
         )}
         {/* Status badge overlaid on image */}
         <div className="absolute top-2 right-2">
@@ -65,12 +65,12 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="p-4 flex flex-col flex-1">
         {/* Name + plate + type */}
         <div className="mb-3">
-          <h3 className="font-semibold text-white text-sm leading-tight mb-1">
+          <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">
             {vehicle.name}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Plate number in monospace badge */}
-            <span className="font-mono text-xs bg-white/10 text-white px-2 py-0.5 rounded border border-white/10">
+            <span className="font-mono text-xs bg-muted text-foreground px-2 py-0.5 rounded border border-border">
               {vehicle.plateNumber}
             </span>
             {/* Vehicle type badge */}

@@ -1,12 +1,7 @@
-/**
- * app/dashboard/page.tsx
- * Main dashboard — shows a summary stats bar, the live map (60%+),
- * and a mini vehicle list on the right/bottom.
- */
 import Link from "next/link";
 import { Plus, Activity, Clock, WifiOff, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DynamicMap } from "@/components/map/DynamicMap";
+import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +11,6 @@ export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return null;
 
-  // Fetch all accessible vehicles with basic details
   const accesses = await prisma.vehicleAccess.findMany({
     where: { userId: dbUser.id },
     include: {
@@ -41,9 +35,8 @@ export default async function DashboardPage() {
     userRole: a.role,
   }));
 
-  // Stats
-  const activeCount = vehicles.filter((v) => v.status === "active").length;
-  const idleCount = vehicles.filter((v) => v.status === "idle").length;
+  const activeCount  = vehicles.filter((v) => v.status === "active").length;
+  const idleCount    = vehicles.filter((v) => v.status === "idle").length;
   const offlineCount = vehicles.filter((v) => v.status === "offline").length;
 
   const mapVehicles = vehicles
@@ -60,83 +53,89 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Stats bar ──────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3">
-        <div className="flex items-center justify-between mb-4">
+      {/* ── Header bar ──────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 px-5 sm:px-6 pt-5 pb-4">
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Fleet overview — {vehicles.length} vehicle
-              {vehicles.length !== 1 ? "s" : ""}
+            {/* DM Serif Display for the page title — editorial touch */}
+            <h1 className="font-display text-2xl text-foreground leading-none tracking-tight">
+              Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in fleet
             </p>
           </div>
           <Button
             size="sm"
-            className="gap-2 bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
             render={<Link href="/dashboard/vehicles/new" />}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             Add Vehicle
           </Button>
         </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+        {/* ── Stat cards — "financial terminal" style ──────────────────── */}
+        {/* Large number → hairline rule → label + icon. Distinctive, not generic. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard
-            icon={<Car className="h-4 w-4 text-[#00c2cc]" />}
+            icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}
             label="Total"
             value={vehicles.length}
+            valueClass="text-foreground"
           />
           <StatCard
-            icon={<Activity className="h-4 w-4 text-green-500" />}
+            icon={<Activity className="h-3.5 w-3.5 text-green-600" />}
             label="Active"
             value={activeCount}
-            colour="text-green-400"
+            valueClass="text-green-600"
           />
           <StatCard
-            icon={<Clock className="h-4 w-4 text-yellow-500" />}
+            icon={<Clock className="h-3.5 w-3.5 text-amber-500" />}
             label="Idle"
             value={idleCount}
-            colour="text-yellow-400"
+            valueClass="text-amber-600"
           />
           <StatCard
-            icon={<WifiOff className="h-4 w-4 text-red-500" />}
+            icon={<WifiOff className="h-3.5 w-3.5 text-red-500" />}
             label="Offline"
             value={offlineCount}
-            colour="text-red-400"
+            valueClass="text-red-600"
           />
         </div>
       </div>
 
-      {/* ── Main area: map + side panel ───────────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden px-4 sm:px-6 pb-4 gap-4 min-h-0">
-        {/* Map takes 60%+ of the width */}
+      {/* ── Map + side panel ─────────────────────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden px-5 sm:px-6 pb-5 gap-4 min-h-0">
+        {/* Live map */}
         <div className="flex-1 min-h-[300px] min-w-0">
-          <DynamicMap
-            vehicles={mapVehicles}
-            className="h-full w-full rounded-xl overflow-hidden border border-border/50"
+          <LiveMap
+            initialVehicles={mapVehicles}
+            className="h-full w-full rounded-xl overflow-hidden border border-border"
           />
         </div>
 
-        {/* Side panel: recent vehicles (hidden on small screens) */}
-        <aside className="hidden xl:flex flex-col w-72 flex-shrink-0 overflow-y-auto gap-2">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-white">Vehicles</h2>
+        {/* Vehicle list — only on xl+ */}
+        <aside className="hidden xl:flex flex-col w-68 flex-shrink-0 overflow-y-auto gap-1.5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Vehicles
+            </h2>
             <Link
               href="/dashboard/vehicles"
-              className="text-xs text-[#00c2cc] hover:underline"
+              className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
               View all
             </Link>
           </div>
 
           {vehicles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 text-center">
-              <Car className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">No vehicles yet</p>
+            <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
+              <Car className="h-8 w-8 text-muted-foreground/20 mb-3" />
+              <p className="text-sm text-muted-foreground">No vehicles yet</p>
               <Link
                 href="/dashboard/vehicles/new"
-                className="text-xs text-[#00c2cc] hover:underline mt-1"
+                className="text-xs text-primary hover:underline mt-1.5"
               >
                 Add one →
               </Link>
@@ -146,23 +145,25 @@ export default async function DashboardPage() {
               <Link
                 key={v.id}
                 href={`/dashboard/vehicles/${v.id}`}
-                className="flex items-center gap-3 bg-card border border-border/50 rounded-lg p-3 hover:border-[#00c2cc]/30 transition-colors group"
+                className="flex items-center gap-3 bg-card border border-border rounded-xl p-3 hover:border-primary/20 hover:bg-card/80 transition-all duration-150 group"
               >
-                <div className="flex-shrink-0">
-                  <Car className="h-5 w-5 text-muted-foreground group-hover:text-[#00c2cc] transition-colors" />
+                <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                  <Car className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate leading-none mb-1">
                     {v.name}
                   </p>
                   <p className="text-xs font-mono text-muted-foreground">
                     {v.plateNumber}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {timeAgo(v.lastSeenAt)}
-                  </p>
                 </div>
-                <StatusBadge status={v.status} />
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <StatusBadge status={v.status} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {timeAgo(v.lastSeenAt)}
+                  </span>
+                </div>
               </Link>
             ))
           )}
@@ -172,24 +173,33 @@ export default async function DashboardPage() {
   );
 }
 
-// ─── Small stat card component ───────────────────────────────────────────
+/* ─── Stat card — financial terminal style ──────────────────────────────── */
+/* To reskin: change className values here only. Structure stays the same.  */
 function StatCard({
   icon,
   label,
   value,
-  colour = "text-white",
+  valueClass,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
-  colour?: string;
+  valueClass: string;
 }) {
   return (
-    <div className="bg-card border border-border/50 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
-      <div className="p-1.5 bg-white/5 rounded-md">{icon}</div>
-      <div>
-        <p className={`text-xl font-bold leading-none ${colour}`}>{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+    <div className="bg-card border border-border rounded-xl px-4 py-3.5">
+      {/* Large number — Space Grotesk tabular numerals */}
+      <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
+        {value}
+      </p>
+      {/* Hairline rule — the distinctive design anchor */}
+      <div className="h-px bg-border my-3" />
+      {/* Label row */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
+        {icon}
       </div>
     </div>
   );

@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-8">
-      <MapPin className="h-12 w-12 text-[#00c2cc] mb-4" />
-      <h1 className="text-6xl font-bold text-white mb-2">404</h1>
+      <MapPin className="h-12 w-12 text-primary mb-4" />
+      <h1 className="text-6xl font-bold text-foreground mb-2">404</h1>
       <p className="text-xl text-muted-foreground mb-2">Page not found</p>
       <p className="text-sm text-muted-foreground mb-8 text-center max-w-sm">
         The page you&apos;re looking for doesn&apos;t exist or you don&apos;t

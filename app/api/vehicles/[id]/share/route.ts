@@ -26,22 +26,25 @@ export async function GET(
   const allowed = await canShare(dbUser.id, id);
   if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
 
-  const accesses = await prisma.vehicleAccess.findMany({
-    where: { vehicleId: id },
-    include: { user: { select: { id: true, name: true, email: true } } },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const data = accesses.map((a) => ({
-    id: a.id,
-    userId: a.userId,
-    role: a.role,
-    userName: a.user.name,
-    userEmail: a.user.email,
-    isCurrentUser: a.userId === dbUser.id,
-  }));
-
-  return Response.json({ data, error: null });
+  try {
+    const accesses = await prisma.vehicleAccess.findMany({
+      where: { vehicleId: id },
+      include: { user: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    const data = accesses.map((a) => ({
+      id: a.id,
+      userId: a.userId,
+      role: a.role,
+      userName: a.user.name,
+      userEmail: a.user.email,
+      isCurrentUser: a.userId === dbUser.id,
+    }));
+    return Response.json({ data, error: null });
+  } catch (e) {
+    console.error("[GET /api/vehicles/[id]/share]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }
 
 // POST /api/vehicles/[id]/share
@@ -105,21 +108,25 @@ export async function POST(
     return Response.json({ data: null, error: "User not found." }, { status: 404 });
   }
 
-  const existing = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
-  });
-  if (existing?.role === "owner") {
-    return Response.json(
-      { data: null, error: "Cannot change the owner's role." },
-      { status: 400 }
-    );
+  try {
+    const existing = await prisma.vehicleAccess.findUnique({
+      where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
+    });
+    if (existing?.role === "owner") {
+      return Response.json(
+        { data: null, error: "Cannot change the owner's role." },
+        { status: 400 }
+      );
+    }
+
+    const access = await prisma.vehicleAccess.upsert({
+      where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
+      update: { role },
+      create: { vehicleId: id, userId: targetUser.id, role },
+    });
+    return Response.json({ data: access, error: null }, { status: 200 });
+  } catch (e) {
+    console.error("[POST /api/vehicles/[id]/share]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
   }
-
-  const access = await prisma.vehicleAccess.upsert({
-    where: { vehicleId_userId: { vehicleId: id, userId: targetUser.id } },
-    update: { role },
-    create: { vehicleId: id, userId: targetUser.id, role },
-  });
-
-  return Response.json({ data: access, error: null }, { status: 200 });
 }

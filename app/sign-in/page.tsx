@@ -21,84 +21,65 @@ export default function SignInPage() {
     setError(null);
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Invalid email or password.");
+      if (result?.error) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6 p-8 bg-card border border-border/50 rounded-xl shadow-xl">
-        {/* Logo */}
-        <div className="flex items-center gap-2 justify-center mb-2">
-          <MapPin className="h-5 w-5 text-[#00c2cc]" />
-          <span className="text-lg font-bold text-white">FleetTrack</span>
+      <div className="w-full max-w-sm space-y-6 p-8 bg-card border border-border rounded-xl shadow-xl">
+        <div className="flex items-center gap-2.5 justify-center mb-2">
+          <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <MapPin className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <span className="text-sm font-semibold tracking-[0.2em] text-foreground uppercase">Atlas</span>
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Sign in</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Welcome back to your fleet
-          </p>
+          <h1 className="font-display text-2xl text-foreground">Sign in</h1>
+          <p className="text-sm text-muted-foreground mt-1">Welcome back to your fleet</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-lg">
-              {error}
-            </p>
+            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>
           )}
 
-          <Button
-            type="submit"
-            className="w-full bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/sign-up" className="text-[#00c2cc] hover:underline font-medium">
-            Sign up
-          </Link>
+          <Link href="/sign-up" className="text-primary hover:underline font-medium">Sign up</Link>
         </p>
       </div>
     </div>

@@ -61,11 +61,11 @@ export function SharePageClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
     });
-    const json = await res.json();
+    const json = await res.json().catch(() => null) as { error?: string } | null;
     setInviteLoading(false);
 
     if (!res.ok) {
-      setInviteError(json.error ?? "Failed to invite user.");
+      setInviteError(json?.error ?? "Failed to invite user.");
       return;
     }
 
@@ -74,8 +74,8 @@ export function SharePageClient({
     router.refresh();
     // Re-fetch access list
     const listRes = await fetch(`/api/vehicles/${vehicleId}/share`);
-    const listJson = await listRes.json();
-    if (listJson.data) setAccesses(listJson.data);
+    const listJson = await listRes.json().catch(() => null) as { data?: AccessEntry[] } | null;
+    if (listJson?.data) setAccesses(listJson.data);
   }
 
   async function handleRemove(userId: string) {
@@ -105,8 +105,8 @@ export function SharePageClient({
     <div className="max-w-xl space-y-6">
       {/* ── Invite form ────────────────────────────────────────────── */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-[#00c2cc]" />
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-primary" />
           Invite Someone
         </h2>
 
@@ -145,7 +145,7 @@ export function SharePageClient({
           <Button
             type="submit"
             disabled={inviteLoading}
-            className="w-full bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             {inviteLoading ? "Inviting…" : "Invite"}
           </Button>
@@ -154,15 +154,15 @@ export function SharePageClient({
         {/* Role legend */}
         <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
           <div>
-            <p className="font-semibold text-white">Viewer</p>
+            <p className="font-semibold text-foreground">Viewer</p>
             <p>Can view only</p>
           </div>
           <div>
-            <p className="font-semibold text-white">Editor</p>
+            <p className="font-semibold text-foreground">Editor</p>
             <p>Can view + edit details</p>
           </div>
           <div>
-            <p className="font-semibold text-white">Owner</p>
+            <p className="font-semibold text-foreground">Owner</p>
             <p>Full control</p>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function SharePageClient({
 
       {/* ── Current access list ─────────────────────────────────────── */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-4">
+        <h2 className="text-sm font-semibold text-foreground mb-4">
           Current Access ({accesses.length})
         </h2>
 
@@ -180,15 +180,15 @@ export function SharePageClient({
               {i > 0 && <Separator className="bg-border/50 my-2" />}
               <div className="flex items-center gap-3">
                 {/* Avatar placeholder */}
-                <div className="h-8 w-8 rounded-full bg-[#00c2cc]/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-semibold text-[#00c2cc]">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-primary">
                     {(entry.userName ?? entry.userEmail)[0].toUpperCase()}
                   </span>
                 </div>
 
                 {/* Name + email */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {entry.userName ?? entry.userEmail}
                     {entry.isCurrentUser && (
                       <span className="ml-1.5 text-xs text-muted-foreground">

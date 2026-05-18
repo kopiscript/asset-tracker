@@ -210,7 +210,7 @@ export function VehicleForm({
 
       {/* GPS coordinates */}
       <div>
-        <p className="text-sm font-medium text-white mb-2">GPS Location (optional)</p>
+        <p className="text-sm font-medium text-foreground mb-2">GPS Location (optional)</p>
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Latitude" error={errors.latitude} hint="e.g. 3.1390">
             <Input
@@ -246,7 +246,7 @@ export function VehicleForm({
         <Button
           type="submit"
           disabled={loading}
-          className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           {loading ? "Saving…" : submitLabel}
         </Button>
@@ -277,7 +277,7 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-white">{label}</Label>
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
       {hint && <p className="text-xs text-muted-foreground -mt-1">{hint}</p>}
       {children}
       {error && <p className="text-xs text-red-400">{error}</p>}

@@ -24,19 +24,23 @@ export async function DELETE(
   const allowed = await canShare(dbUser.id, id);
   if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
 
-  const target = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
-  });
-  if (target?.role === "owner") {
-    return Response.json(
-      { data: null, error: "Cannot remove the vehicle owner." },
-      { status: 400 }
-    );
+  try {
+    const target = await prisma.vehicleAccess.findUnique({
+      where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
+    });
+    if (target?.role === "owner") {
+      return Response.json(
+        { data: null, error: "Cannot remove the vehicle owner." },
+        { status: 400 }
+      );
+    }
+
+    await prisma.vehicleAccess.delete({
+      where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
+    });
+    return Response.json({ data: { userId: targetUserId }, error: null });
+  } catch (e) {
+    console.error("[DELETE /api/vehicles/[id]/share/[userId]]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
   }
-
-  await prisma.vehicleAccess.delete({
-    where: { vehicleId_userId: { vehicleId: id, userId: targetUserId } },
-  });
-
-  return Response.json({ data: { userId: targetUserId }, error: null });
 }

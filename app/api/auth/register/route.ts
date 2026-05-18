@@ -27,28 +27,33 @@ export async function POST(request: Request) {
     );
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: body.email },
-  });
-  if (existing) {
+  try {
+    const existing = await prisma.user.findUnique({
+      where: { email: body.email },
+    });
+    if (existing) {
+      return Response.json(
+        { error: "An account with that email already exists." },
+        { status: 409 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(body.password as string, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        email: body.email as string,
+        name: body.name && typeof body.name === "string" ? body.name : null,
+        password: hashedPassword,
+      },
+    });
+
     return Response.json(
-      { error: "An account with that email already exists." },
-      { status: 409 }
+      { data: { id: user.id, email: user.email, name: user.name } },
+      { status: 201 }
     );
+  } catch (e) {
+    console.error("[POST /api/auth/register]", e);
+    return Response.json({ error: "Internal server error." }, { status: 500 });
   }
-
-  const hashedPassword = await bcrypt.hash(body.password, 12);
-
-  const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      name: body.name && typeof body.name === "string" ? body.name : null,
-      password: hashedPassword,
-    },
-  });
-
-  return Response.json(
-    { data: { id: user.id, email: user.email, name: user.name } },
-    { status: 201 }
-  );
 }

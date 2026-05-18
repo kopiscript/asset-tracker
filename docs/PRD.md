@@ -1,9 +1,9 @@
 # Atlas — Product Requirements Document
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Audience:** Developers  
 **Status:** Validated  
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-17
 
 ---
 
@@ -77,7 +77,8 @@ model LocationHistory {
   latitude   Float
   longitude  Float
   speed      Float?   // km/h — optional, hardware-dependent
-  recordedAt DateTime // hardware clock time, not server receive time
+  heading    Float?   // degrees 0–360 — optional, hardware-dependent
+  recordedAt DateTime @default(now())
 
   vehicle    Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
@@ -86,11 +87,14 @@ model LocationHistory {
 ```
 
 **Design notes:**
-- `recordedAt` uses hardware time so trip reconstruction is accurate even when pings arrive late or out of order
+- `heading` added (not in original spec) — useful for hardware that sends bearing; also needed by the simulation engine
+- `recordedAt` has `@default(now())` so hardware that omits it gets server time; hardware that sends it overrides with its clock
 - `speed` is nullable — stored now to avoid a future migration, even if hardware doesn't send it yet
 - Index on `[vehicleId, recordedAt]` matches the exact query pattern for trip history
 - Cascade delete — removing a vehicle removes all its history
 - `Vehicle` gains a `locationHistory LocationHistory[]` relation
+- **Seed data:** 13 KL-area Malaysian vehicles (W/B plates, real neighbourhood coordinates); 2,166 historical pings pre-seeded at 30-second intervals across 3 hours for 6 active vehicles
+- **⚠️ Production note:** Seed data is simulated. Replace with real GPS data before going live.
 
 ### Multi-tenancy path
 The current `ownerId` + `VehicleAccess` model supports single-tenant. Adding multi-tenancy later requires one additive migration: an `Organization` model with `organizationId` on `Vehicle` and an `OrganizationMember` table. No structural rework needed.
@@ -157,12 +161,12 @@ Auth: Session (canView permission required)
 
 ## 7. UI Design
 
-### Live Map (dashboard — existing, one change)
+### Live Map (dashboard — implemented)
 
 - Map renders all vehicle markers using last known position from `Vehicle`
-- Client polls `GET /api/vehicles` every 60 seconds and re-renders markers
-- Adds a **"Last updated Xs ago"** indicator so the user knows data freshness
-- Polling cleans up on unmount (`clearInterval` in `useEffect`) to prevent memory leaks
+- **Dev/demo:** Client calls `POST /api/simulate/tick` every 5 seconds. Each tick advances active vehicles along pre-defined KL street loops (stateless, deterministic from time), writes new positions to `Vehicle` and appends a `LocationHistory` row, then returns the updated vehicle list.
+- **Production intent:** Replace with `GET /api/vehicles` polling every 60 seconds once real GPS hardware is sending data. Remove or gate the simulate/tick endpoint.
+- Shows **"Live · just now"** badge with green pulse; cleans up intervals on unmount
 
 ### Trip History (new — vehicle detail page)
 
@@ -222,6 +226,9 @@ Trip 2 — 11:30 to 12:05 (35 min)      ← expanded
 | 9 | **API key auth for IoT endpoint** | Session auth, no auth | Hardware cannot hold a browser session; security gap if unprotected |
 | 10 | **API key management UI deferred** | Build key management in v1 | Keys issued manually for v1; management UI is post-v1 scope |
 | 11 | **Data retention policy deferred** | Implement now | Fleet size unknown; premature to set a window before seeing real volume |
+| 12 | **Simulation engine for demo** | Real hardware, static mock data | Lets the map show live movement during demos without GPS hardware; deterministic (time-based) so no state needed; must be removed/gated before production |
+| 13 | **`$executeRawUnsafe` for bulk inserts** | `createMany`, individual `create` calls | `PrismaNeonHttp` doesn't support implicit transactions; `createMany`/`deleteMany` use them internally; raw SQL avoids this |
+| 14 | **`db push` for LocationHistory in dev** | `db migrate` | Faster iteration; a proper versioned migration must be created before production |
 
 ---
 

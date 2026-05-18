@@ -171,7 +171,7 @@ export function VehicleMap({
                 </p>
                 <Link
                   href={`/dashboard/vehicles/${v.id}`}
-                  className="block w-full text-center text-xs bg-[#00c2cc] text-[#0f1923] font-semibold px-2 py-1 rounded hover:bg-[#009aa3] transition-colors"
+                  className="block w-full text-center text-xs bg-primary text-primary-foreground font-semibold px-2 py-1 rounded hover:bg-primary/90 transition-colors"
                 >
                   View Details →
                 </Link>
@@ -184,7 +184,7 @@ export function VehicleMap({
       {/* Overlay when no vehicles have GPS data */}
       {mappable.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center z-[500] pointer-events-none">
-          <div className="bg-black/70 text-white text-sm px-4 py-2 rounded-lg backdrop-blur-sm">
+          <div className="bg-background/90 text-foreground text-sm px-4 py-2 rounded-lg backdrop-blur-sm border border-border">
             No location data yet
           </div>
         </div>

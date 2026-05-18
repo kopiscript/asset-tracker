@@ -48,15 +48,19 @@ npm run db:studio    # Open Prisma Studio (visual DB browser)
 
 ### Prisma 7
 - **No `url` in `schema.prisma`** — the connection URL lives in `prisma.config.ts` (for the CLI) and is passed via the adapter in `lib/prisma.ts` (for runtime). Adding `url = env(...)` to the datasource block is a hard error.
-- **Requires a driver adapter** — `new PrismaClient()` with no arguments is an error. The client is always constructed as `new PrismaClient({ adapter: new PrismaPg({ connectionString }) })`.
+- **Requires a driver adapter** — `new PrismaClient()` with no arguments is an error. The client is always constructed as `new PrismaClient({ adapter: new PrismaNeonHttp(connectionString, {}) })`.
 - Generated client output is `lib/generated/prisma/client.ts` — import from `@/lib/generated/prisma/client`, not `@prisma/client`.
 - Two env files are needed: `.env` (Prisma CLI reads this via `dotenv/config` in `prisma.config.ts`) and `.env.local` (Next.js reads this at runtime).
+- **`PrismaNeonHttp` does not support transactions** — `createMany`, `deleteMany`, and `$transaction()` all fail with "Transactions are not supported in HTTP mode". Use `$executeRawUnsafe` for bulk inserts/deletes.
+- **`PrismaNeonHttp` constructor requires two arguments** — `new PrismaNeonHttp(connectionString, {})`. Passing only one argument is a TypeScript error.
+- **Seed script**: `prisma.config.ts` `migrations.seed` is set to `tsx ./prisma/seed.ts`. The seed avoids `upsert`, `createMany`, and `deleteMany` — uses `findUnique` + `create`/`update` for single rows and `$executeRawUnsafe` for bulk inserts.
 
 ### shadcn/ui (Base UI edition)
 - Components are backed by `@base-ui/react`, **not Radix**. The `asChild` prop does not exist.
 - To render a Button as a link: `<Button render={<Link href="..." />}>text</Button>`.
 - To use a trigger (Dialog, Sheet, Tooltip) with a custom element: `<DialogTrigger render={<Button variant="outline" />}>text</DialogTrigger>`.
 - `Select.onValueChange` receives `string | null` — always guard: `onValueChange={(v) => v && setState(v)}`.
+- **`nativeButton` prop**: Base UI Button requires `nativeButton={false}` when `render` is a non-`<button>` element (e.g. `<Link>`). The `Button` wrapper in `components/ui/button.tsx` handles this automatically: it sets `nativeButton={false}` whenever a `render` prop is present.
 
 ### NextAuth v5 (Auth.js v5 — `next-auth@5.0.0-beta.31`)
 - **Import from `@/auth`, not from `next-auth`** — `auth`, `handlers`, `signIn`, `signOut` are all exported from `auth.ts` at the project root.
@@ -100,7 +104,9 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
 **LocationHistory**: Append-only table storing every GPS ping. Indexed on `[vehicleId, recordedAt]`. Never update or delete rows — only insert. Cascade-deleted when a Vehicle is deleted.
 
-**Dark mode**: The app is always dark. `"dark"` is hard-coded as a class on `<html>` in `app/layout.tsx`. There is no light mode.
+**Live simulation (dev/demo only)**: `lib/simulation-routes.ts` defines looping KL street routes for the 6 active seeded vehicles. `POST /api/simulate/tick` computes each vehicle's current position from `(currentTime % loopMs)` — stateless, deterministic. `LiveMap` calls this endpoint every 5 seconds to animate markers. **Remove or gate this endpoint before production** — real hardware will push positions via `PATCH /api/vehicles/[id]/location`.
+
+**Dark mode**: Removed — the app uses light mode (Apple Clarity palette). `"dark"` class is NOT on `<html>` in `app/layout.tsx`. Theme variables live in the `:root` block in `app/globals.css`.
 
 **Tailwind v4**: Theme customization lives in `app/globals.css` (CSS variables), not in `tailwind.config.ts`. The accent color is `--color-accent: #00c2cc`.
 

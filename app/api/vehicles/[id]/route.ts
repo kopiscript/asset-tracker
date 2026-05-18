@@ -26,17 +26,18 @@ export async function GET(
     return Response.json({ data: null, error: "User not found" }, { status: 404 });
   }
 
-  const allowed = await canView(dbUser.id, id);
-  if (!allowed) {
-    return Response.json({ data: null, error: "Not found" }, { status: 404 });
-  }
+  try {
+    const allowed = await canView(dbUser.id, id);
+    if (!allowed) return Response.json({ data: null, error: "Not found" }, { status: 404 });
 
-  const vehicle = await prisma.vehicle.findUnique({ where: { id } });
-  if (!vehicle) {
-    return Response.json({ data: null, error: "Not found" }, { status: 404 });
-  }
+    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) return Response.json({ data: null, error: "Not found" }, { status: 404 });
 
-  return Response.json({ data: vehicle, error: null });
+    return Response.json({ data: vehicle, error: null });
+  } catch (e) {
+    console.error("[GET /api/vehicles/[id]]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }
 
 // PATCH /api/vehicles/[id]
@@ -67,24 +68,28 @@ export async function PATCH(
     return Response.json({ data: null, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  type UpdateData = Parameters<typeof prisma.vehicle.update>[0]["data"];
-  const data: UpdateData = {};
-  if (typeof body.name === "string") data.name = body.name;
-  if (typeof body.plateNumber === "string") data.plateNumber = body.plateNumber.toUpperCase();
-  if (typeof body.type === "string") data.type = body.type;
-  if (typeof body.status === "string") data.status = body.status;
-  if (body.fuelLevel !== undefined) data.fuelLevel = typeof body.fuelLevel === "number" ? body.fuelLevel : null;
-  if (body.mileage !== undefined) data.mileage = typeof body.mileage === "number" ? body.mileage : null;
-  if (body.driverName !== undefined) data.driverName = (body.driverName as string | null);
-  if (body.notes !== undefined) data.notes = (body.notes as string | null);
-  if (body.imageUrl !== undefined) data.imageUrl = (body.imageUrl as string | null);
-  if (body.latitude !== undefined) data.latitude = typeof body.latitude === "number" ? body.latitude : null;
-  if (body.longitude !== undefined) data.longitude = typeof body.longitude === "number" ? body.longitude : null;
-  if (body.latitude != null) data.lastSeenAt = new Date();
+  try {
+    type UpdateData = Parameters<typeof prisma.vehicle.update>[0]["data"];
+    const data: UpdateData = {};
+    if (typeof body.name === "string") data.name = body.name;
+    if (typeof body.plateNumber === "string") data.plateNumber = body.plateNumber.toUpperCase();
+    if (typeof body.type === "string") data.type = body.type;
+    if (typeof body.status === "string") data.status = body.status;
+    if (body.fuelLevel !== undefined) data.fuelLevel = typeof body.fuelLevel === "number" ? body.fuelLevel : null;
+    if (body.mileage !== undefined) data.mileage = typeof body.mileage === "number" ? body.mileage : null;
+    if (body.driverName !== undefined) data.driverName = (body.driverName as string | null);
+    if (body.notes !== undefined) data.notes = (body.notes as string | null);
+    if (body.imageUrl !== undefined) data.imageUrl = (body.imageUrl as string | null);
+    if (body.latitude !== undefined) data.latitude = typeof body.latitude === "number" ? body.latitude : null;
+    if (body.longitude !== undefined) data.longitude = typeof body.longitude === "number" ? body.longitude : null;
+    if (body.latitude != null) data.lastSeenAt = new Date();
 
-  const updated = await prisma.vehicle.update({ where: { id }, data });
-
-  return Response.json({ data: updated, error: null });
+    const updated = await prisma.vehicle.update({ where: { id }, data });
+    return Response.json({ data: updated, error: null });
+  } catch (e) {
+    console.error("[PATCH /api/vehicles/[id]]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }
 
 // DELETE /api/vehicles/[id]
@@ -108,6 +113,11 @@ export async function DELETE(
     return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.vehicle.delete({ where: { id } });
-  return Response.json({ data: { id }, error: null });
+  try {
+    await prisma.vehicle.delete({ where: { id } });
+    return Response.json({ data: { id }, error: null });
+  } catch (e) {
+    console.error("[DELETE /api/vehicles/[id]]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }

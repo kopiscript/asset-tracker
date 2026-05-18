@@ -22,113 +22,80 @@ export default function SignUpPage() {
     setError(null);
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json().catch(() => null) as { error?: string } | null;
 
-    if (!res.ok) {
-      setError(data.error ?? "Registration failed.");
+      if (!res.ok) {
+        setError(data?.error ?? "Registration failed.");
+        return;
+      }
+
+      const result = await signIn("credentials", { email, password, redirect: false });
+
+      if (result?.error) {
+        // Account was created but auto-sign-in failed — send to sign-in with a hint
+        setError("Account created! Please sign in.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Auto sign-in after successful registration
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      // Account created but sign-in failed — send to sign-in page
-      router.push("/sign-in");
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6 p-8 bg-card border border-border/50 rounded-xl shadow-xl">
-        {/* Logo */}
-        <div className="flex items-center gap-2 justify-center mb-2">
-          <MapPin className="h-5 w-5 text-[#00c2cc]" />
-          <span className="text-lg font-bold text-white">FleetTrack</span>
+      <div className="w-full max-w-sm space-y-6 p-8 bg-card border border-border rounded-xl shadow-xl">
+        <div className="flex items-center gap-2.5 justify-center mb-2">
+          <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <MapPin className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <span className="text-sm font-semibold tracking-[0.2em] text-foreground uppercase">Atlas</span>
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Create account</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Join FleetTrack to manage your fleet
-          </p>
+          <h1 className="font-display text-2xl text-foreground">Create account</h1>
+          <p className="text-sm text-muted-foreground mt-1">Join Atlas to manage your fleet</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="name">Name <span className="text-muted-foreground">(optional)</span></Label>
-            <Input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              placeholder="Your name"
-            />
+            <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Your name" />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              minLength={8}
-              placeholder="Min. 8 characters"
-            />
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" minLength={8} placeholder="Min. 8 characters" />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-lg">
-              {error}
-            </p>
+            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>
           )}
 
-          <Button
-            type="submit"
-            className="w-full bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" disabled={loading}>
             {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/sign-in" className="text-[#00c2cc] hover:underline font-medium">
-            Sign in
-          </Link>
+          <Link href="/sign-in" className="text-primary hover:underline font-medium">Sign in</Link>
         </p>
       </div>
     </div>

@@ -25,7 +25,7 @@ export function SettingsClient({
     <div className="max-w-2xl space-y-6">
       {/* Language preference */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-1">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
           {tr("language")}
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
@@ -39,8 +39,8 @@ export function SettingsClient({
               onClick={() => setLang(l)}
               className={`px-5 py-2 rounded-lg text-sm font-semibold border transition-all ${
                 lang === l
-                  ? "bg-[#00c2cc] text-[#0f1923] border-[#00c2cc]"
-                  : "border-border/50 text-muted-foreground hover:text-white hover:border-border"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               {l === "en" ? "English" : "Bahasa Malaysia"}
@@ -51,29 +51,29 @@ export function SettingsClient({
 
       {/* Profile section */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-1">Profile</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-1">Profile</h2>
         <p className="text-xs text-muted-foreground mb-4">
           Your account information.
         </p>
         <div className="text-sm space-y-1 text-muted-foreground">
           <p>
-            <span className="text-white">Name:</span>{" "}
+            <span className="text-foreground">Name:</span>{" "}
             {userName ?? <span className="italic">Not set</span>}
           </p>
           <p>
-            <span className="text-white">Email:</span> {userEmail ?? "Unknown"}
+            <span className="text-foreground">Email:</span> {userEmail ?? "Unknown"}
           </p>
         </div>
       </div>
 
       {/* Support section */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-white mb-1">Support</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-1">Support</h2>
         <p className="text-sm text-muted-foreground">
           Need help? Contact us at{" "}
           <a
             href={`mailto:${supportEmail}`}
-            className="text-[#00c2cc] hover:underline"
+            className="text-primary hover:underline"
           >
             {/* ✏️ EDIT: Replace with your support email */}
             {supportEmail}

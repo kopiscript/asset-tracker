@@ -33,11 +33,11 @@ export default function NewVehiclePage() {
       }),
     });
 
-    const json = await res.json();
-    if (!res.ok) return { error: json.error ?? "Failed to create vehicle." };
+    const json = await res.json().catch(() => null) as { error?: string; data?: { id: string } } | null;
+    if (!res.ok) return { error: json?.error ?? "Failed to create vehicle." };
 
     // Redirect to the new vehicle's detail page
-    router.push(`/dashboard/vehicles/${json.data.id}`);
+    router.push(`/dashboard/vehicles/${json?.data?.id}`);
     router.refresh();
     return {};
   }
@@ -50,7 +50,7 @@ export default function NewVehiclePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Add Vehicle</h1>
+          <h1 className="text-2xl font-bold text-foreground">Add Vehicle</h1>
           <p className="text-sm text-muted-foreground">
             Fill in the details to add a new vehicle to your fleet.
           </p>

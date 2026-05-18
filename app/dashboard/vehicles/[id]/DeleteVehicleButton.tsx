@@ -40,9 +40,9 @@ export function DeleteVehicleButton({
       const res = await fetch(`/api/vehicles/${vehicleId}`, {
         method: "DELETE",
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => null) as { error?: string } | null;
       if (!res.ok) {
-        setError(json.error ?? "Failed to delete vehicle.");
+        setError(json?.error ?? "Failed to delete vehicle.");
         return;
       }
       setOpen(false);
@@ -74,7 +74,7 @@ export function DeleteVehicleButton({
           <DialogTitle>Delete Vehicle</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete{" "}
-            <strong className="text-white">{vehicleName}</strong>? This will
+            <strong className="text-foreground">{vehicleName}</strong>? This will
             also remove all access permissions. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>

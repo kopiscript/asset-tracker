@@ -8,7 +8,15 @@
       "Bash(npm view *)",
       "Bash(npm run *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "WebFetch(domain:claudecodeguide.dev)",
+      "Skill(frontend-design)",
+      "Bash(node -e \"const m = require\\('@prisma/adapter-neon'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const u = process.env.DATABASE_URL || ''; console.log\\('Set:', !!u\\); console.log\\('Starts with:', u.slice\\(0,20\\)\\); console.log\\('Has host:', u.includes\\('@'\\) ? u.split\\('@'\\)[1].split\\('/'\\)[0] : 'MISSING @'\\)\")",
+      "Skill(systematic-debugging)",
+      "Bash(npx prisma *)",
+      "Bash(node *)",
+      "PowerShell(Resolve-DnsName *)"
     ]
   }
 }

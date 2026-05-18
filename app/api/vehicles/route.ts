@@ -20,19 +20,17 @@ export async function GET() {
     return Response.json({ data: null, error: "User not found" }, { status: 404 });
   }
 
-  const accesses = await prisma.vehicleAccess.findMany({
-    where: { userId: dbUser.id },
-    include: {
-      vehicle: true,
-    },
-  });
-
-  const vehicles = accesses.map((a) => ({
-    ...a.vehicle,
-    userRole: a.role,
-  }));
-
-  return Response.json({ data: vehicles, error: null });
+  try {
+    const accesses = await prisma.vehicleAccess.findMany({
+      where: { userId: dbUser.id },
+      include: { vehicle: true },
+    });
+    const vehicles = accesses.map((a) => ({ ...a.vehicle, userRole: a.role }));
+    return Response.json({ data: vehicles, error: null });
+  } catch (e) {
+    console.error("[GET /api/vehicles]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }
 
 // POST /api/vehicles
@@ -65,6 +63,7 @@ export async function POST(request: Request) {
     return Response.json({ data: null, error: "Vehicle type is required." }, { status: 400 });
   }
 
+  try {
   // Create vehicle + owner access in a transaction
   const vehicle = await prisma.$transaction(async (tx) => {
     const v = await tx.vehicle.create({
@@ -108,4 +107,8 @@ export async function POST(request: Request) {
   });
 
   return Response.json({ data: vehicle, error: null }, { status: 201 });
+  } catch (e) {
+    console.error("[POST /api/vehicles]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }

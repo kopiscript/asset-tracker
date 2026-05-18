@@ -4,7 +4,6 @@
  * Shows the hero, feature grid, and call-to-action section.
  * Uses the Placeholder component to highlight text that needs editing.
  */
-import { Placeholder } from "@/components/Placeholder";
 import {
   LandingAuthButtons,
   LandingCtaButton,
@@ -20,42 +19,42 @@ import {
 } from "lucide-react";
 
 // ✏️ EDIT: Replace with your company/product name
-const PRODUCT_NAME = "FleetTrack";
+const PRODUCT_NAME = "Atlas";
 
 // ✏️ EDIT: Update feature descriptions to match your use case
 const features = [
   {
-    icon: <Activity className="h-6 w-6 text-[#00c2cc]" />, // ✏️ EDIT: brand accent colour
+    icon: <Activity className="h-6 w-6 text-primary" />, // ✏️ EDIT: brand accent colour
     title: "Real-Time Tracking",
     desc: "See exactly where each vehicle is on a live map, updated as location data arrives from your GPS hardware.",
   },
   {
-    icon: <Shield className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <Shield className="h-6 w-6 text-primary" />,
     title: "Access Control",
     desc: "Share vehicles with drivers and managers. Choose Viewer, Editor, or Owner roles per person.",
   },
   {
-    icon: <Gauge className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <Gauge className="h-6 w-6 text-primary" />,
     title: "Vehicle Health",
     desc: "Monitor fuel levels, mileage, and driver assignments from one clean dashboard.",
   },
   {
-    icon: <Globe className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <Globe className="h-6 w-6 text-primary" />,
     title: "Malaysian-First",
     desc: "Built for Malaysian roads. Full Bahasa Malaysia support and Malaysian plate number format.",
   },
   {
-    icon: <MapPin className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <MapPin className="h-6 w-6 text-primary" />,
     title: "No API Keys Needed",
     desc: "Uses free OpenStreetMap tiles — no expensive Google Maps billing surprises.",
   },
   {
-    icon: <Users className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <Users className="h-6 w-6 text-primary" />,
     title: "Team-Friendly",
     desc: "Invite your whole operations team. Each member sees only what they need.",
   },
   {
-    icon: <Zap className="h-6 w-6 text-[#00c2cc]" />,
+    icon: <Zap className="h-6 w-6 text-primary" />,
     title: "Fast & Lightweight",
     desc: "Built on Next.js 16 — pages load instantly even on mobile networks.",
   },
@@ -70,9 +69,9 @@ export default function LandingPage() {
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <MapPin className="h-6 w-6 text-[#00c2cc]" />
+              <MapPin className="h-6 w-6 text-primary" />
               {/* ✏️ EDIT: Replace with your product name */}
-              <span className="text-xl font-bold text-white">
+              <span className="text-xl font-bold text-foreground">
                 {PRODUCT_NAME}
               </span>
             </div>
@@ -86,21 +85,18 @@ export default function LandingPage() {
       {/* ── Hero Section ─────────────────────────────────────────────────── */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden">
         {/* Background glow */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00c2cc]/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative">
-          <div className="inline-flex items-center gap-2 bg-[#00c2cc]/10 text-[#00c2cc] text-sm font-medium px-3 py-1 rounded-full border border-[#00c2cc]/20 mb-6">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00c2cc] animate-pulse" />
-            {/* ✏️ EDIT: Change this announcement text */}
-            <Placeholder>Now in Beta — Free for all Malaysian fleets</Placeholder>
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-medium px-3 py-1 rounded-full border border-primary/20 mb-6">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            Now in Beta — Free for all Malaysian fleets
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            {/* ✏️ EDIT: Change the hero headline */}
-            <Placeholder>Track Your Fleet,</Placeholder>
+          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl text-foreground leading-[1.05] tracking-tight mb-6">
+            Track Your Fleet,
             <br />
-            <span className="text-[#00c2cc]">Anywhere in Malaysia</span>{" "}
-            {/* ✏️ EDIT: brand accent colour */}
+            <span className="text-primary italic">Anywhere in Malaysia</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
@@ -124,8 +120,7 @@ export default function LandingPage() {
               <span className="h-3 w-3 rounded-full bg-yellow-500/60" />
               <span className="h-3 w-3 rounded-full bg-green-500/60" />
               <span className="ml-4 text-xs text-muted-foreground font-mono">
-                {/* ✏️ EDIT: Change this URL to your real domain */}
-                fleettrack.app/dashboard
+                atlas.app/dashboard
               </span>
             </div>
             {/* Mock dashboard content */}
@@ -137,7 +132,7 @@ export default function LandingPage() {
                     key={item}
                     className={`h-8 rounded-md flex items-center px-3 text-xs ${
                       item === "Dashboard"
-                        ? "bg-[#00c2cc]/20 text-[#00c2cc]"
+                        ? "bg-primary/20 text-primary"
                         : "text-muted-foreground"
                     }`}
                   >
@@ -174,7 +169,7 @@ export default function LandingPage() {
                     style={{ top: pin.top, left: pin.left }}
                   />
                 ))}
-                <span className="relative text-sm text-white/60 z-10">
+                <span className="relative text-sm text-foreground/60 z-10">
                   Live map preview
                 </span>
               </div>
@@ -187,7 +182,7 @@ export default function LandingPage() {
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-4">
               Everything you need to manage your fleet
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -201,12 +196,12 @@ export default function LandingPage() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="bg-card border border-border/50 rounded-xl p-6 hover:border-[#00c2cc]/30 hover:shadow-[0_0_20px_rgba(0,194,204,0.05)] transition-all duration-300"
+                className="bg-card border border-border/50 rounded-xl p-6 hover:border-primary/30 transition-all duration-300"
               >
-                <div className="mb-4 p-2 bg-[#00c2cc]/10 rounded-lg w-fit">
+                <div className="mb-4 p-2 bg-primary/10 rounded-lg w-fit">
                   {f.icon}
                 </div>
-                <h3 className="font-semibold text-white mb-2">{f.title}</h3>
+                <h3 className="font-semibold text-foreground mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
               </div>
             ))}
@@ -217,9 +212,8 @@ export default function LandingPage() {
       {/* ── CTA Section ─────────────────────────────────────────────────── */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="bg-gradient-to-br from-[#00c2cc]/10 to-transparent border border-[#00c2cc]/20 rounded-2xl p-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              {/* ✏️ EDIT: CTA headline */}
+          <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-2xl p-10">
+            <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-4">
               Ready to take control of your fleet?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
@@ -235,27 +229,21 @@ export default function LandingPage() {
       <footer className="border-t border-border/50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-[#00c2cc]" />
-            {/* ✏️ EDIT: Replace with your company name */}
-            <span>
-              © 2026 <Placeholder>Your Company Name</Placeholder>. All rights
-              reserved.
-            </span>
+            <MapPin className="h-4 w-4 text-primary" />
+            <span>© 2026 Atlas. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-4">
-            {/* ✏️ EDIT: Add your real privacy/terms URLs */}
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-foreground transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-foreground transition-colors">
               Terms of Service
             </a>
-            {/* ✏️ EDIT: Replace with your support email */}
             <a
-              href="mailto:support@yourcompany.com"
-              className="hover:text-white transition-colors"
+              href="mailto:support@atlasfleet.app"
+              className="hover:text-foreground transition-colors"
             >
-              <Placeholder>support@yourcompany.com</Placeholder>
+              support@atlasfleet.app
             </a>
           </div>
         </div>

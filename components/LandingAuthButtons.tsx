@@ -30,7 +30,7 @@ export function LandingAuthButtons({
           <Link href="/dashboard">
             <Button
               size="lg"
-              className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold gap-2"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
             >
               Go to Dashboard <ArrowRight className="h-4 w-4" />
             </Button>
@@ -39,13 +39,13 @@ export function LandingAuthButtons({
           <Link href="/sign-up">
             <Button
               size="lg"
-              className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold gap-2"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
             >
               Get Started Free <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         )}
-        <Button size="lg" variant="outline" render={<a href="#features" />}>
+        <Button size="lg" variant="outline" nativeButton={false} render={<a href="#features" />}>
           Learn More
         </Button>
       </div>
@@ -58,7 +58,7 @@ export function LandingAuthButtons({
       <Link href="/dashboard">
         <Button
           size={size}
-          className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Go to Dashboard
         </Button>
@@ -76,7 +76,7 @@ export function LandingAuthButtons({
       <Link href="/sign-up">
         <Button
           size={size}
-          className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           Get Started Free
         </Button>
@@ -95,7 +95,7 @@ export function LandingCtaButton() {
       <Link href="/dashboard">
         <Button
           size="lg"
-          className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-bold gap-2 px-8"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 px-8"
         >
           Go to Dashboard <ArrowRight className="h-4 w-4" />
         </Button>
@@ -107,7 +107,7 @@ export function LandingCtaButton() {
     <Link href="/sign-up">
       <Button
         size="lg"
-        className="bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-bold gap-2 px-8"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 px-8"
       >
         Get Started Free <ArrowRight className="h-4 w-4" />
       </Button>

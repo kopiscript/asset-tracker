@@ -5,41 +5,48 @@
  * Forces the dark theme by adding the "dark" class to <html>.
  */
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, DM_Serif_Display, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// UI / body — geometric, excellent tabular numerals for dashboard stats
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
+// Display — editorial serif for headlines and feature titles
+const dmSerifDisplay = DM_Serif_Display({
+  variable: "--font-dm-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
+// Mono — plate numbers, code, API keys
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-// ✏️ EDIT: Change the app title and description
 export const metadata: Metadata = {
-  title: "FleetTrack — Vehicle Asset Tracker",
+  title: "Atlas — Fleet Tracking",
   description:
-    "Real-time vehicle tracking dashboard for Malaysian fleets. Monitor your vehicles, manage access, and stay in control.",
+    "Real-time vehicle tracking for Malaysian fleets. Monitor positions, manage access, and review trip history.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // "dark" class enables the dark colour scheme from globals.css
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${dmSerifDisplay.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {/* AuthProvider wraps the app so useSession() works in client components */}
         <AuthProvider>
-          {/* TooltipProvider is required by shadcn/ui tooltip components */}
           <TooltipProvider>{children}</TooltipProvider>
         </AuthProvider>
       </body>

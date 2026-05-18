@@ -1,8 +1,3 @@
-/**
- * components/dashboard/DashboardHeader.tsx
- * Top bar shown on all dashboard pages.
- * Contains: language toggle, notification bell, user avatar (initials).
- */
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -23,12 +18,19 @@ function UserAvatar() {
     .slice(0, 2);
 
   return (
-    <div
-      className="h-8 w-8 rounded-full bg-[#00c2cc] flex items-center justify-center text-xs font-bold text-[#0f1923] select-none"
-      title={session?.user?.email ?? undefined}
-    >
-      {initials}
-    </div>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <div
+            className="h-8 w-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-xs font-semibold text-primary select-none cursor-default"
+            title={session?.user?.email ?? undefined}
+          />
+        }
+      >
+        {initials}
+      </TooltipTrigger>
+      <TooltipContent>{session?.user?.email ?? "Account"}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -36,52 +38,52 @@ export function DashboardHeader() {
   const { lang, setLang } = useLang();
 
   return (
-    <header className="h-14 border-b border-border/50 bg-background/80 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
-      {/* Left: spacer on mobile (hamburger is absolutely positioned) */}
+    <header className="h-14 border-b border-border bg-background/60 backdrop-blur-md flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
+      {/* Mobile hamburger spacer */}
       <div className="w-8 lg:hidden" />
 
       {/* Flex spacer */}
       <div className="flex-1" />
 
-      {/* Right side actions */}
-      <div className="flex items-center gap-2">
-        {/* Language toggle */}
-        <div className="flex items-center rounded-md border border-border overflow-hidden">
+      {/* Right actions */}
+      <div className="flex items-center gap-3">
+        {/* Language toggle — minimal text buttons, no border box */}
+        <div className="flex items-center gap-0.5">
           {(["en", "bm"] as Lang[]).map((l) => (
             <button
               key={l}
               onClick={() => setLang(l)}
-              className={`px-2.5 py-1 text-xs font-semibold uppercase transition-colors ${
+              className={[
+                "px-2 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md transition-colors",
                 lang === l
-                  ? "bg-[#00c2cc] text-[#0f1923]" /* ✏️ EDIT: brand accent colour */
-                  : "text-muted-foreground hover:text-white"
-              }`}
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground",
+              ].join(" ")}
             >
               {l}
             </button>
           ))}
         </div>
 
-        {/* Notification bell — placeholder */}
+        {/* Notification bell */}
         <Tooltip>
           <TooltipTrigger
             render={
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative text-muted-foreground hover:text-white"
+                className="relative h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5"
                 aria-label="Notifications"
               />
             }
           >
             <Bell className="h-4 w-4" />
-            {/* ✏️ EDIT: Remove this dot when you implement real notifications */}
-            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-[#00c2cc]" />
+            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
           </TooltipTrigger>
-          <TooltipContent>Notifications (coming soon)</TooltipContent>
+          <TooltipContent>Notifications — coming soon</TooltipContent>
         </Tooltip>
 
-        {/* User avatar — shows initials from session */}
+        {/* User avatar */}
         <UserAvatar />
       </div>
     </header>

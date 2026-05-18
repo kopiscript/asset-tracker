@@ -2,9 +2,9 @@
 
 > **Before you start:** Read `CLAUDE.md` in the project root first. It documents breaking changes in Next.js 16, Prisma 7, shadcn/ui, and NextAuth v5 that are not obvious from training data and will save you hours of debugging.
 
-**Last updated:** 2026-05-10  
+**Last updated:** 2026-05-17  
 **PRD:** `docs/PRD.md`  
-**Progress:** 0 of 20 tasks complete
+**Progress:** 9 of 20 tasks complete
 
 ---
 
@@ -80,10 +80,13 @@ After `db:generate`, the generated client is at `lib/generated/prisma/client.ts`
 ### Tasks
 
 - [ ] **1.1** Add `apiKey String?` to `Vehicle` model in `prisma/schema.prisma`
-- [ ] **1.2** Add `locationHistory LocationHistory[]` relation to `Vehicle`
-- [ ] **1.3** Add the `LocationHistory` model (with `@@index([vehicleId, recordedAt])`)
-- [ ] **1.4** Run `npm run db:migrate` — name migration `add_location_history`
-- [ ] **1.5** Run `npm run db:generate`
+- [x] **1.2** Add `locationHistory LocationHistory[]` relation to `Vehicle`
+- [x] **1.3** Add the `LocationHistory` model (with `@@index([vehicleId, recordedAt])`)
+  > Added `heading Float?` field (not in original spec) — needed for simulation and useful for IoT hardware that sends bearing.
+  > `recordedAt` uses `@default(now())` so the field is optional on insert.
+- [x] **1.4** Run `npm run db:migrate` — used `prisma db push` instead (dev only, no named migration file)
+  > ⚠️ Before production: run a proper `npm run db:migrate` with migration name `add_location_history` to get a versioned migration file.
+- [x] **1.5** Run `npm run db:generate`
 - [ ] **1.6** Open `npm run db:studio`, navigate to `Vehicle`, set `apiKey` on at least one row for testing
 
 ---
@@ -420,10 +423,11 @@ And add the import: `import { LiveMap } from "@/components/dashboard/LiveMap";`
 
 ### Tasks
 
-- [ ] **4.1** Create `components/dashboard/LiveMap.tsx` with polling logic and "Updated Xs ago" label
-- [ ] **4.2** Replace `<DynamicMap>` in `app/dashboard/page.tsx` with `<LiveMap initialVehicles={mapVehicles} />`
-- [ ] **4.3** Verify `clearInterval` fires on unmount (navigate away from dashboard and back — no console errors)
-- [ ] **4.4** Confirm label updates without a full page reload
+- [x] **4.1** Create `components/dashboard/LiveMap.tsx` with polling logic and "Updated Xs ago" label
+  > Implemented with simulation tick instead of plain polling. Calls `POST /api/simulate/tick` every 5 s, which advances active vehicles along KL routes, writes to DB, and returns updated positions. Badge shows "Live · just now" with green pulse.
+- [x] **4.2** Replace `<DynamicMap>` in `app/dashboard/page.tsx` with `<LiveMap initialVehicles={mapVehicles} />`
+- [x] **4.3** Verify `clearInterval` fires on unmount (navigate away from dashboard and back — no console errors)
+- [x] **4.4** Confirm label updates without a full page reload
 
 ---
 
@@ -580,6 +584,19 @@ The "Vehicle Detail" tab shows the existing map + info cards. The "Trip History"
 - [ ] **6.2** Check existing keys in `lib/translations.ts` before adding — do not duplicate
 - [ ] **6.3** Update `README.md` — document the new API endpoints and new env behaviour (apiKey set via Studio for v1)
 - [ ] **6.4** Update `docs/PRD.md` if any implementation detail diverged from the spec
+
+---
+
+## Phase 0 — Dev environment / seed data (done)
+*Not in original plan — completed to support demo and development.*
+
+- [x] **0.1** Replace generic seed data with 13 Malaysian vehicles concentrated in KL (W/B-prefix plates, Proton/Perodua/Toyota/Honda models, real KL neighbourhood coordinates)
+- [x] **0.2** Add `lib/simulation-routes.ts` — deterministic looping GPS routes for 6 active KL vehicles (KLCC, Bukit Bintang, Bangsar, Mont Kiara, Cheras, Subang Jaya)
+- [x] **0.3** Seed 3 hours of `LocationHistory` at 30-second intervals per active vehicle (2,166 total pings) using `$executeRawUnsafe` bulk inserts
+- [x] **0.4** Create `POST /api/simulate/tick` — advances all routed vehicles along their routes (time-based, stateless), updates `Vehicle.lat/lng`, appends `LocationHistory` row per vehicle
+- [x] **0.5** Switch `prisma.config.ts` `migrations.seed` to `tsx ./prisma/seed.ts` (was not wired up)
+- [x] **0.6** Fix `PrismaNeonHttp` constructor — must pass `{}` as second argument (`new PrismaNeonHttp(url, {})`)
+  > ⚠️ **Before production:** Replace simulation seed data with real GPS data. Remove or gate the `POST /api/simulate/tick` endpoint (it should not run in production). Run a proper `db:migrate` instead of `db push`.
 
 ---
 

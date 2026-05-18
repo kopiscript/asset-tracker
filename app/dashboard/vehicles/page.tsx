@@ -57,13 +57,13 @@ export default async function VehiclesPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Vehicles</h1>
+          <h1 className="text-2xl font-bold text-foreground">Vehicles</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} total
           </p>
         </div>
         <Button
-          className="gap-2 bg-[#00c2cc] hover:bg-[#009aa3] text-[#0f1923] font-semibold"
+          className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           render={<Link href="/dashboard/vehicles/new" />}
         >
           <Plus className="h-4 w-4" />

@@ -43,16 +43,20 @@ export async function PATCH(
     );
   }
 
-  const updated = await prisma.vehicle.update({
-    where: { id },
-    data: {
-      latitude: body.latitude,
-      longitude: body.longitude,
-      lastSeenAt: new Date(),
-      status: "active",
-    },
-    select: { id: true, latitude: true, longitude: true, lastSeenAt: true, status: true },
-  });
-
-  return Response.json({ data: updated, error: null });
+  try {
+    const updated = await prisma.vehicle.update({
+      where: { id },
+      data: {
+        latitude: body.latitude as number,
+        longitude: body.longitude as number,
+        lastSeenAt: new Date(),
+        status: "active",
+      },
+      select: { id: true, latitude: true, longitude: true, lastSeenAt: true, status: true },
+    });
+    return Response.json({ data: updated, error: null });
+  } catch (e) {
+    console.error("[PATCH /api/vehicles/[id]/location]", e);
+    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
+  }
 }
