@@ -9,13 +9,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canView, canEdit, canDelete } from "@/lib/permissions";
-
-function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
-  if (!isActive) return "offline";
-  if (!lastSeenAt) return "idle";
-  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
-  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
-}
+import { deriveStatus } from "@/lib/status";
 
 // GET /api/vehicles/[id]
 export async function GET(
@@ -44,7 +38,7 @@ export async function GET(
         telemetryRecords: {
           orderBy: { timestampUtc: "desc" },
           take: 1,
-          select: { latitude: true, longitude: true, timestampUtc: true },
+          select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
         },
       },
     });
@@ -58,6 +52,7 @@ export async function GET(
         latitude: latest?.latitude ?? null,
         longitude: latest?.longitude ?? null,
         lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+        speed: latest?.speedKmh ?? null,
         status: deriveStatus(vehicle.isActive, latest?.timestampUtc ?? null),
         telemetryRecords: undefined,
       },

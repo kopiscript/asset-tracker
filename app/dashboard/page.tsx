@@ -6,13 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
-
-function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
-  if (!isActive) return "offline";
-  if (!lastSeenAt) return "idle";
-  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
-  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
-}
+import { deriveStatus } from "@/lib/status";
 
 export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();

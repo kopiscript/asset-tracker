@@ -32,18 +32,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!valid) return null;
-        return { id: user.id, email: user.email, name: user.name };
+        return { id: user.id, email: user.email, name: user.name, usertype: user.usertype };
       },
     }),
   ],
   callbacks: {
     ...authConfig.callbacks,
     jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.usertype = user.usertype ?? "user";
+      }
       return token;
     },
     session({ session, token }) {
       session.user.id = token.id as string;
+      session.user.usertype = (token.usertype as string) ?? "user";
       return session;
     },
   },

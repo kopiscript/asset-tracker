@@ -1,16 +1,3 @@
-/**
- * components/map/VehicleMap.tsx
- * Interactive Leaflet map showing vehicle locations.
- * Uses OpenStreetMap tiles — completely free, no API key needed.
- *
- * Markers are colour-coded:
- *   🟢 green  = active
- *   🟡 yellow = idle
- *   🔴 red    = offline
- *
- * Must be used as a client component because Leaflet uses browser APIs.
- * Import it with dynamic() and ssr: false to avoid server-side errors.
- */
 "use client";
 
 import { useEffect } from "react";
@@ -19,25 +6,24 @@ import {
   TileLayer,
   Marker,
   Popup,
+  Polyline,
+  CircleMarker,
+  Tooltip,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
 import { timeAgo } from "@/lib/format";
 
-// ─── Fix Leaflet's default icon path (broken in Webpack / Next.js) ────────
-// Leaflet tries to load marker icons from a relative path that doesn't exist.
-// We override it with a data URI approach using divIcon instead.
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 
-/** Creates a coloured circle marker icon for a given vehicle status */
 function makeIcon(status: string) {
   const colour =
     status === "active"
-      ? "#22c55e"  // green-500
+      ? "#22c55e"
       : status === "idle"
-        ? "#eab308" // yellow-500
-        : "#ef4444"; // red-500
+        ? "#eab308"
+        : "#ef4444";
 
   return L.divIcon({
     className: "",
@@ -69,57 +55,85 @@ export type MapVehicle = {
   lastSeenAt: string | null;
 };
 
+export type HistoryPoint = {
+  latitude: number;
+  longitude: number;
+  /** ISO string of the MY-time timestamp */
+  timestampMy: string;
+  speedKmh: number | null;
+};
+
 interface VehicleMapProps {
   vehicles: MapVehicle[];
-  /** If provided, centres the map on this vehicle */
   focusVehicleId?: string;
+  /** When provided, renders a history polyline instead of live markers */
+  historyPath?: HistoryPoint[];
   className?: string;
 }
 
-// ─── Helper: re-centres the map when focusVehicleId changes ──────────────
 function MapFocus({
   vehicles,
   focusVehicleId,
+  historyPath,
 }: {
   vehicles: MapVehicle[];
   focusVehicleId?: string;
+  historyPath?: HistoryPoint[];
 }) {
   const map = useMap();
   useEffect(() => {
+    // If we have a history path, fit bounds to the entire path
+    if (historyPath && historyPath.length > 0) {
+      const bounds = historyPath.map(
+        (p): [number, number] => [p.latitude, p.longitude]
+      );
+      map.fitBounds(bounds, { padding: [32, 32], animate: true });
+      return;
+    }
     if (!focusVehicleId) return;
     const v = vehicles.find((v) => v.id === focusVehicleId);
-    if (v) {
-      map.setView([v.latitude, v.longitude], 14, { animate: true });
-    }
-  }, [focusVehicleId, vehicles, map]);
+    if (v) map.setView([v.latitude, v.longitude], 14, { animate: true });
+  }, [focusVehicleId, vehicles, historyPath, map]);
   return null;
 }
 
-// ─── Main component ───────────────────────────────────────────────────────
-// Default centre: Kuala Lumpur, Malaysia
+/** Format a "fake UTC" ISO timestamp as MY-time display string */
+function formatMyTime(isoString: string): string {
+  // The timestamp is stored as MY wall-clock time with UTC timezone digits.
+  // We read the UTC parts directly to display the MY time correctly.
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ` +
+    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
+  );
+}
+
 const KL_CENTER: [number, number] = [3.139, 101.6869];
 
 export function VehicleMap({
   vehicles,
   focusVehicleId,
+  historyPath,
   className = "h-full w-full",
 }: VehicleMapProps) {
-  // Filter to only vehicles with GPS coordinates
   const mappable = vehicles.filter(
     (v) => v.latitude != null && v.longitude != null
   );
 
-  // Calculate initial centre: focused vehicle, first vehicle, or KL
   const focused = focusVehicleId
     ? mappable.find((v) => v.id === focusVehicleId)
     : undefined;
   const firstVehicle = mappable[0];
-  const center: [number, number] = focused
-    ? [focused.latitude, focused.longitude]
-    : firstVehicle
-      ? [firstVehicle.latitude, firstVehicle.longitude]
-      : KL_CENTER;
-  const zoom = focused ? 14 : mappable.length > 0 ? 7 : 10;
+  const center: [number, number] =
+    historyPath && historyPath.length > 0
+      ? [historyPath[0].latitude, historyPath[0].longitude]
+      : focused
+        ? [focused.latitude, focused.longitude]
+        : firstVehicle
+          ? [firstVehicle.latitude, firstVehicle.longitude]
+          : KL_CENTER;
+  const zoom = historyPath ? 13 : focused ? 14 : mappable.length > 0 ? 7 : 10;
 
   return (
     <div className={`relative ${className}`}>
@@ -129,63 +143,118 @@ export function VehicleMap({
         style={{ height: "100%", width: "100%" }}
         className="rounded-lg"
       >
-        {/* OpenStreetMap tiles — free forever, no API key */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Re-centre when focusVehicleId changes */}
-        <MapFocus vehicles={mappable} focusVehicleId={focusVehicleId} />
+        <MapFocus
+          vehicles={mappable}
+          focusVehicleId={focusVehicleId}
+          historyPath={historyPath}
+        />
 
-        {/* Render a marker for each vehicle */}
-        {mappable.map((v) => (
-          <Marker
-            key={v.id}
-            position={[v.latitude, v.longitude]}
-            icon={makeIcon(v.status)}
-          >
-            <Popup>
-              {/* Popup card */}
-              <div className="min-w-[160px]">
-                <p className="font-semibold text-sm mb-0.5">{v.name}</p>
-                <p className="font-mono text-xs text-gray-500 mb-1">
-                  {v.plateNumber}
-                </p>
-                <p className="text-xs capitalize mb-1">
-                  Status:{" "}
-                  <span
-                    className={
-                      v.status === "active"
-                        ? "text-green-600"
-                        : v.status === "idle"
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                    }
+        {/* ── History path mode ───────────────────────────────────────── */}
+        {historyPath && historyPath.length > 0 && (
+          <>
+            <Polyline
+              positions={historyPath.map((p) => [p.latitude, p.longitude])}
+              pathOptions={{ color: "#00c2cc", weight: 3, opacity: 0.85 }}
+            />
+            {/* Start marker */}
+            <CircleMarker
+              center={[historyPath[0].latitude, historyPath[0].longitude]}
+              radius={7}
+              pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 1, weight: 2 }}
+            >
+              <Tooltip direction="top" offset={[0, -8]}>
+                <span className="text-xs font-medium">Start<br />{formatMyTime(historyPath[0].timestampMy)}</span>
+              </Tooltip>
+            </CircleMarker>
+            {/* End marker */}
+            <CircleMarker
+              center={[historyPath[historyPath.length - 1].latitude, historyPath[historyPath.length - 1].longitude]}
+              radius={7}
+              pathOptions={{ color: "#ef4444", fillColor: "#ef4444", fillOpacity: 1, weight: 2 }}
+            >
+              <Tooltip direction="top" offset={[0, -8]}>
+                <span className="text-xs font-medium">End<br />{formatMyTime(historyPath[historyPath.length - 1].timestampMy)}</span>
+              </Tooltip>
+            </CircleMarker>
+            {/* Intermediate nodes */}
+            {historyPath.slice(1, -1).map((p, i) => (
+              <CircleMarker
+                key={i}
+                center={[p.latitude, p.longitude]}
+                radius={4}
+                pathOptions={{ color: "#00c2cc", fillColor: "#00c2cc", fillOpacity: 0.7, weight: 1 }}
+              >
+                <Tooltip direction="top" offset={[0, -6]}>
+                  <div className="text-xs leading-tight">
+                    <div className="font-medium">{formatMyTime(p.timestampMy)}</div>
+                    {p.speedKmh != null && (
+                      <div className="text-gray-500">{p.speedKmh.toFixed(1)} km/h</div>
+                    )}
+                  </div>
+                </Tooltip>
+              </CircleMarker>
+            ))}
+          </>
+        )}
+
+        {/* ── Live marker mode ────────────────────────────────────────── */}
+        {!historyPath &&
+          mappable.map((v) => (
+            <Marker
+              key={v.id}
+              position={[v.latitude, v.longitude]}
+              icon={makeIcon(v.status)}
+            >
+              <Popup>
+                <div className="min-w-[160px]">
+                  <p className="font-semibold text-sm mb-0.5">{v.name}</p>
+                  <p className="font-mono text-xs text-gray-500 mb-1">{v.plateNumber}</p>
+                  <p className="text-xs capitalize mb-1">
+                    Status:{" "}
+                    <span
+                      className={
+                        v.status === "active"
+                          ? "text-green-600"
+                          : v.status === "idle"
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                      }
+                    >
+                      {v.status}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-400 mb-2">
+                    {v.lastSeenAt ? timeAgo(v.lastSeenAt) : "No location data"}
+                  </p>
+                  <Link
+                    href={`/dashboard/vehicles/${v.id}`}
+                    className="block w-full text-center text-xs bg-primary text-primary-foreground font-semibold px-2 py-1 rounded hover:bg-primary/90 transition-colors"
                   >
-                    {v.status}
-                  </span>
-                </p>
-                <p className="text-xs text-gray-400 mb-2">
-                  {v.lastSeenAt ? timeAgo(v.lastSeenAt) : "No location data"}
-                </p>
-                <Link
-                  href={`/dashboard/vehicles/${v.id}`}
-                  className="block w-full text-center text-xs bg-primary text-primary-foreground font-semibold px-2 py-1 rounded hover:bg-primary/90 transition-colors"
-                >
-                  View Details →
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+                    View Details →
+                  </Link>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
       </MapContainer>
 
-      {/* Overlay when no vehicles have GPS data */}
-      {mappable.length === 0 && (
+      {!historyPath && mappable.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center z-[500] pointer-events-none">
           <div className="bg-background/90 text-foreground text-sm px-4 py-2 rounded-lg backdrop-blur-sm border border-border">
             No location data yet
+          </div>
+        </div>
+      )}
+
+      {historyPath && historyPath.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center z-[500] pointer-events-none">
+          <div className="bg-background/90 text-foreground text-sm px-4 py-2 rounded-lg backdrop-blur-sm border border-border">
+            No history for this time range
           </div>
         </div>
       )}

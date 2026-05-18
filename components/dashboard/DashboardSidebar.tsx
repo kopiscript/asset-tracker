@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, ShieldCheck } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useLang } from "@/components/LanguageProvider";
 import {
   Sheet,
@@ -57,6 +57,8 @@ function NavLink({
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { tr } = useLang();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.usertype === "admin";
 
   return (
     <div className="flex flex-col h-full">
@@ -86,6 +88,14 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             onClick={onNavClick}
           />
         ))}
+        {isAdmin && (
+          <NavLink
+            icon={ShieldCheck}
+            label="Admin"
+            href="/dashboard/admin"
+            onClick={onNavClick}
+          />
+        )}
       </nav>
 
       {/* Sign out */}

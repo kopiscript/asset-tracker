@@ -5,24 +5,17 @@
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Share2, MapPin, User, Clock, FileText } from "lucide-react";
+import { ArrowLeft, Edit, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { DynamicMap } from "@/components/map/DynamicMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DeleteVehicleButton } from "./DeleteVehicleButton";
+import { VehicleDetailTabs } from "./VehicleDetailTabs";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canEdit, canShare } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { timeAgo } from "@/lib/format";
-
-function deriveStatus(isActive: boolean | null, lastSeenAt: Date | null): string {
-  if (!isActive) return "offline";
-  if (!lastSeenAt) return "idle";
-  const minAgo = (Date.now() - lastSeenAt.getTime()) / 60000;
-  return minAgo < 10 ? "active" : minAgo < 60 ? "idle" : "offline";
-}
+import { deriveStatus } from "@/lib/status";
+import { totalDistanceKm, todayMidnightMy } from "@/lib/geo";
 
 export default async function VehicleDetailPage(
   props: PageProps<"/dashboard/vehicles/[id]">
@@ -32,6 +25,8 @@ export default async function VehicleDetailPage(
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return notFound();
 
+  const isAdmin = dbUser.usertype === "admin";
+
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: BigInt(id) },
     include: {
@@ -39,40 +34,62 @@ export default async function VehicleDetailPage(
       telemetryRecords: {
         orderBy: { timestampUtc: "desc" },
         take: 1,
-        select: { latitude: true, longitude: true, timestampUtc: true },
+        select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
       },
     },
   });
   if (!vehicle) return notFound();
 
-  const access = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
-  });
-  if (!access) return notFound();
+  // Access gate — admins bypass vehicle_access check
+  if (!isAdmin) {
+    const access = await prisma.vehicleAccess.findUnique({
+      where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
+    });
+    if (!access) return notFound();
+  }
 
-  const userCanEdit = await canEdit(dbUser.id, id);
-  const userCanShare = await canShare(dbUser.id, id);
-  const userRole = access.role;
+  const access = isAdmin
+    ? null
+    : await prisma.vehicleAccess.findUnique({
+        where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
+      });
 
-  const latest = vehicle.telemetryRecords[0] ?? null;
-  const latitude = latest?.latitude ?? null;
+  const userRole    = isAdmin ? "admin" : (access?.role ?? "viewer");
+  const userCanEdit = isAdmin || userRole === "editor" || userRole === "owner";
+  const userCanShare = !isAdmin && userRole === "owner";
+
+  const latest    = vehicle.telemetryRecords[0] ?? null;
+  const latitude  = latest?.latitude  ?? null;
   const longitude = latest?.longitude ?? null;
   const lastSeenAt = latest?.timestampUtc ?? null;
-  const status = deriveStatus(vehicle.isActive, lastSeenAt);
+  const speed     = latest?.speedKmh ?? null;
+  const status    = deriveStatus(vehicle.isActive, lastSeenAt);
+
+  // Today's mileage — query pings from MY midnight to now, compute Haversine sum
+  const midnight = todayMidnightMy();
+  const todayPings = await prisma.telemetryRecord.findMany({
+    where: {
+      vehicleId:   BigInt(id),
+      timestampMy: { gte: midnight },
+      latitude:    { not: null },
+      longitude:   { not: null },
+    },
+    orderBy: { timestampMy: "asc" },
+    select: { latitude: true, longitude: true },
+  });
+  const todayKm = totalDistanceKm(todayPings);
 
   const mapVehicles =
     latitude != null && longitude != null
-      ? [
-          {
-            id,
-            name: vehicle.name ?? id,
-            plateNumber: vehicle.plateNumber ?? "",
-            status,
-            latitude,
-            longitude,
-            lastSeenAt: lastSeenAt?.toISOString() ?? null,
-          },
-        ]
+      ? [{
+          id,
+          name: vehicle.name ?? id,
+          plateNumber: vehicle.plateNumber ?? "",
+          status,
+          latitude,
+          longitude,
+          lastSeenAt: lastSeenAt?.toISOString() ?? null,
+        }]
       : [];
 
   return (
@@ -90,9 +107,7 @@ export default async function VehicleDetailPage(
                 {vehicle.plateNumber}
               </span>
               {vehicle.type && (
-                <Badge variant="secondary" className="text-xs">
-                  {vehicle.type}
-                </Badge>
+                <Badge variant="secondary" className="text-xs">{vehicle.type}</Badge>
               )}
               <StatusBadge status={status} />
             </div>
@@ -118,87 +133,25 @@ export default async function VehicleDetailPage(
         </div>
       </div>
 
-      {/* ── Map ────────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-4 sm:px-6 pb-4">
-        <div className="h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden border border-border/50">
-          <DynamicMap
-            vehicles={mapVehicles}
-            focusVehicleId={id}
-            className="h-full w-full"
-          />
-        </div>
-        {latitude == null && (
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            No GPS location recorded yet. Map is centred on Kuala Lumpur.
-          </p>
-        )}
-      </div>
-
-      {/* ── Details grid ────────────────────────────────────────────────── */}
-      <div className="px-4 sm:px-6 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">Vehicle Info</h2>
-            <div className="space-y-3">
-              <DetailRow icon={<User className="h-4 w-4" />} label="Driver">
-                {vehicle.driverName ?? "No driver assigned"}
-              </DetailRow>
-              <Separator className="bg-border/50" />
-              <DetailRow icon={<Clock className="h-4 w-4" />} label="Last Seen">
-                {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
-              </DetailRow>
-              <Separator className="bg-border/50" />
-              <DetailRow icon={<FileText className="h-4 w-4" />} label="IMEI">
-                <span className="font-mono text-xs">{vehicle.imei}</span>
-              </DetailRow>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border/50 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
-            <div className="space-y-3">
-              <DetailRow icon={<User className="h-4 w-4" />} label="Owner">
-                {vehicle.owner?.name ?? vehicle.owner?.email ?? "—"}
-              </DetailRow>
-              <Separator className="bg-border/50" />
-              <DetailRow icon={<div className="h-4 w-4 text-xs">👤</div>} label="Your Role">
-                <span className="capitalize">{userRole}</span>
-              </DetailRow>
-              {latitude != null && (
-                <>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<MapPin className="h-4 w-4" />} label="Coordinates">
-                    <span className="font-mono text-xs">
-                      {latitude.toFixed(5)}, {longitude?.toFixed(5)}
-                    </span>
-                  </DetailRow>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DetailRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="text-muted-foreground mt-0.5 flex-shrink-0">{icon}</span>
-      <div className="flex-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <div className="text-sm text-foreground mt-0.5">{children}</div>
-      </div>
+      {/* ── Tabs (Overview + History) ───────────────────────────────────── */}
+      <VehicleDetailTabs
+        vehicle={{
+          id,
+          imei:        vehicle.imei,
+          name:        vehicle.name,
+          plateNumber: vehicle.plateNumber,
+          driverName:  vehicle.driverName,
+          ownerName:   vehicle.owner?.name ?? null,
+          ownerEmail:  vehicle.owner?.email ?? null,
+          userRole,
+        }}
+        mapVehicles={mapVehicles}
+        latitude={latitude}
+        longitude={longitude}
+        lastSeenAt={lastSeenAt?.toISOString() ?? null}
+        speed={speed}
+        todayKm={todayKm}
+      />
     </div>
   );
 }

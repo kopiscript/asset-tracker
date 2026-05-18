@@ -13,9 +13,8 @@
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { MapVehicle } from "./VehicleMap";
+import type { MapVehicle, HistoryPoint } from "./VehicleMap";
 
-// Dynamically import the real map with SSR turned off
 const VehicleMapNoSSR = dynamic(
   () => import("./VehicleMap").then((m) => ({ default: m.VehicleMap })),
   {
@@ -29,6 +28,7 @@ const VehicleMapNoSSR = dynamic(
 interface DynamicMapProps {
   vehicles: MapVehicle[];
   focusVehicleId?: string;
+  historyPath?: HistoryPoint[];
   className?: string;
 }
 

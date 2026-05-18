@@ -1,0 +1,260 @@
+/**
+ * app/dashboard/admin/page.tsx
+ * Global admin panel — only accessible to users with usertype = "admin".
+ * Shows all vehicles on a live map + a full user roster with their vehicles.
+ */
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Car, Users, Activity, WifiOff } from "lucide-react";
+import { LiveMap } from "@/components/dashboard/LiveMap";
+import { StatusBadge } from "@/components/StatusBadge";
+import { getOrCreateDbUser } from "@/lib/user-sync";
+import { prisma } from "@/lib/prisma";
+import { deriveStatus } from "@/lib/status";
+import { timeAgo } from "@/lib/format";
+import type { MapVehicle } from "@/components/map/VehicleMap";
+
+function StatCard({
+  icon,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  valueClass: string;
+}) {
+  return (
+    <div className="bg-card border border-border rounded-xl px-4 py-3.5">
+      <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
+        {value}
+      </p>
+      <div className="h-px bg-border my-3" />
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+        {icon}
+      </div>
+    </div>
+  );
+}
+
+export default async function AdminPage() {
+  const dbUser = await getOrCreateDbUser();
+  if (!dbUser || dbUser.usertype !== "admin") redirect("/dashboard");
+
+  // All vehicles with latest telemetry
+  const vehicles = await prisma.vehicle.findMany({
+    include: {
+      owner: { select: { name: true, email: true } },
+      telemetryRecords: {
+        orderBy: { timestampUtc: "desc" },
+        take: 1,
+        select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // All users with their vehicle access list
+  const users = await prisma.user.findMany({
+    select: {
+      id:        true,
+      name:      true,
+      email:     true,
+      usertype:  true,
+      createdAt: true,
+      accesses: {
+        select: {
+          role: true,
+          vehicle: { select: { id: true, name: true, plateNumber: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const vehicleRows = vehicles.map((v) => {
+    const latest = v.telemetryRecords[0] ?? null;
+    return {
+      id:          v.id.toString(),
+      imei:        v.imei,
+      name:        v.name,
+      plateNumber: v.plateNumber,
+      isActive:    v.isActive,
+      latitude:    latest?.latitude  ?? null,
+      longitude:   latest?.longitude ?? null,
+      lastSeenAt:  latest?.timestampUtc ?? null,
+      speed:       latest?.speedKmh ?? null,
+      status:      deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+      ownerName:   v.owner?.name ?? v.owner?.email ?? "—",
+    };
+  });
+
+  const mapVehicles: MapVehicle[] = vehicleRows
+    .filter((v) => v.latitude != null && v.longitude != null)
+    .map((v) => ({
+      id:          v.id,
+      name:        v.name ?? v.imei,
+      plateNumber: v.plateNumber ?? "",
+      status:      v.status,
+      latitude:    v.latitude!,
+      longitude:   v.longitude!,
+      lastSeenAt:  v.lastSeenAt?.toISOString() ?? null,
+    }));
+
+  const activeCount  = vehicleRows.filter((v) => v.status === "active").length;
+  const offlineCount = vehicleRows.filter((v) => v.status === "offline").length;
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div>
+        <h1 className="font-display text-2xl text-foreground leading-none tracking-tight">
+          Admin Panel
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Global fleet overview — all users and vehicles
+        </p>
+      </div>
+
+      {/* ── Stats ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard
+          icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}
+          label="Vehicles"
+          value={vehicles.length}
+          valueClass="text-foreground"
+        />
+        <StatCard
+          icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
+          label="Users"
+          value={users.length}
+          valueClass="text-foreground"
+        />
+        <StatCard
+          icon={<Activity className="h-3.5 w-3.5 text-green-600" />}
+          label="Active"
+          value={activeCount}
+          valueClass="text-green-600"
+        />
+        <StatCard
+          icon={<WifiOff className="h-3.5 w-3.5 text-red-500" />}
+          label="Offline"
+          value={offlineCount}
+          valueClass="text-red-600"
+        />
+      </div>
+
+      {/* ── Global map ─────────────────────────────────────────────────── */}
+      <div className="h-80 lg:h-[28rem] rounded-xl overflow-hidden border border-border">
+        <LiveMap initialVehicles={mapVehicles} className="h-full w-full" />
+      </div>
+
+      {/* ── Vehicle table ──────────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">All Vehicles</h2>
+        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-muted/30">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicle</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Owner</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Last Seen</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Speed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vehicleRows.map((v) => (
+                <tr key={v.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <Link href={`/dashboard/vehicles/${v.id}`} className="hover:underline font-medium text-foreground">
+                      {v.name ?? v.imei}
+                    </Link>
+                    {v.plateNumber && (
+                      <p className="font-mono text-xs text-muted-foreground">{v.plateNumber}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{v.ownerName}</td>
+                  <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                    {v.lastSeenAt ? timeAgo(v.lastSeenAt) : "Never"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                    {v.speed != null ? `${v.speed.toFixed(1)} km/h` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {vehicleRows.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">No vehicles in system.</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── User table ─────────────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">All Users</h2>
+        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-muted/30">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicles</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-foreground">{u.name}</p>
+                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <span className={`text-xs font-medium capitalize px-2 py-0.5 rounded-full border ${
+                      u.usertype === "admin"
+                        ? "bg-primary/10 text-primary border-primary/20"
+                        : "bg-muted text-muted-foreground border-border"
+                    }`}>
+                      {u.usertype}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {u.accesses.length === 0 ? (
+                        <span className="text-muted-foreground text-xs">None</span>
+                      ) : (
+                        u.accesses.slice(0, 3).map((a) => (
+                          <Link
+                            key={a.vehicle.id.toString()}
+                            href={`/dashboard/vehicles/${a.vehicle.id.toString()}`}
+                            className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded border border-border hover:border-primary/30 transition-colors"
+                          >
+                            {a.vehicle.plateNumber ?? a.vehicle.name ?? a.vehicle.id.toString()}
+                          </Link>
+                        ))
+                      )}
+                      {u.accesses.length > 3 && (
+                        <span className="text-xs text-muted-foreground">+{u.accesses.length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
+                    {u.createdAt ? timeAgo(u.createdAt) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {users.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">No users in system.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
