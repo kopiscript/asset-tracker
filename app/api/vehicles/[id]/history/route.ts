@@ -32,7 +32,7 @@ export async function GET(
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
-  const isAdmin = dbUser.usertype === "admin";
+  const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
   if (!isAdmin && !(await canView(dbUser.id, id))) {
     return Response.json({ data: null, error: "Not found" }, { status: 404 });
   }

@@ -1,14 +1,8 @@
-/**
- * app/api/vehicles/[id]/route.ts
- * GET    — get one vehicle (requires view access)
- * PATCH  — update vehicle details (requires edit access)
- * DELETE — delete vehicle (requires owner access)
- */
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
-import { canView, canEdit, canDelete } from "@/lib/permissions";
+import { getEffectiveVehicleRole, canEdit, canDelete } from "@/lib/permissions";
 import { deriveStatus } from "@/lib/status";
 
 // GET /api/vehicles/[id]
@@ -28,13 +22,13 @@ export async function GET(
   }
 
   try {
-    const allowed = await canView(dbUser.id, id);
-    if (!allowed) return Response.json({ data: null, error: "Not found" }, { status: 404 });
+    const userRole = await getEffectiveVehicleRole(dbUser.id, id);
+    if (!userRole) return Response.json({ data: null, error: "Not found" }, { status: 404 });
 
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: BigInt(id) },
       include: {
-        owner: { select: { name: true, email: true } },
+        org: { select: { id: true, name: true } },
         telemetryRecords: {
           where: { latitude: { not: null }, longitude: { not: null } },
           orderBy: { timestampUtc: "desc" },
@@ -48,14 +42,21 @@ export async function GET(
     const latest = vehicle.telemetryRecords[0] ?? null;
     return Response.json({
       data: {
-        ...vehicle,
         id: vehicle.id.toString(),
+        imei: vehicle.imei,
+        name: vehicle.name,
+        plateNumber: vehicle.plateNumber,
+        type: vehicle.type,
+        driverName: vehicle.driverName,
+        isActive: vehicle.isActive,
+        orgId: vehicle.orgId,
+        orgName: vehicle.org?.name ?? null,
         latitude: latest?.latitude ?? null,
         longitude: latest?.longitude ?? null,
         lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
         speed: latest?.speedKmh ?? null,
         status: deriveStatus(vehicle.isActive, latest?.timestampUtc ?? null),
-        telemetryRecords: undefined,
+        userRole,
       },
       error: null,
     });
@@ -81,8 +82,7 @@ export async function PATCH(
     return Response.json({ data: null, error: "User not found" }, { status: 404 });
   }
 
-  const allowed = await canEdit(dbUser.id, id);
-  if (!allowed) {
+  if (!(await canEdit(dbUser.id, id))) {
     return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
   }
 
@@ -99,8 +99,10 @@ export async function PATCH(
     if (typeof body.name === "string") data.name = body.name;
     if (typeof body.plateNumber === "string") data.plateNumber = body.plateNumber.toUpperCase();
     if (typeof body.type === "string") data.type = body.type;
-    if (body.driverName !== undefined) data.driverName = (body.driverName as string | null);
+    if (body.driverName !== undefined) data.driverName = body.driverName as string | null;
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
+    const isSystemAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
+    if ("orgId" in body && isSystemAdmin) data.orgId = (body.orgId as string | null) || null;
 
     const updated = await prisma.vehicle.update({ where: { id: BigInt(id) }, data });
     return Response.json({ data: { ...updated, id: updated.id.toString() }, error: null });
@@ -126,8 +128,7 @@ export async function DELETE(
     return Response.json({ data: null, error: "User not found" }, { status: 404 });
   }
 
-  const allowed = await canDelete(dbUser.id, id);
-  if (!allowed) {
+  if (!(await canDelete(dbUser.id, id))) {
     return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
   }
 

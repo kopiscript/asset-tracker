@@ -35,8 +35,7 @@ interface VehicleInfo {
   name: string | null;
   plateNumber: string | null;
   driverName: string | null;
-  ownerName: string | null;
-  ownerEmail: string | null;
+  orgName: string | null;
   userRole: string;
 }
 
@@ -214,8 +213,8 @@ function OverviewTab({
         <div className="bg-card border border-border/50 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
           <div className="space-y-3">
-            <DetailRow icon={<User className="h-4 w-4" />} label="Owner">
-              {vehicle.ownerName ?? vehicle.ownerEmail ?? "—"}
+            <DetailRow icon={<User className="h-4 w-4" />} label="Organisation">
+              {vehicle.orgName ?? "—"}
             </DetailRow>
             <Separator className="bg-border/50" />
             <DetailRow icon={<div className="h-4 w-4 text-xs flex items-center">👤</div>} label="Your Role">

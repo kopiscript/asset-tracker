@@ -1,17 +1,14 @@
-/**
- * app/api/admin/users/route.ts
- * GET — all registered users with their vehicle summary.
- * Requires usertype = "admin".
- */
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 
+// GET /api/admin/users — all users with their org memberships.
+// Requires usertype = "admin" or "system_admin".
 export async function GET() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  if (dbUser.usertype !== "admin") {
+  if (dbUser.usertype !== "admin" && dbUser.usertype !== "system_admin") {
     return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
   }
 
@@ -23,10 +20,10 @@ export async function GET() {
         email:     true,
         usertype:  true,
         createdAt: true,
-        accesses: {
+        orgMemberships: {
           select: {
             role: true,
-            vehicle: { select: { id: true, name: true, plateNumber: true } },
+            org: { select: { id: true, name: true } },
           },
         },
       },
@@ -34,17 +31,16 @@ export async function GET() {
     });
 
     const data = users.map((u) => ({
-      id:           u.id,
-      name:         u.name,
-      email:        u.email,
-      usertype:     u.usertype,
-      createdAt:    u.createdAt?.toISOString() ?? null,
-      vehicleCount: u.accesses.length,
-      vehicles:     u.accesses.map((a) => ({
-        id:          a.vehicle.id.toString(),
-        name:        a.vehicle.name,
-        plateNumber: a.vehicle.plateNumber,
-        role:        a.role,
+      id:        u.id,
+      name:      u.name,
+      email:     u.email,
+      usertype:  u.usertype,
+      createdAt: u.createdAt?.toISOString() ?? null,
+      orgCount:  u.orgMemberships.length,
+      orgs:      u.orgMemberships.map((m) => ({
+        id:   m.org.id,
+        name: m.org.name,
+        role: m.role,
       })),
     }));
 

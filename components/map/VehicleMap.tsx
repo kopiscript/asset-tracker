@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -81,19 +81,25 @@ function MapFocus({
   historyPath?: HistoryPoint[];
 }) {
   const map = useMap();
+  const didFocus = useRef(false);
+
+  // History path: always refit when the path changes (user picks a new date range)
   useEffect(() => {
-    // If we have a history path, fit bounds to the entire path
-    if (historyPath && historyPath.length > 0) {
-      const bounds = historyPath.map(
-        (p): [number, number] => [p.latitude, p.longitude]
-      );
-      map.fitBounds(bounds, { padding: [32, 32], animate: true });
-      return;
-    }
-    if (!focusVehicleId) return;
+    if (!historyPath || historyPath.length === 0) return;
+    const bounds = historyPath.map((p): [number, number] => [p.latitude, p.longitude]);
+    map.fitBounds(bounds, { padding: [32, 32], animate: true });
+  }, [historyPath, map]);
+
+  // Live focus: fly to the vehicle once on initial mount, then leave zoom alone
+  useEffect(() => {
+    if (!focusVehicleId || didFocus.current) return;
     const v = vehicles.find((v) => v.id === focusVehicleId);
-    if (v) map.setView([v.latitude, v.longitude], 14, { animate: true });
-  }, [focusVehicleId, vehicles, historyPath, map]);
+    if (v) {
+      map.setView([v.latitude, v.longitude], 14, { animate: true });
+      didFocus.current = true;
+    }
+  }, [focusVehicleId, vehicles, map]);
+
   return null;
 }
 

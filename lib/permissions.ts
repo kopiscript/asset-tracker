@@ -1,59 +1,105 @@
-/**
- * lib/permissions.ts
- * Helper functions that check what actions a user can perform on a vehicle.
- * Always use these in API routes to enforce access control.
- *
- * Roles (from least to most powerful):
- *   viewer  → can only view
- *   editor  → can view + edit vehicle details
- *   owner   → can view + edit + share + delete
- */
 import { prisma } from "./prisma";
 
-/** Returns the role string for a user on a vehicle, or null if no access. */
-export async function getRole(
+// ── Internal helpers ───────────────────────────────────────────────────────
+
+async function isSystemAdmin(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { usertype: true },
+  });
+  return user?.usertype === "admin" || user?.usertype === "system_admin";
+}
+
+/** Returns the user's role in an org, or null if not a member. */
+export async function getOrgRole(
   userId: string,
-  vehicleId: string
+  orgId: string
 ): Promise<string | null> {
-  const access = await prisma.vehicleAccess.findUnique({
-    where: { vehicleId_userId: { vehicleId: BigInt(vehicleId), userId } },
+  const member = await prisma.orgMember.findUnique({
+    where: { userId_orgId: { userId, orgId } },
     select: { role: true },
   });
-  return access?.role ?? null;
+  return member?.role ?? null;
 }
 
-/** Can the user view this vehicle? (viewer, editor, or owner) */
-export async function canView(
-  userId: string,
-  vehicleId: string
-): Promise<boolean> {
-  const role = await getRole(userId, vehicleId);
-  return role !== null;
+/** Returns true if user is a member of any fleet that contains this vehicle. */
+async function hasFleetAccess(userId: string, vehicleId: bigint): Promise<boolean> {
+  const fleetVehicles = await prisma.fleetVehicle.findMany({
+    where: { vehicleId },
+    select: { fleetId: true },
+  });
+  if (fleetVehicles.length === 0) return false;
+  const fleetIds = fleetVehicles.map((fv) => fv.fleetId);
+  const hit = await prisma.fleetMember.findFirst({
+    where: { userId, fleetId: { in: fleetIds } },
+  });
+  return !!hit;
 }
 
-/** Can the user edit this vehicle's details? (editor or owner) */
-export async function canEdit(
+// ── Vehicle-level roles ────────────────────────────────────────────────────
+
+/**
+ * Returns the effective role a user has on a vehicle:
+ *   "owner"  — org owner (full control)
+ *   "admin"  — org admin with fleet access (read + write)
+ *   "viewer" — org viewer with fleet access (read only)
+ *   null     — no access
+ *
+ * System admins are treated as "owner" on every vehicle.
+ */
+export async function getEffectiveVehicleRole(
   userId: string,
   vehicleId: string
-): Promise<boolean> {
-  const role = await getRole(userId, vehicleId);
-  return role === "editor" || role === "owner";
+): Promise<"owner" | "admin" | "viewer" | null> {
+  if (await isSystemAdmin(userId)) return "owner";
+
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id: BigInt(vehicleId) },
+    select: { orgId: true },
+  });
+  if (!vehicle?.orgId) return null;
+
+  const orgRole = await getOrgRole(userId, vehicle.orgId);
+  if (!orgRole) return null;
+  if (orgRole === "owner") return "owner";
+
+  // admin and viewer need explicit fleet assignment
+  if (await hasFleetAccess(userId, BigInt(vehicleId))) {
+    return orgRole as "admin" | "viewer";
+  }
+  return null;
 }
 
-/** Can the user manage who has access? (owner only) */
-export async function canShare(
-  userId: string,
-  vehicleId: string
-): Promise<boolean> {
-  const role = await getRole(userId, vehicleId);
+export async function canView(userId: string, vehicleId: string): Promise<boolean> {
+  return (await getEffectiveVehicleRole(userId, vehicleId)) !== null;
+}
+
+export async function canEdit(userId: string, vehicleId: string): Promise<boolean> {
+  const role = await getEffectiveVehicleRole(userId, vehicleId);
+  return role === "owner" || role === "admin";
+}
+
+/** Only org owners can delete vehicles. */
+export async function canDelete(userId: string, vehicleId: string): Promise<boolean> {
+  const role = await getEffectiveVehicleRole(userId, vehicleId);
   return role === "owner";
 }
 
-/** Can the user delete this vehicle? (owner only) */
-export async function canDelete(
-  userId: string,
-  vehicleId: string
-): Promise<boolean> {
-  const role = await getRole(userId, vehicleId);
-  return role === "owner";
+// ── Org-level permissions ──────────────────────────────────────────────────
+
+/** Can user manage org members and settings? (system_admin or org owner) */
+export async function canManageOrg(userId: string, orgId: string): Promise<boolean> {
+  if (await isSystemAdmin(userId)) return true;
+  return (await getOrgRole(userId, orgId)) === "owner";
+}
+
+/** Can user manage a fleet (add/remove vehicles, grant member access)? */
+export async function canManageFleet(userId: string, fleetId: string): Promise<boolean> {
+  if (await isSystemAdmin(userId)) return true;
+  const fleet = await prisma.fleet.findUnique({
+    where: { id: fleetId },
+    select: { orgId: true },
+  });
+  if (!fleet) return false;
+  return (await getOrgRole(userId, fleet.orgId)) === "owner";
 }

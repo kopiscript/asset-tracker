@@ -1,18 +1,12 @@
-/**
- * app/api/vehicles/route.ts
- * GET  — list all vehicles the current user can access
- * POST — create a new vehicle (user becomes the owner)
- */
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { deriveStatus } from "@/lib/status";
 
-// GET /api/vehicles
+// GET /api/vehicles — list all vehicles the current user can access
 export async function GET() {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,38 +16,109 @@ export async function GET() {
   }
 
   try {
-    const accesses = await prisma.vehicleAccess.findMany({
-      where: { userId: dbUser.id },
-      include: {
-        vehicle: {
-          include: {
-            telemetryRecords: {
-              where: { latitude: { not: null }, longitude: { not: null } },
-              orderBy: { timestampUtc: "desc" },
-              take: 1,
-              select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
-            },
+    const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
+
+    let vehiclesRaw;
+
+    if (isAdmin) {
+      vehiclesRaw = await prisma.vehicle.findMany({
+        include: {
+          org: { select: { id: true, name: true } },
+          telemetryRecords: {
+            where: { latitude: { not: null }, longitude: { not: null } },
+            orderBy: { timestampUtc: "desc" },
+            take: 1,
+            select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
           },
         },
-      },
-    });
+      });
+    } else {
+      // Collect org memberships and fleet memberships in parallel
+      const [orgMemberships, fleetMemberships] = await Promise.all([
+        prisma.orgMember.findMany({
+          where: { userId: dbUser.id },
+          select: { orgId: true, role: true },
+        }),
+        prisma.fleetMember.findMany({
+          where: { userId: dbUser.id },
+          select: { fleetId: true },
+        }),
+      ]);
 
-    const vehicles = accesses.map((a) => {
-      const latest = a.vehicle.telemetryRecords[0] ?? null;
+      const ownerOrgIds = orgMemberships.filter((m) => m.role === "owner").map((m) => m.orgId);
+      const memberFleetIds = fleetMemberships.map((m) => m.fleetId);
+
+      if (ownerOrgIds.length === 0 && memberFleetIds.length === 0) {
+        return Response.json({ data: [], error: null });
+      }
+
+      const orClauses = [
+        ...(ownerOrgIds.length > 0 ? [{ orgId: { in: ownerOrgIds } }] : []),
+        ...(memberFleetIds.length > 0
+          ? [{ fleets: { some: { fleetId: { in: memberFleetIds } } } }]
+          : []),
+      ];
+
+      vehiclesRaw = await prisma.vehicle.findMany({
+        where: { OR: orClauses },
+        include: {
+          org: { select: { id: true, name: true } },
+          telemetryRecords: {
+            where: { latitude: { not: null }, longitude: { not: null } },
+            orderBy: { timestampUtc: "desc" },
+            take: 1,
+            select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
+          },
+        },
+      });
+
+      // Build role map: orgId -> role
+      const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
+
+      const vehicles = vehiclesRaw.map((v) => {
+        const latest = v.telemetryRecords[0] ?? null;
+        const userRole = v.orgId ? (orgRoleMap.get(v.orgId) ?? "viewer") : "viewer";
+        return {
+          id: v.id.toString(),
+          imei: v.imei,
+          name: v.name,
+          plateNumber: v.plateNumber,
+          type: v.type,
+          driverName: v.driverName,
+          isActive: v.isActive,
+          latitude: latest?.latitude ?? null,
+          longitude: latest?.longitude ?? null,
+          lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
+          speed: latest?.speedKmh ?? null,
+          status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+          orgId: v.orgId,
+          orgName: v.org?.name ?? null,
+          userRole,
+        };
+      });
+
+      return Response.json({ data: vehicles, error: null });
+    }
+
+    // System admin path
+    const vehicles = vehiclesRaw.map((v) => {
+      const latest = v.telemetryRecords[0] ?? null;
       return {
-        id: a.vehicle.id.toString(),
-        imei: a.vehicle.imei,
-        name: a.vehicle.name,
-        plateNumber: a.vehicle.plateNumber,
-        type: a.vehicle.type,
-        driverName: a.vehicle.driverName,
-        isActive: a.vehicle.isActive,
+        id: v.id.toString(),
+        imei: v.imei,
+        name: v.name,
+        plateNumber: v.plateNumber,
+        type: v.type,
+        driverName: v.driverName,
+        isActive: v.isActive,
         latitude: latest?.latitude ?? null,
         longitude: latest?.longitude ?? null,
         lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
         speed: latest?.speedKmh ?? null,
-        status: deriveStatus(a.vehicle.isActive, latest?.timestampUtc ?? null),
-        userRole: a.role,
+        status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+        orgId: v.orgId,
+        orgName: v.org?.name ?? null,
+        userRole: "owner",
       };
     });
 
@@ -64,11 +129,10 @@ export async function GET() {
   }
 }
 
-// POST /api/vehicles
+// POST /api/vehicles — create a new vehicle
 export async function POST(request: Request) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
+  if (!session?.user?.id) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -94,6 +158,33 @@ export async function POST(request: Request) {
     return Response.json({ data: null, error: "Plate number is required." }, { status: 400 });
   }
 
+  // Resolve orgId: use provided orgId if the user is an owner there, or auto-pick their first owned org
+  let orgId: string | null = null;
+  if (body.orgId && typeof body.orgId === "string") {
+    const membership = await prisma.orgMember.findUnique({
+      where: { userId_orgId: { userId: dbUser.id, orgId: body.orgId } },
+      select: { role: true },
+    });
+    const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
+    if (!isAdmin && membership?.role !== "owner") {
+      return Response.json(
+        { data: null, error: "You must be an org owner to add vehicles." },
+        { status: 403 }
+      );
+    }
+    orgId = body.orgId;
+  } else {
+    // Auto-pick the user's first owned org
+    const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
+    if (!isAdmin) {
+      const firstOwned = await prisma.orgMember.findFirst({
+        where: { userId: dbUser.id, role: "owner" },
+        select: { orgId: true },
+      });
+      orgId = firstOwned?.orgId ?? null;
+    }
+  }
+
   try {
     const v = await prisma.vehicle.create({
       data: {
@@ -103,15 +194,7 @@ export async function POST(request: Request) {
         type: body.type && typeof body.type === "string" ? body.type : null,
         driverName: body.driverName && typeof body.driverName === "string" ? body.driverName : null,
         isActive: true,
-        userId: dbUser.id,
-      },
-    });
-
-    await prisma.vehicleAccess.create({
-      data: {
-        vehicleId: v.id,
-        userId: dbUser.id,
-        role: "owner",
+        orgId,
       },
     });
 

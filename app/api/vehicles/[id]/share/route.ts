@@ -1,133 +1,14 @@
-/**
- * app/api/vehicles/[id]/share/route.ts
- * GET  — list all users with access to this vehicle (owner only)
- * POST — invite a user by email OR update an existing user's role (owner only)
- */
-import type { NextRequest } from "next/server";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { getOrCreateDbUser } from "@/lib/user-sync";
-import { canShare } from "@/lib/permissions";
-
-// GET /api/vehicles/[id]/share
-export async function GET(
-  _req: NextRequest,
-  ctx: RouteContext<"/api/vehicles/[id]/share">
-) {
-  const { id } = await ctx.params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-  }
-
-  const dbUser = await getOrCreateDbUser();
-  if (!dbUser) return Response.json({ data: null, error: "User not found" }, { status: 404 });
-
-  const allowed = await canShare(dbUser.id, id);
-  if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
-
-  try {
-    const accesses = await prisma.vehicleAccess.findMany({
-      where: { vehicleId: BigInt(id) },
-      include: { user: { select: { id: true, name: true, email: true } } },
-      orderBy: { createdAt: "asc" },
-    });
-    const data = accesses.map((a) => ({
-      id: a.id,
-      userId: a.userId,
-      role: a.role,
-      userName: a.user.name,
-      userEmail: a.user.email,
-      isCurrentUser: a.userId === dbUser.id,
-    }));
-    return Response.json({ data, error: null });
-  } catch (e) {
-    console.error("[GET /api/vehicles/[id]/share]", e);
-    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
-  }
+// Vehicle sharing has been replaced by org-level fleet management.
+// Use /api/orgs/[id]/fleets/[fleetId]/members to grant access to vehicles.
+export async function GET() {
+  return Response.json(
+    { data: null, error: "Per-vehicle sharing is removed. Use fleet management instead." },
+    { status: 410 }
+  );
 }
-
-// POST /api/vehicles/[id]/share
-export async function POST(
-  request: NextRequest,
-  ctx: RouteContext<"/api/vehicles/[id]/share">
-) {
-  const { id } = await ctx.params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-  }
-
-  const dbUser = await getOrCreateDbUser();
-  if (!dbUser) return Response.json({ data: null, error: "User not found" }, { status: 404 });
-
-  const allowed = await canShare(dbUser.id, id);
-  if (!allowed) return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
-
-  let body: { email?: string; userId?: string; role?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ data: null, error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const role = body.role ?? "viewer";
-  if (!["viewer", "editor"].includes(role)) {
-    return Response.json(
-      { data: null, error: "Role must be 'viewer' or 'editor'." },
-      { status: 400 }
-    );
-  }
-
-  let targetUser: { id: string } | null = null;
-
-  if (body.userId) {
-    targetUser = await prisma.user.findUnique({
-      where: { id: body.userId },
-      select: { id: true },
-    });
-  } else if (body.email) {
-    targetUser = await prisma.user.findUnique({
-      where: { email: body.email },
-      select: { id: true },
-    });
-    if (!targetUser) {
-      return Response.json(
-        { data: null, error: "No account found with that email. They must sign up first." },
-        { status: 404 }
-      );
-    }
-  } else {
-    return Response.json(
-      { data: null, error: "Provide either 'email' or 'userId'." },
-      { status: 400 }
-    );
-  }
-
-  if (!targetUser) {
-    return Response.json({ data: null, error: "User not found." }, { status: 404 });
-  }
-
-  try {
-    const vehicleIdBig = BigInt(id);
-    const existing = await prisma.vehicleAccess.findUnique({
-      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUser.id } },
-    });
-    if (existing?.role === "owner") {
-      return Response.json(
-        { data: null, error: "Cannot change the owner's role." },
-        { status: 400 }
-      );
-    }
-
-    const access = await prisma.vehicleAccess.upsert({
-      where: { vehicleId_userId: { vehicleId: vehicleIdBig, userId: targetUser.id } },
-      update: { role },
-      create: { vehicleId: vehicleIdBig, userId: targetUser.id, role },
-    });
-    return Response.json({ data: { ...access, vehicleId: access.vehicleId.toString() }, error: null });
-  } catch (e) {
-    console.error("[POST /api/vehicles/[id]/share]", e);
-    return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
-  }
+export async function POST() {
+  return Response.json(
+    { data: null, error: "Per-vehicle sharing is removed. Use fleet management instead." },
+    { status: 410 }
+  );
 }

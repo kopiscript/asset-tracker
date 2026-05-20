@@ -1,0 +1,163 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, Plus, Users, Car, Layers, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getOrCreateDbUser } from "@/lib/user-sync";
+import { getOrgRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { OrgPageClient } from "./OrgPageClient";
+
+export default async function OrgDetailPage(
+  props: PageProps<"/dashboard/orgs/[id]">
+) {
+  const { id } = await props.params;
+
+  const dbUser = await getOrCreateDbUser();
+  if (!dbUser) return notFound();
+
+  const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
+  const userRole = isAdmin ? "owner" : await getOrgRole(dbUser.id, id);
+  if (!userRole) return notFound();
+
+  const org = await prisma.organization.findUnique({
+    where: { id },
+    include: {
+      members: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+      fleets: {
+        include: { _count: { select: { vehicles: true, members: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+      vehicles: {
+        where: { fleets: { none: {} } }, // vehicles not yet in any fleet
+        select: { id: true, name: true, plateNumber: true, type: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  if (!org) return notFound();
+
+  const canManage = userRole === "owner";
+
+  const roleColor = (role: string) =>
+    role === "owner"
+      ? "bg-primary/10 text-primary border-primary/20"
+      : role === "admin"
+      ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+      : "bg-muted text-muted-foreground border-border";
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" render={<Link href="/dashboard/orgs" />}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-foreground">{org.name}</h1>
+          <p className="text-sm text-muted-foreground capitalize">Your role: {userRole}</p>
+        </div>
+      </div>
+
+      {/* ── Members ────────────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-4 w-4" /> Members ({org.members.length})
+          </h2>
+          {canManage && (
+            <OrgPageClient orgId={id} action="invite-member" />
+          )}
+        </div>
+        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          {org.members.map((m, i) => (
+            <div
+              key={m.id}
+              className={`flex items-center gap-3 px-4 py-3 ${i < org.members.length - 1 ? "border-b border-border/30" : ""}`}
+            >
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-semibold text-primary">
+                  {(m.user.name ?? m.user.email)[0].toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {m.user.name}
+                  {m.userId === dbUser.id && <span className="ml-1.5 text-xs text-muted-foreground">(you)</span>}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
+              </div>
+              <Badge className={`text-xs capitalize border ${roleColor(m.role)}`}>{m.role}</Badge>
+            </div>
+          ))}
+          {org.members.length === 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">No members yet.</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Fleets ─────────────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Layers className="h-4 w-4" /> Fleets ({org.fleets.length})
+          </h2>
+          {canManage && (
+            <OrgPageClient orgId={id} action="create-fleet" />
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {org.fleets.map((f) => (
+            <Link
+              key={f.id}
+              href={`/dashboard/orgs/${id}/fleets/${f.id}`}
+              className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-colors group"
+            >
+              <p className="font-medium text-foreground group-hover:text-primary transition-colors">{f.name}</p>
+              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {f._count.vehicles} vehicle{f._count.vehicles !== 1 ? "s" : ""}</span>
+                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {f._count.members} member{f._count.members !== 1 ? "s" : ""}</span>
+              </div>
+            </Link>
+          ))}
+          {org.fleets.length === 0 && (
+            <div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border/50 rounded-xl">
+              No fleets yet. {canManage ? "Create one to group vehicles." : ""}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Unassigned vehicles ────────────────────────────────────────── */}
+      {org.vehicles.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+            <Car className="h-4 w-4" /> Unassigned Vehicles ({org.vehicles.length})
+          </h2>
+          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+            {org.vehicles.map((v, i) => (
+              <div
+                key={v.id.toString()}
+                className={`flex items-center gap-3 px-4 py-3 ${i < org.vehicles.length - 1 ? "border-b border-border/30" : ""}`}
+              >
+                <Link
+                  href={`/dashboard/vehicles/${v.id.toString()}`}
+                  className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                >
+                  {v.name ?? v.id.toString()}
+                </Link>
+                {v.plateNumber && (
+                  <span className="font-mono text-xs text-muted-foreground">{v.plateNumber}</span>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">Not in any fleet</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

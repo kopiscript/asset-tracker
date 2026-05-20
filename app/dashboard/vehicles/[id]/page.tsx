@@ -1,18 +1,13 @@
-/**
- * app/dashboard/vehicles/[id]/page.tsx
- * Single vehicle detail page.
- * In Next.js 16, params is a Promise — must be awaited.
- */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Share2 } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DeleteVehicleButton } from "./DeleteVehicleButton";
 import { VehicleDetailTabs } from "./VehicleDetailTabs";
 import { getOrCreateDbUser } from "@/lib/user-sync";
-import { canEdit, canShare } from "@/lib/permissions";
+import { getEffectiveVehicleRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { deriveStatus } from "@/lib/status";
 import { totalDistanceKm, todayMidnightMy } from "@/lib/geo";
@@ -25,12 +20,13 @@ export default async function VehicleDetailPage(
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return notFound();
 
-  const isAdmin = dbUser.usertype === "admin";
+  const userRole = await getEffectiveVehicleRole(dbUser.id, id);
+  if (!userRole) return notFound();
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: BigInt(id) },
     include: {
-      owner: { select: { name: true, email: true } },
+      org: { select: { id: true, name: true } },
       telemetryRecords: {
         where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { timestampUtc: "desc" },
@@ -41,23 +37,8 @@ export default async function VehicleDetailPage(
   });
   if (!vehicle) return notFound();
 
-  // Access gate — admins bypass vehicle_access check
-  if (!isAdmin) {
-    const access = await prisma.vehicleAccess.findUnique({
-      where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
-    });
-    if (!access) return notFound();
-  }
-
-  const access = isAdmin
-    ? null
-    : await prisma.vehicleAccess.findUnique({
-        where: { vehicleId_userId: { vehicleId: BigInt(id), userId: dbUser.id } },
-      });
-
-  const userRole    = isAdmin ? "admin" : (access?.role ?? "viewer");
-  const userCanEdit = isAdmin || userRole === "editor" || userRole === "owner";
-  const userCanShare = !isAdmin && userRole === "owner";
+  const userCanEdit   = userRole === "owner" || userRole === "admin";
+  const userCanDelete = userRole === "owner";
 
   const latest    = vehicle.telemetryRecords[0] ?? null;
   const latitude  = latest?.latitude  ?? null;
@@ -66,7 +47,6 @@ export default async function VehicleDetailPage(
   const speed     = latest?.speedKmh ?? null;
   const status    = deriveStatus(vehicle.isActive, lastSeenAt);
 
-  // Today's mileage — query pings from MY midnight to now, compute Haversine sum
   const midnight = todayMidnightMy();
   const todayPings = await prisma.telemetryRecord.findMany({
     where: {
@@ -82,15 +62,7 @@ export default async function VehicleDetailPage(
 
   const mapVehicles =
     latitude != null && longitude != null
-      ? [{
-          id,
-          name: vehicle.name ?? id,
-          plateNumber: vehicle.plateNumber ?? "",
-          status,
-          latitude,
-          longitude,
-          lastSeenAt: lastSeenAt?.toISOString() ?? null,
-        }]
+      ? [{ id, name: vehicle.name ?? id, plateNumber: vehicle.plateNumber ?? "", status, latitude, longitude, lastSeenAt: lastSeenAt?.toISOString() ?? null }]
       : [];
 
   return (
@@ -122,13 +94,7 @@ export default async function VehicleDetailPage(
               <span className="hidden sm:inline">Edit</span>
             </Button>
           )}
-          {userCanShare && (
-            <Button variant="outline" size="sm" className="gap-1.5" render={<Link href={`/dashboard/vehicles/${id}/share`} />}>
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-          )}
-          {userRole === "owner" && (
+          {userCanDelete && (
             <DeleteVehicleButton vehicleId={id} vehicleName={vehicle.name ?? id} />
           )}
         </div>
@@ -142,8 +108,7 @@ export default async function VehicleDetailPage(
           name:        vehicle.name,
           plateNumber: vehicle.plateNumber,
           driverName:  vehicle.driverName,
-          ownerName:   vehicle.owner?.name ?? null,
-          ownerEmail:  vehicle.owner?.email ?? null,
+          orgName:     vehicle.org?.name ?? null,
           userRole,
         }}
         mapVehicles={mapVehicles}

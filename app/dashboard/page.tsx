@@ -12,18 +12,29 @@ import { deriveStatus } from "@/lib/status";
 export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) return null;
-  if (dbUser.usertype === "admin") redirect("/dashboard/admin");
+  if (dbUser.usertype === "admin" || dbUser.usertype === "system_admin") redirect("/dashboard/admin");
 
-  const accesses = await prisma.vehicleAccess.findMany({
-    where: { userId: dbUser.id },
-    include: {
-      vehicle: {
+  // Collect accessible vehicles via org ownership and fleet membership
+  const [orgMemberships, fleetMemberships] = await Promise.all([
+    prisma.orgMember.findMany({ where: { userId: dbUser.id }, select: { orgId: true, role: true } }),
+    prisma.fleetMember.findMany({ where: { userId: dbUser.id }, select: { fleetId: true } }),
+  ]);
+
+  const ownerOrgIds = orgMemberships.filter((m) => m.role === "owner").map((m) => m.orgId);
+  const memberFleetIds = fleetMemberships.map((m) => m.fleetId);
+  const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
+
+  const vehicleRows = (ownerOrgIds.length === 0 && memberFleetIds.length === 0)
+    ? []
+    : await prisma.vehicle.findMany({
+        where: {
+          OR: [
+            ...(ownerOrgIds.length > 0 ? [{ orgId: { in: ownerOrgIds } }] : []),
+            ...(memberFleetIds.length > 0 ? [{ fleets: { some: { fleetId: { in: memberFleetIds } } } }] : []),
+          ],
+        },
         select: {
-          id: true,
-          name: true,
-          plateNumber: true,
-          type: true,
-          isActive: true,
+          id: true, name: true, plateNumber: true, type: true, isActive: true, orgId: true,
           telemetryRecords: {
             where: { latitude: { not: null }, longitude: { not: null } },
             orderBy: { timestampUtc: "desc" },
@@ -31,23 +42,21 @@ export default async function DashboardPage() {
             select: { latitude: true, longitude: true, timestampUtc: true },
           },
         },
-      },
-    },
-  });
+      });
 
-  const vehicles = accesses.map((a) => {
-    const latest = a.vehicle.telemetryRecords[0] ?? null;
+  const vehicles = vehicleRows.map((v) => {
+    const latest = v.telemetryRecords[0] ?? null;
     return {
-      id: a.vehicle.id.toString(),
-      name: a.vehicle.name,
-      plateNumber: a.vehicle.plateNumber,
-      type: a.vehicle.type,
-      isActive: a.vehicle.isActive,
+      id: v.id.toString(),
+      name: v.name,
+      plateNumber: v.plateNumber,
+      type: v.type,
+      isActive: v.isActive,
       latitude: latest?.latitude ?? null,
       longitude: latest?.longitude ?? null,
       lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
-      status: deriveStatus(a.vehicle.isActive, latest?.timestampUtc ?? null),
-      userRole: a.role,
+      status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+      userRole: v.orgId ? (orgRoleMap.get(v.orgId) ?? "viewer") : "viewer",
     };
   });
 

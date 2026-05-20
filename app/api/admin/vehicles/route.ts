@@ -1,25 +1,22 @@
-/**
- * app/api/admin/vehicles/route.ts
- * GET — all vehicles across all users with latest telemetry.
- * Requires usertype = "admin".
- */
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { deriveStatus } from "@/lib/status";
 
+// GET /api/admin/vehicles — all vehicles with latest telemetry.
+// Requires usertype = "admin" or "system_admin".
 export async function GET() {
   const dbUser = await getOrCreateDbUser();
   if (!dbUser) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  if (dbUser.usertype !== "admin") {
+  if (dbUser.usertype !== "admin" && dbUser.usertype !== "system_admin") {
     return Response.json({ data: null, error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const vehicles = await prisma.vehicle.findMany({
       include: {
-        owner: { select: { id: true, name: true, email: true } },
+        org: { select: { id: true, name: true } },
         telemetryRecords: {
           where: { latitude: { not: null }, longitude: { not: null } },
           orderBy: { timestampUtc: "desc" },
@@ -45,7 +42,8 @@ export async function GET() {
         lastSeenAt:  latest?.timestampUtc?.toISOString() ?? null,
         speed:       latest?.speedKmh  ?? null,
         status:      deriveStatus(v.isActive, latest?.timestampUtc ?? null),
-        owner:       v.owner,
+        orgId:       v.orgId,
+        orgName:     v.org?.name ?? null,
       };
     });
 

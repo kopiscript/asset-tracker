@@ -5,7 +5,7 @@
  */
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Car, Users, Activity, WifiOff } from "lucide-react";
+import { Car, Users, Activity, WifiOff, Building2, Layers } from "lucide-react";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -13,6 +13,8 @@ import { prisma } from "@/lib/prisma";
 import { deriveStatus } from "@/lib/status";
 import { timeAgo } from "@/lib/format";
 import type { MapVehicle } from "@/components/map/VehicleMap";
+import { AdminAddVehicleForm } from "./AdminAddVehicleForm";
+import { AdminAssignOrgCell } from "./AdminAssignOrgCell";
 
 function StatCard({
   icon,
@@ -41,12 +43,12 @@ function StatCard({
 
 export default async function AdminPage() {
   const dbUser = await getOrCreateDbUser();
-  if (!dbUser || dbUser.usertype !== "admin") redirect("/dashboard");
+  if (!dbUser || (dbUser.usertype !== "admin" && dbUser.usertype !== "system_admin")) redirect("/dashboard");
 
   // All vehicles with latest telemetry
   const vehicles = await prisma.vehicle.findMany({
     include: {
-      owner: { select: { name: true, email: true } },
+      org: { select: { name: true } },
       telemetryRecords: {
         where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { timestampUtc: "desc" },
@@ -57,7 +59,15 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // All users with their vehicle access list
+  // All orgs with member + vehicle + fleet counts
+  const orgs = await prisma.organization.findMany({
+    include: {
+      _count: { select: { members: true, vehicles: true, fleets: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // All users with their org memberships
   const users = await prisma.user.findMany({
     select: {
       id:        true,
@@ -65,10 +75,10 @@ export default async function AdminPage() {
       email:     true,
       usertype:  true,
       createdAt: true,
-      accesses: {
+      orgMemberships: {
         select: {
           role: true,
-          vehicle: { select: { id: true, name: true, plateNumber: true } },
+          org: { select: { id: true, name: true } },
         },
       },
     },
@@ -88,9 +98,12 @@ export default async function AdminPage() {
       lastSeenAt:  latest?.timestampUtc ?? null,
       speed:       latest?.speedKmh ?? null,
       status:      deriveStatus(v.isActive, latest?.timestampUtc ?? null),
-      ownerName:   v.owner?.name ?? v.owner?.email ?? "—",
+      orgId:       v.orgId ?? null,
+      orgName:     v.org?.name ?? null,
     };
   });
+
+  const orgOptions = orgs.map((o) => ({ id: o.id, name: o.name }));
 
   const mapVehicles: MapVehicle[] = vehicleRows
     .filter((v) => v.latitude != null && v.longitude != null)
@@ -154,13 +167,16 @@ export default async function AdminPage() {
 
       {/* ── Vehicle table ──────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">All Vehicles</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground">All Vehicles</h2>
+          <AdminAddVehicleForm orgs={orgOptions} />
+        </div>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicle</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Owner</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Org</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Last Seen</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Speed</th>
@@ -177,7 +193,14 @@ export default async function AdminPage() {
                       <p className="font-mono text-xs text-muted-foreground">{v.plateNumber}</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{v.ownerName}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <AdminAssignOrgCell
+                      vehicleId={v.id}
+                      orgId={v.orgId}
+                      orgName={v.orgName}
+                      orgs={orgOptions}
+                    />
+                  </td>
                   <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {v.lastSeenAt ? timeAgo(v.lastSeenAt) : "Never"}
@@ -195,6 +218,54 @@ export default async function AdminPage() {
         </div>
       </div>
 
+      {/* ── Org table ──────────────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">All Organisations</h2>
+        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-muted/30">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organisation</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Members</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Fleets</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicles</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orgs.map((o) => (
+                <tr key={o.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-foreground">{o.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{o.id}</p>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {o._count.members}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                    <span className="flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> {o._count.fleets}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    <span className="flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {o._count.vehicles}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/dashboard/orgs/${o.id}`}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Configure →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {orgs.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">No organisations in system.</div>
+          )}
+        </div>
+      </div>
+
       {/* ── User table ─────────────────────────────────────────────────── */}
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">All Users</h2>
@@ -204,7 +275,7 @@ export default async function AdminPage() {
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicles</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Orgs</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Joined</th>
               </tr>
             </thead>
@@ -226,21 +297,22 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {u.accesses.length === 0 ? (
+                      {u.orgMemberships.length === 0 ? (
                         <span className="text-muted-foreground text-xs">None</span>
                       ) : (
-                        u.accesses.slice(0, 3).map((a) => (
+                        u.orgMemberships.slice(0, 3).map((m) => (
                           <Link
-                            key={a.vehicle.id.toString()}
-                            href={`/dashboard/vehicles/${a.vehicle.id.toString()}`}
-                            className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded border border-border hover:border-primary/30 transition-colors"
+                            key={m.org.id}
+                            href={`/dashboard/orgs/${m.org.id}`}
+                            className="text-xs bg-muted px-1.5 py-0.5 rounded border border-border hover:border-primary/30 transition-colors"
                           >
-                            {a.vehicle.plateNumber ?? a.vehicle.name ?? a.vehicle.id.toString()}
+                            {m.org.name}
+                            <span className="ml-1 text-muted-foreground capitalize">({m.role})</span>
                           </Link>
                         ))
                       )}
-                      {u.accesses.length > 3 && (
-                        <span className="text-xs text-muted-foreground">+{u.accesses.length - 3}</span>
+                      {u.orgMemberships.length > 3 && (
+                        <span className="text-xs text-muted-foreground">+{u.orgMemberships.length - 3}</span>
                       )}
                     </div>
                   </td>

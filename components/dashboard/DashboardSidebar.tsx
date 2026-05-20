@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, Globe2 } from "lucide-react";
+import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, Globe2, Building2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import {
   Sheet,
@@ -15,14 +15,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const USER_NAV = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Car,             label: "Vehicles",  href: "/dashboard/vehicles" },
-  { icon: Settings,        label: "Settings",  href: "/dashboard/settings" },
+  { icon: LayoutDashboard, label: "Dashboard",     href: "/dashboard" },
+  { icon: Car,             label: "Vehicles",      href: "/dashboard/vehicles" },
+  { icon: Building2,       label: "Organisations", href: "/dashboard/orgs" },
+  { icon: Settings,        label: "Settings",      href: "/dashboard/settings" },
 ];
 
 const ADMIN_NAV = [
-  { icon: Globe2,   label: "Fleet Overview", href: "/dashboard/admin" },
-  { icon: Settings, label: "Settings",       href: "/dashboard/settings" },
+  { icon: Globe2,     label: "Fleet Overview",  href: "/dashboard/admin" },
+  { icon: Building2,  label: "Organisations",   href: "/dashboard/orgs" },
+  { icon: Settings,   label: "Settings",        href: "/dashboard/settings" },
 ];
 
 function NavLink({
