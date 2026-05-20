@@ -147,8 +147,6 @@ export default async function VehicleDetailPage(
           userRole,
         }}
         mapVehicles={mapVehicles}
-        latitude={latitude}
-        longitude={longitude}
         lastSeenAt={lastSeenAt?.toISOString() ?? null}
         speed={speed}
         todayKm={todayKm}

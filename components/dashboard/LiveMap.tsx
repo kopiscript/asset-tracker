@@ -5,7 +5,7 @@ import { DynamicMap } from "@/components/map/DynamicMap";
 import type { MapVehicle } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
 
-const POLL_MS = 10_000; // poll every 10 seconds
+const POLL_MS = 60_000; // fleet overview: 60s is sufficient
 
 function useLiveVehicles(initial: MapVehicle[]) {
   const [vehicles, setVehicles] = useState(initial);
@@ -17,20 +17,38 @@ function useLiveVehicles(initial: MapVehicle[]) {
       const res = await fetch("/api/vehicles");
       const json = await res.json();
       if (json.data) {
-        setVehicles(
+        setVehicles((prev) => {
+          const prevMap = new Map(prev.map((v) => [v.id, v]));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (json.data as any[])
-            .filter((v) => v.latitude != null && v.longitude != null)
-            .map((v) => ({
-              id: v.id,
-              name: v.name ?? v.imei,
-              plateNumber: v.plateNumber ?? "",
-              status: v.status,
-              latitude: v.latitude,
-              longitude: v.longitude,
-              lastSeenAt: v.lastSeenAt,
-            }))
-        );
+          const seen = new Set<string>();
+          const next: MapVehicle[] = [];
+
+          for (const v of json.data as any[]) {
+            seen.add(v.id);
+            if (v.latitude != null && v.longitude != null) {
+              next.push({
+                id: v.id,
+                name: v.name ?? v.imei,
+                plateNumber: v.plateNumber ?? "",
+                status: v.status,
+                latitude: v.latitude,
+                longitude: v.longitude,
+                lastSeenAt: v.lastSeenAt,
+              });
+            } else {
+              // Null coords: keep last known position, update status + lastSeenAt
+              const existing = prevMap.get(v.id);
+              if (existing) next.push({ ...existing, status: v.status, lastSeenAt: v.lastSeenAt });
+            }
+          }
+
+          // Vehicle absent from response (empty array or transient gap): keep it
+          for (const [id, v] of prevMap) {
+            if (!seen.has(id)) next.push(v);
+          }
+
+          return next;
+        });
         setLastRefreshed(new Date());
       }
     } catch {
@@ -39,12 +57,24 @@ function useLiveVehicles(initial: MapVehicle[]) {
   }, []);
 
   useEffect(() => {
-    refresh(); // fetch immediately so stale server-side data is updated right away
-    const poll = setInterval(refresh, POLL_MS);
+    refresh();
+    let poll = setInterval(refresh, POLL_MS);
     const label = setInterval(() => forceLabel((n) => n + 1), 10_000);
+
+    function handleVisibility() {
+      if (document.hidden) {
+        clearInterval(poll);
+      } else {
+        refresh();
+        poll = setInterval(refresh, POLL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       clearInterval(poll);
       clearInterval(label);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [refresh]);
 

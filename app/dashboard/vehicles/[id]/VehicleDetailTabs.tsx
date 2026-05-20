@@ -43,8 +43,6 @@ interface VehicleInfo {
 interface VehicleDetailTabsProps {
   vehicle: VehicleInfo;
   mapVehicles: MapVehicle[];
-  latitude: number | null;
-  longitude: number | null;
   lastSeenAt: string | null;
   speed: number | null;
   todayKm: number;
@@ -67,6 +65,174 @@ function DetailRow({
       <div className="flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
         <div className="text-sm text-foreground mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Live single-vehicle hook ─────────────────────────────────────────────
+
+const SINGLE_VEHICLE_POLL_MS = 10_000;
+
+function useLiveVehicle(
+  vehicleId: string,
+  initial: {
+    mapVehicles: MapVehicle[];
+    lastSeenAt: string | null;
+    speed: number | null;
+  }
+) {
+  const [mapVehicles, setMapVehicles] = useState(initial.mapVehicles);
+  const [lastSeenAt, setLastSeenAt]   = useState(initial.lastSeenAt);
+  const [speed, setSpeed]             = useState(initial.speed);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res  = await fetch(`/api/vehicles/${vehicleId}`);
+      const json = await res.json() as { data?: Record<string, unknown> | null };
+      if (!json.data) return;
+      const v = json.data;
+
+      setLastSeenAt((v.lastSeenAt as string | null) ?? null);
+      setSpeed((v.speed as number | null) ?? null);
+
+      if (v.latitude != null && v.longitude != null) {
+        setMapVehicles([{
+          id: vehicleId,
+          name: (v.name as string | null) ?? vehicleId,
+          plateNumber: (v.plateNumber as string | null) ?? "",
+          status: v.status as string,
+          latitude:  v.latitude  as number,
+          longitude: v.longitude as number,
+          lastSeenAt: (v.lastSeenAt as string | null) ?? null,
+        }]);
+      } else {
+        // Null coords: keep last known position, update status only
+        setMapVehicles((prev) =>
+          prev.length > 0
+            ? [{ ...prev[0], status: v.status as string, lastSeenAt: (v.lastSeenAt as string | null) ?? null }]
+            : prev
+        );
+      }
+    } catch {
+      // keep stale on error
+    }
+  }, [vehicleId]);
+
+  useEffect(() => {
+    refresh();
+    let poll = setInterval(refresh, SINGLE_VEHICLE_POLL_MS);
+
+    function handleVisibility() {
+      if (document.hidden) {
+        clearInterval(poll);
+      } else {
+        refresh();
+        poll = setInterval(refresh, SINGLE_VEHICLE_POLL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [refresh]);
+
+  return { mapVehicles, lastSeenAt, speed };
+}
+
+// ─── Overview tab (mounts/unmounts with tab — stops polling on history tab) ──
+
+function OverviewTab({
+  vehicle,
+  initialMapVehicles,
+  initialLastSeenAt,
+  initialSpeed,
+  todayKm,
+}: {
+  vehicle: VehicleInfo;
+  initialMapVehicles: MapVehicle[];
+  initialLastSeenAt: string | null;
+  initialSpeed: number | null;
+  todayKm: number;
+}) {
+  const { mapVehicles, lastSeenAt, speed } = useLiveVehicle(vehicle.id, {
+    mapVehicles: initialMapVehicles,
+    lastSeenAt:  initialLastSeenAt,
+    speed:       initialSpeed,
+  });
+
+  const hasLocation = mapVehicles.length > 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Current position map */}
+      <div className="h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden border border-border/50">
+        <DynamicMap
+          vehicles={mapVehicles}
+          focusVehicleId={vehicle.id}
+          className="h-full w-full"
+        />
+      </div>
+      {!hasLocation && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <MapPin className="h-3 w-3" />
+          No GPS location recorded yet. Map is centred on Kuala Lumpur.
+        </p>
+      )}
+
+      {/* Detail cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Vehicle info */}
+        <div className="bg-card border border-border/50 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-foreground mb-4">Vehicle Info</h2>
+          <div className="space-y-3">
+            <DetailRow icon={<User className="h-4 w-4" />} label="Driver">
+              {vehicle.driverName ?? "No driver assigned"}
+            </DetailRow>
+            <Separator className="bg-border/50" />
+            <DetailRow icon={<Clock className="h-4 w-4" />} label="Last Seen">
+              {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
+            </DetailRow>
+            <Separator className="bg-border/50" />
+            <DetailRow icon={<FileText className="h-4 w-4" />} label="IMEI">
+              <span className="font-mono text-xs">{vehicle.imei}</span>
+            </DetailRow>
+            <Separator className="bg-border/50" />
+            <DetailRow icon={<Gauge className="h-4 w-4" />} label="Current Speed">
+              {speed != null ? `${speed.toFixed(1)} km/h` : "—"}
+            </DetailRow>
+            <Separator className="bg-border/50" />
+            <DetailRow icon={<Route className="h-4 w-4" />} label="Today's Mileage">
+              {todayKm > 0 ? `${todayKm.toFixed(1)} km` : "—"}
+            </DetailRow>
+          </div>
+        </div>
+
+        {/* Additional info */}
+        <div className="bg-card border border-border/50 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
+          <div className="space-y-3">
+            <DetailRow icon={<User className="h-4 w-4" />} label="Owner">
+              {vehicle.ownerName ?? vehicle.ownerEmail ?? "—"}
+            </DetailRow>
+            <Separator className="bg-border/50" />
+            <DetailRow icon={<div className="h-4 w-4 text-xs flex items-center">👤</div>} label="Your Role">
+              <span className="capitalize">{vehicle.userRole}</span>
+            </DetailRow>
+            {hasLocation && (
+              <>
+                <Separator className="bg-border/50" />
+                <DetailRow icon={<MapPin className="h-4 w-4" />} label="Coordinates">
+                  <span className="font-mono text-xs">
+                    {mapVehicles[0].latitude.toFixed(5)}, {mapVehicles[0].longitude.toFixed(5)}
+                  </span>
+                </DetailRow>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -166,8 +332,6 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
 export function VehicleDetailTabs({
   vehicle,
   mapVehicles,
-  latitude,
-  longitude,
   lastSeenAt,
   speed,
   todayKm,
@@ -196,80 +360,15 @@ export function VehicleDetailTabs({
       </div>
 
       <div className="px-4 sm:px-6 pb-8">
-        {/* ── Overview tab ─────────────────────────────────────────── */}
         {tab === "overview" && (
-          <div className="space-y-4">
-            {/* Current position map */}
-            <div className="h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden border border-border/50">
-              <DynamicMap
-                vehicles={mapVehicles}
-                focusVehicleId={vehicle.id}
-                className="h-full w-full"
-              />
-            </div>
-            {latitude == null && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                No GPS location recorded yet. Map is centred on Kuala Lumpur.
-              </p>
-            )}
-
-            {/* Detail cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Vehicle info */}
-              <div className="bg-card border border-border/50 rounded-xl p-5">
-                <h2 className="text-sm font-semibold text-foreground mb-4">Vehicle Info</h2>
-                <div className="space-y-3">
-                  <DetailRow icon={<User className="h-4 w-4" />} label="Driver">
-                    {vehicle.driverName ?? "No driver assigned"}
-                  </DetailRow>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<Clock className="h-4 w-4" />} label="Last Seen">
-                    {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
-                  </DetailRow>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<FileText className="h-4 w-4" />} label="IMEI">
-                    <span className="font-mono text-xs">{vehicle.imei}</span>
-                  </DetailRow>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<Gauge className="h-4 w-4" />} label="Current Speed">
-                    {speed != null ? `${speed.toFixed(1)} km/h` : "—"}
-                  </DetailRow>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<Route className="h-4 w-4" />} label="Today's Mileage">
-                    {todayKm > 0 ? `${todayKm.toFixed(1)} km` : "—"}
-                  </DetailRow>
-                </div>
-              </div>
-
-              {/* Additional info */}
-              <div className="bg-card border border-border/50 rounded-xl p-5">
-                <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
-                <div className="space-y-3">
-                  <DetailRow icon={<User className="h-4 w-4" />} label="Owner">
-                    {vehicle.ownerName ?? vehicle.ownerEmail ?? "—"}
-                  </DetailRow>
-                  <Separator className="bg-border/50" />
-                  <DetailRow icon={<div className="h-4 w-4 text-xs flex items-center">👤</div>} label="Your Role">
-                    <span className="capitalize">{vehicle.userRole}</span>
-                  </DetailRow>
-                  {latitude != null && (
-                    <>
-                      <Separator className="bg-border/50" />
-                      <DetailRow icon={<MapPin className="h-4 w-4" />} label="Coordinates">
-                        <span className="font-mono text-xs">
-                          {latitude.toFixed(5)}, {longitude?.toFixed(5)}
-                        </span>
-                      </DetailRow>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <OverviewTab
+            vehicle={vehicle}
+            initialMapVehicles={mapVehicles}
+            initialLastSeenAt={lastSeenAt}
+            initialSpeed={speed}
+            todayKm={todayKm}
+          />
         )}
-
-        {/* ── History tab ──────────────────────────────────────────── */}
         {tab === "history" && <HistoryTab vehicleId={vehicle.id} />}
       </div>
     </div>
