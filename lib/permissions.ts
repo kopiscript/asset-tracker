@@ -22,20 +22,6 @@ export async function getOrgRole(
   return member?.role ?? null;
 }
 
-/** Returns true if user is a member of any fleet that contains this vehicle. */
-async function hasFleetAccess(userId: string, vehicleId: bigint): Promise<boolean> {
-  const fleetVehicles = await prisma.fleetVehicle.findMany({
-    where: { vehicleId },
-    select: { fleetId: true },
-  });
-  if (fleetVehicles.length === 0) return false;
-  const fleetIds = fleetVehicles.map((fv) => fv.fleetId);
-  const hit = await prisma.fleetMember.findFirst({
-    where: { userId, fleetId: { in: fleetIds } },
-  });
-  return !!hit;
-}
-
 // ── Vehicle-level roles ────────────────────────────────────────────────────
 
 /**
@@ -61,13 +47,8 @@ export async function getEffectiveVehicleRole(
 
   const orgRole = await getOrgRole(userId, vehicle.orgId);
   if (!orgRole) return null;
-  if (orgRole === "owner") return "owner";
-
-  // admin and viewer need explicit fleet assignment
-  if (await hasFleetAccess(userId, BigInt(vehicleId))) {
-    return orgRole as "admin" | "viewer";
-  }
-  return null;
+  // All org members (owner, admin, viewer) can access all vehicles in the org
+  return orgRole as "owner" | "admin" | "viewer";
 }
 
 export async function canView(userId: string, vehicleId: string): Promise<boolean> {

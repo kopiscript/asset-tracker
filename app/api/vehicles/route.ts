@@ -33,34 +33,19 @@ export async function GET() {
         },
       });
     } else {
-      // Collect org memberships and fleet memberships in parallel
-      const [orgMemberships, fleetMemberships] = await Promise.all([
-        prisma.orgMember.findMany({
-          where: { userId: dbUser.id },
-          select: { orgId: true, role: true },
-        }),
-        prisma.fleetMember.findMany({
-          where: { userId: dbUser.id },
-          select: { fleetId: true },
-        }),
-      ]);
+      // All org memberships — any role grants access to all org vehicles
+      const orgMemberships = await prisma.orgMember.findMany({
+        where: { userId: dbUser.id },
+        select: { orgId: true, role: true },
+      });
 
-      const ownerOrgIds = orgMemberships.filter((m) => m.role === "owner").map((m) => m.orgId);
-      const memberFleetIds = fleetMemberships.map((m) => m.fleetId);
-
-      if (ownerOrgIds.length === 0 && memberFleetIds.length === 0) {
+      const allOrgIds = orgMemberships.map((m) => m.orgId);
+      if (allOrgIds.length === 0) {
         return Response.json({ data: [], error: null });
       }
 
-      const orClauses = [
-        ...(ownerOrgIds.length > 0 ? [{ orgId: { in: ownerOrgIds } }] : []),
-        ...(memberFleetIds.length > 0
-          ? [{ fleets: { some: { fleetId: { in: memberFleetIds } } } }]
-          : []),
-      ];
-
       vehiclesRaw = await prisma.vehicle.findMany({
-        where: { OR: orClauses },
+        where: { orgId: { in: allOrgIds } },
         include: {
           org: { select: { id: true, name: true } },
           telemetryRecords: {

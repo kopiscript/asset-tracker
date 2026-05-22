@@ -15,11 +15,12 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canView } from "@/lib/permissions";
-import { todayMidnightMy } from "@/lib/geo";
+import { todayMidnightMy, totalDistanceKm } from "@/lib/geo";
 
 const MAX_DAYS = 30;
 const MAX_POINTS = 5000;
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000;
+const TRIP_GAP_MS = 10 * 60 * 1000; // 10-minute silence = new trip
 
 export async function GET(
   req: NextRequest,
@@ -99,16 +100,63 @@ export async function GET(
       MAX_POINTS
     );
 
-    const data = rows.map((r) => ({
+    type Point = { latitude: number; longitude: number; timestampMy: string; speedKmh: number | null };
+    type TripRecord = {
+      id: number;
+      startedAt: string;
+      endedAt: string;
+      durationMinutes: number;
+      distanceKm: number;
+      pointCount: number;
+      points: Point[];
+    };
+
+    const allPoints: Point[] = rows.map((r) => ({
       latitude:    r.latitude,
       longitude:   r.longitude,
-      timestampMy: r.timestamp_my,   // already a clean ISO string, no .toISOString() needed
+      timestampMy: r.timestamp_my,
       speedKmh:    r.speed_kmh,
     }));
 
-    return Response.json({ data, error: null });
+    // Segment points into trips by a 10-minute silence threshold
+    const trips: TripRecord[] = [];
+    let currentPoints: Point[] = [];
+
+    for (const pt of allPoints) {
+      if (currentPoints.length === 0) {
+        currentPoints.push(pt);
+      } else {
+        const lastPt = currentPoints[currentPoints.length - 1];
+        const gapMs = new Date(pt.timestampMy).getTime() - new Date(lastPt.timestampMy).getTime();
+        if (gapMs > TRIP_GAP_MS) {
+          trips.push(buildTrip(trips.length + 1, currentPoints));
+          currentPoints = [pt];
+        } else {
+          currentPoints.push(pt);
+        }
+      }
+    }
+    if (currentPoints.length > 0) {
+      trips.push(buildTrip(trips.length + 1, currentPoints));
+    }
+
+    return Response.json({ data: trips, error: null });
   } catch (e) {
     console.error("[GET /api/vehicles/[id]/history]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });
   }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+type Point = { latitude: number; longitude: number; timestampMy: string; speedKmh: number | null };
+
+function buildTrip(id: number, pts: Point[]) {
+  const startedAt = pts[0].timestampMy;
+  const endedAt   = pts[pts.length - 1].timestampMy;
+  const durationMinutes = Math.round(
+    (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60_000
+  );
+  const distanceKm = Math.round(totalDistanceKm(pts) * 10) / 10;
+  return { id, startedAt, endedAt, durationMinutes, distanceKm, pointCount: pts.length, points: pts };
 }

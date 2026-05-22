@@ -21,8 +21,7 @@ export default async function SettingsPage() {
       <SettingsClient
         userName={session?.user?.name ?? null}
         userEmail={session?.user?.email ?? null}
-        // ✏️ EDIT: Replace with your support email address
-        supportEmail="support@yourcompany.com"
+        supportEmail={process.env.SUPPORT_EMAIL ?? "support@assettracker.my"}
       />
     </div>
   );

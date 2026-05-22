@@ -75,7 +75,6 @@ export function SettingsClient({
             href={`mailto:${supportEmail}`}
             className="text-primary hover:underline"
           >
-            {/* ✏️ EDIT: Replace with your support email */}
             {supportEmail}
           </a>
         </p>

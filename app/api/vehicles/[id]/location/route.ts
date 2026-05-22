@@ -30,10 +30,13 @@ export async function PATCH(
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: BigInt(id) },
-    select: { id: true, imei: true },
+    select: { id: true, imei: true, apiKey: true },
   });
-  // No per-vehicle API key stored yet — accept any bearer token for v1 if vehicle exists
   if (!vehicle) {
+    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  // If the vehicle has an API key configured, it must match exactly
+  if (vehicle.apiKey !== null && vehicle.apiKey !== providedKey) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 

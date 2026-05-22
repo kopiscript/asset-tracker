@@ -14,25 +14,19 @@ export default async function DashboardPage() {
   if (!dbUser) return null;
   if (dbUser.usertype === "admin" || dbUser.usertype === "system_admin") redirect("/dashboard/admin");
 
-  // Collect accessible vehicles via org ownership and fleet membership
-  const [orgMemberships, fleetMemberships] = await Promise.all([
-    prisma.orgMember.findMany({ where: { userId: dbUser.id }, select: { orgId: true, role: true } }),
-    prisma.fleetMember.findMany({ where: { userId: dbUser.id }, select: { fleetId: true } }),
-  ]);
+  // Collect accessible vehicles via org membership (any role)
+  const orgMemberships = await prisma.orgMember.findMany({
+    where: { userId: dbUser.id },
+    select: { orgId: true, role: true },
+  });
 
-  const ownerOrgIds = orgMemberships.filter((m) => m.role === "owner").map((m) => m.orgId);
-  const memberFleetIds = fleetMemberships.map((m) => m.fleetId);
+  const allOrgIds = orgMemberships.map((m) => m.orgId);
   const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
 
-  const vehicleRows = (ownerOrgIds.length === 0 && memberFleetIds.length === 0)
+  const vehicleRows = allOrgIds.length === 0
     ? []
     : await prisma.vehicle.findMany({
-        where: {
-          OR: [
-            ...(ownerOrgIds.length > 0 ? [{ orgId: { in: ownerOrgIds } }] : []),
-            ...(memberFleetIds.length > 0 ? [{ fleets: { some: { fleetId: { in: memberFleetIds } } } }] : []),
-          ],
-        },
+        where: { orgId: { in: allOrgIds } },
         select: {
           id: true, name: true, plateNumber: true, type: true, isActive: true, orgId: true,
           telemetryRecords: {
@@ -86,7 +80,7 @@ export default async function DashboardPage() {
               Dashboard
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in fleet
+              {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in your organisations
             </p>
           </div>
           <Button

@@ -7,6 +7,7 @@ import { getOrCreateDbUser } from "@/lib/user-sync";
 import { getOrgRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { OrgPageClient } from "./OrgPageClient";
+import { RemoveMemberButton } from "./RemoveMemberButton";
 
 export default async function OrgDetailPage(
   props: PageProps<"/dashboard/orgs/[id]">
@@ -91,6 +92,13 @@ export default async function OrgDetailPage(
                 <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
               </div>
               <Badge className={`text-xs capitalize border ${roleColor(m.role)}`}>{m.role}</Badge>
+              {canManage && m.userId !== dbUser.id && (
+                <RemoveMemberButton
+                  orgId={id}
+                  userId={m.userId}
+                  userName={m.user.name ?? m.user.email}
+                />
+              )}
             </div>
           ))}
           {org.members.length === 0 && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2 } from "lucide-react";
+import { MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { DynamicMap } from "@/components/map/DynamicMap";
@@ -237,25 +237,61 @@ function OverviewTab({
   );
 }
 
+// ─── Trip types ───────────────────────────────────────────────────────────
+
+interface TripRecord {
+  id: number;
+  startedAt: string;
+  endedAt: string;
+  durationMinutes: number;
+  distanceKm: number;
+  pointCount: number;
+  points: HistoryPoint[];
+}
+
+/** Display a "fake-UTC" MY timestamp as a human-readable MY time string. */
+function formatMyTime(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ` +
+    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
+  );
+}
+
 // ─── History tab ──────────────────────────────────────────────────────────
 
 function HistoryTab({ vehicleId }: { vehicleId: string }) {
   const [from, setFrom] = useState(myMidnight);
   const [to, setTo]     = useState(myNow);
-  const [points, setPoints]   = useState<HistoryPoint[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [trips, setTrips]         = useState<TripRecord[] | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
 
   const load = useCallback(async (f: string, t: string) => {
+    const fromMs = new Date(f).getTime();
+    const toMs   = new Date(t).getTime();
+    const windowDays = (toMs - fromMs) / (1000 * 60 * 60 * 24);
+    if (windowDays > 30) {
+      setError("Maximum history window is 30 days.");
+      return;
+    }
+    if (toMs <= fromMs) {
+      setError("'To' must be after 'From'.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res  = await fetch(`/api/vehicles/${vehicleId}/history?from=${f}Z&to=${t}Z`);
-      const json = await res.json() as { data?: HistoryPoint[]; error?: string };
+      const json = await res.json() as { data?: TripRecord[]; error?: string };
       if (!res.ok || json.error) {
         setError(json.error ?? "Failed to load history.");
       } else {
-        setPoints(json.data ?? []);
+        const loaded = json.data ?? [];
+        setTrips(loaded);
+        setSelectedIdx(0);
       }
     } catch {
       setError("Network error. Please try again.");
@@ -264,8 +300,13 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
     }
   }, [vehicleId]);
 
-  // Auto-load on first mount with default range (today)
   useEffect(() => { load(from, to); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedTrip = trips && trips.length > 0 && selectedIdx < trips.length
+    ? trips[selectedIdx]
+    : null;
+
+  const totalPoints = trips ? trips.reduce((n, t) => n + t.pointCount, 0) : 0;
 
   return (
     <div className="space-y-4">
@@ -301,27 +342,69 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
             disabled={loading}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Route className="h-3.5 w-3.5" />}
-            {loading ? "Loading…" : "Load Path"}
+            {loading ? "Loading…" : "Load Trips"}
           </Button>
         </div>
-        {error && (
-          <p className="text-xs text-red-500 mt-2">{error}</p>
-        )}
-        {points !== null && !loading && (
+        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+        {trips !== null && !loading && (
           <p className="text-xs text-muted-foreground mt-2">
-            {points.length} point{points.length !== 1 ? "s" : ""} found
+            {trips.length} trip{trips.length !== 1 ? "s" : ""} · {totalPoints} points
           </p>
         )}
       </div>
 
-      {/* ── History map ──────────────────────────────────────────────── */}
-      <div className="h-72 sm:h-96 rounded-xl overflow-hidden border border-border/50">
+      {/* ── Map showing selected trip ─────────────────────────────────── */}
+      <div className="h-64 sm:h-80 rounded-xl overflow-hidden border border-border/50">
         <DynamicMap
           vehicles={[]}
-          historyPath={points ?? undefined}
+          historyPath={selectedTrip?.points ?? undefined}
           className="h-full w-full"
         />
       </div>
+
+      {/* ── Trip list ────────────────────────────────────────────────── */}
+      {trips !== null && trips.length === 0 && !loading && (
+        <p className="text-sm text-muted-foreground text-center py-4">
+          No trips found for this time range.
+        </p>
+      )}
+
+      {trips && trips.length > 0 && (
+        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border/30">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Trips — click a row to show route
+            </h3>
+          </div>
+          {trips.map((trip, i) => (
+            <button
+              key={trip.id}
+              onClick={() => setSelectedIdx(i)}
+              className={`
+                w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
+                ${i < trips.length - 1 ? "border-b border-border/30" : ""}
+                ${selectedIdx === i ? "bg-primary/5" : "hover:bg-muted/30"}
+              `}
+            >
+              <div className={`h-2.5 w-2.5 rounded-full flex-shrink-0 transition-colors ${selectedIdx === i ? "bg-primary" : "bg-muted-foreground/25"}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold text-foreground">Trip {trip.id}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatMyTime(trip.startedAt)} → {formatMyTime(trip.endedAt)}
+                  </span>
+                </div>
+                <div className="flex gap-3 mt-0.5">
+                  <span className="text-xs text-muted-foreground">{trip.durationMinutes} min</span>
+                  <span className="text-xs text-muted-foreground">{trip.distanceKm} km</span>
+                  <span className="text-xs text-muted-foreground">{trip.pointCount} pts</span>
+                </div>
+              </div>
+              <ChevronRight className={`h-3.5 w-3.5 flex-shrink-0 transition-colors ${selectedIdx === i ? "text-primary" : "text-muted-foreground/30"}`} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
