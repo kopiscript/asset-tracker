@@ -5,7 +5,7 @@
  */
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Car, Users, Activity, WifiOff, Building2, Layers } from "lucide-react";
+import { Car, Users, Activity, WifiOff, Building2 } from "lucide-react";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -62,7 +62,7 @@ export default async function AdminPage() {
   // All orgs with member + vehicle + fleet counts
   const orgs = await prisma.organization.findMany({
     include: {
-      _count: { select: { members: true, vehicles: true, fleets: true } },
+      _count: { select: { members: true, vehicles: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -227,7 +227,6 @@ export default async function AdminPage() {
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organisation</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Members</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Fleets</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicles</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manage</th>
               </tr>
@@ -241,9 +240,6 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                     <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {o._count.members}</span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                    <span className="flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> {o._count.fleets}</span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     <span className="flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {o._count.vehicles}</span>

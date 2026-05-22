@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, Users, Car, Layers, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, Car, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -28,12 +28,7 @@ export default async function OrgDetailPage(
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: "asc" },
       },
-      fleets: {
-        include: { _count: { select: { vehicles: true, members: true } } },
-        orderBy: { createdAt: "asc" },
-      },
       vehicles: {
-        where: { fleets: { none: {} } }, // vehicles not yet in any fleet
         select: { id: true, name: true, plateNumber: true, type: true },
         orderBy: { createdAt: "asc" },
       },
@@ -70,7 +65,7 @@ export default async function OrgDetailPage(
             <Users className="h-4 w-4" /> Members ({org.members.length})
           </h2>
           {canManage && (
-            <OrgPageClient orgId={id} action="invite-member" />
+            <OrgPageClient orgId={id} />
           )}
         </div>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
@@ -107,43 +102,11 @@ export default async function OrgDetailPage(
         </div>
       </div>
 
-      {/* ── Fleets ─────────────────────────────────────────────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Layers className="h-4 w-4" /> Fleets ({org.fleets.length})
-          </h2>
-          {canManage && (
-            <OrgPageClient orgId={id} action="create-fleet" />
-          )}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {org.fleets.map((f) => (
-            <Link
-              key={f.id}
-              href={`/dashboard/orgs/${id}/fleets/${f.id}`}
-              className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-colors group"
-            >
-              <p className="font-medium text-foreground group-hover:text-primary transition-colors">{f.name}</p>
-              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {f._count.vehicles} vehicle{f._count.vehicles !== 1 ? "s" : ""}</span>
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {f._count.members} member{f._count.members !== 1 ? "s" : ""}</span>
-              </div>
-            </Link>
-          ))}
-          {org.fleets.length === 0 && (
-            <div className="col-span-full py-8 text-center text-sm text-muted-foreground bg-card border border-border/50 rounded-xl">
-              No fleets yet. {canManage ? "Create one to group vehicles." : ""}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Unassigned vehicles ────────────────────────────────────────── */}
+      {/* ── Vehicles ───────────────────────────────────────────────────── */}
       {org.vehicles.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-            <Car className="h-4 w-4" /> Unassigned Vehicles ({org.vehicles.length})
+            <Car className="h-4 w-4" /> Vehicles ({org.vehicles.length})
           </h2>
           <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
             {org.vehicles.map((v, i) => (
@@ -160,7 +123,6 @@ export default async function OrgDetailPage(
                 {v.plateNumber && (
                   <span className="font-mono text-xs text-muted-foreground">{v.plateNumber}</span>
                 )}
-                <span className="text-xs text-muted-foreground ml-auto">Not in any fleet</span>
               </div>
             ))}
           </div>

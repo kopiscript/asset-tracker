@@ -74,13 +74,3 @@ export async function canManageOrg(userId: string, orgId: string): Promise<boole
   return (await getOrgRole(userId, orgId)) === "owner";
 }
 
-/** Can user manage a fleet (add/remove vehicles, grant member access)? */
-export async function canManageFleet(userId: string, fleetId: string): Promise<boolean> {
-  if (await isSystemAdmin(userId)) return true;
-  const fleet = await prisma.fleet.findUnique({
-    where: { id: fleetId },
-    select: { orgId: true },
-  });
-  if (!fleet) return false;
-  return (await getOrgRole(userId, fleet.orgId)) === "owner";
-}

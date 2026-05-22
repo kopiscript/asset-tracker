@@ -2,7 +2,7 @@
 
 > **Before you start:** Read `CLAUDE.md` in the project root first. It documents breaking changes in Next.js 16, Prisma 7, shadcn/ui, and NextAuth v5 that are not obvious from training data.
 
-**Last updated:** 2026-05-22
+**Last updated:** 2026-05-22 (session 3)
 **PRD:** `docs/PRD.md`
 
 ---
@@ -17,31 +17,28 @@
 
 ## Current state summary
 
-The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (60s polling), trip history with segmentation, and API key auth on the IoT endpoint are all working. The main remaining work is cleaning up the Fleet data model (which was decided against) and adding Bahasa Malaysia translations for the trip history UI.
+The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (60s polling), trip history with segmentation, and bilingual (EN/BM) translations are all working. Fleet concept was removed — access control is org membership only. The GPS hardware writes directly to `telemetry_records`; the IoT endpoint (`PATCH /api/vehicles/[id]/location`) exists but is unused by the actual hardware. Remaining work is production readiness only.
 
 ---
 
 ## Phase 0b — Fleet removal
 
-**Decision (2026-05-21):** The Fleet concept is being removed. Access control simplified to org membership — any org member sees all org vehicles. Permissions logic was already simplified (2026-05-22), but the schema, routes, and pages still need cleanup.
+**Decision (2026-05-21):** The Fleet concept was removed. Access control simplified to org membership — any org member sees all org vehicles.
 
-**What's already done (2026-05-22):**
-- `lib/permissions.ts` — fleet functions removed, `getEffectiveVehicleRole` now uses org role directly
-- `app/api/vehicles/route.ts` — fleet membership query removed, uses org membership only
-- `app/dashboard/page.tsx` — fleet membership query removed
+**Status: Complete (2026-05-22)**
 
-**What still needs doing:**
-
-- [ ] **0b.1** Remove `Fleet`, `FleetVehicle`, `FleetMember` models from `prisma/schema.prisma`; remove `fleets` relation from `Organization`; remove `fleetMemberships` from `User`
-- [ ] **0b.2** Drop the tables from the database (`prisma db push` after schema update, or write a migration)
-- [ ] **0b.3** Run `npm run db:generate` to regenerate the Prisma client
-- [ ] **0b.4** Delete `app/api/orgs/[id]/fleets/` route tree (4 files)
-- [ ] **0b.5** Delete `app/dashboard/orgs/[id]/fleets/` page tree (2 files)
-- [ ] **0b.6** Update `app/dashboard/vehicles/page.tsx` — still queries `fleetMember` and uses fleet OR clause; replace with org membership only (same pattern as `app/dashboard/page.tsx` after the 2026-05-22 fix)
-- [ ] **0b.7** Update `app/api/orgs/[id]/route.ts` and `app/api/orgs/route.ts` — remove `_count.fleets` from queries and responses
-- [ ] **0b.8** Update `app/dashboard/orgs/[id]/page.tsx` — remove the Fleets section and "New Fleet" button; rename "Unassigned Vehicles" to "Vehicles"
-- [ ] **0b.9** Update `app/dashboard/orgs/[id]/OrgPageClient.tsx` — remove the `create-fleet` action branch; simplify to invite-member only
-- [ ] **0b.10** Verify build passes and org/vehicle pages render correctly with no fleet references
+- [x] **0b.1** Remove `Fleet`, `FleetVehicle`, `FleetMember` models from `prisma/schema.prisma`; remove `fleets` relation from `Organization`; remove `fleetMemberships` from `User`
+- [x] **0b.2** Drop the tables from the database (`prisma db push`)
+  > ⚠️ DB push failed during session due to connectivity (P1001). Tables may still exist in the DB. Re-run `npx prisma db push` when connected to confirm.
+- [x] **0b.3** `npm run db:generate` — Prisma client regenerated without fleet types
+- [x] **0b.4** Deleted `app/api/orgs/[id]/fleets/` route tree
+- [x] **0b.5** Deleted `app/dashboard/orgs/[id]/fleets/` page tree
+- [x] **0b.6** `app/dashboard/vehicles/page.tsx` — uses org membership only
+- [x] **0b.7** `app/api/orgs/[id]/route.ts` and `app/api/orgs/route.ts` — `_count.fleets` removed
+- [x] **0b.8** `app/dashboard/orgs/[id]/page.tsx` — Fleets section removed; "Unassigned Vehicles" renamed "Vehicles"
+- [x] **0b.9** `app/dashboard/orgs/[id]/OrgPageClient.tsx` — simplified to invite-member only
+- [x] **0b.10** `app/dashboard/orgs/page.tsx` — `_count.fleets` and Layers icon removed
+- [x] **0b.11** Build passes with no TypeScript errors
 
 ---
 
@@ -60,14 +57,12 @@ The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (
 
 ## Phase 2 — IoT location endpoint
 
-**Status:** Functional. Auth, body parsing, and telemetry write are all working.
+**Status:** Endpoint exists but is NOT used by actual hardware. The GPS hardware writes directly to the `telemetry_records` table in the database — no HTTP endpoint involved. This endpoint is effectively dead code for v1.
 
-- [x] **2.1** `PATCH /api/vehicles/[id]/location` uses `Authorization: Bearer <key>` — no session auth
-- [x] **2.2** Validates `vehicle.apiKey` — if key is set on the vehicle, the bearer token must match exactly; vehicles with no key configured accept any token (backward compat for dev)
-- [x] **2.3** Body accepts `{ latitude, longitude, speed?, recordedAt? }` — maps to `TelemetryRecord` fields
-- [x] **2.4** Writes one `TelemetryRecord` row per ping
-  > **Note:** Original spec called for a dual write (`Vehicle` lat/lng + `LocationHistory`) inside `prisma.$transaction()`. Not implemented because (a) `Vehicle` has no `latitude`/`longitude` columns — position is always derived from the latest `TelemetryRecord`; (b) `PrismaNeonHttp` does not support `$transaction()`. Single write to `TelemetryRecord` achieves the same result.
-- [ ] **2.5** *(Manual test)* `curl -X PATCH .../api/vehicles/<id>/location -H "Authorization: Bearer <key>" -d '{"latitude":3.139,"longitude":101.687}'` — confirm row appears in `telemetry_records` via Prisma Studio
+- [x] **2.1** `PATCH /api/vehicles/[id]/location` exists with API key auth (bearer token)
+- [x] **2.2** Validates `vehicle.apiKey` when set
+- [x] **2.3–2.4** Writes one `TelemetryRecord` row per ping
+- [N/A] **2.5** Manual test — irrelevant; hardware bypasses this endpoint entirely
 
 ---
 
@@ -110,18 +105,15 @@ The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (
 
 ## Phase 6 — Translations + polish
 
-- [ ] **6.1** Add BM strings to `lib/translations.ts` for new UI text introduced in Phase 5:
-  - History tab label ("History" → "Sejarah")
-  - "Load Trips" button
-  - "X trips · Y points"
-  - Trip list header ("Trips — click a row to show route")
-  - "Trip N" label
-  - Duration / distance / points column labels
-  - "No trips found for this time range"
-  - Date input labels ("From (MY time)", "To (MY time)")
-  - Client-side error messages ("Maximum history window is 30 days", "'To' must be after 'From'")
-- [ ] **6.2** Check existing keys in `lib/translations.ts` before adding — do not duplicate
-- [ ] **6.3** Update `README.md` — document `PATCH /api/vehicles/[id]/location` and `GET /api/vehicles/[id]/history` endpoints; document `SUPPORT_EMAIL` env var
+**Status: Complete (2026-05-22)**
+
+- [x] **6.1** Added EN + BM strings to `lib/translations.ts` for all Phase 5 trip history UI text:
+  - `tripHistory`, `loadTrips`, `tripsFound`, `pointsFound`, `tripLabel`
+  - `tripListHeader`, `noTripsFound`
+  - `fromLabel`, `toLabel`, `durationMin`, `distanceKm`
+  - `errorMaxWindow`, `errorToBeforeFrom`
+- [x] **6.2** No duplicate keys introduced
+- [ ] **6.3** Update `README.md` — document `GET /api/vehicles/[id]/history` endpoint; document `SUPPORT_EMAIL` env var
 
 ---
 

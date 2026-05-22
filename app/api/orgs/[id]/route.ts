@@ -26,7 +26,7 @@ export async function GET(
     const org = await prisma.organization.findUnique({
       where: { id },
       include: {
-        _count: { select: { members: true, vehicles: true, fleets: true } },
+        _count: { select: { members: true, vehicles: true } },
       },
     });
     if (!org) return Response.json({ data: null, error: "Not found" }, { status: 404 });
@@ -35,7 +35,7 @@ export async function GET(
       data: {
         id: org.id, name: org.name, createdAt: org.createdAt.toISOString(),
         userRole, memberCount: org._count.members,
-        vehicleCount: org._count.vehicles, fleetCount: org._count.fleets,
+        vehicleCount: org._count.vehicles,
       },
       error: null,
     });

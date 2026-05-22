@@ -18,7 +18,7 @@ export async function GET() {
     if (isAdmin) {
       const orgs = await prisma.organization.findMany({
         include: {
-          _count: { select: { members: true, vehicles: true, fleets: true } },
+          _count: { select: { members: true, vehicles: true } },
         },
         orderBy: { createdAt: "asc" },
       });
@@ -28,7 +28,6 @@ export async function GET() {
           userRole: "owner",
           memberCount: o._count.members,
           vehicleCount: o._count.vehicles,
-          fleetCount: o._count.fleets,
         })),
         error: null,
       });
@@ -38,7 +37,7 @@ export async function GET() {
       where: { userId: dbUser.id },
       include: {
         org: {
-          include: { _count: { select: { members: true, vehicles: true, fleets: true } } },
+          include: { _count: { select: { members: true, vehicles: true } } },
         },
       },
       orderBy: { createdAt: "asc" },
@@ -50,7 +49,6 @@ export async function GET() {
         userRole: m.role,
         memberCount: m.org._count.members,
         vehicleCount: m.org._count.vehicles,
-        fleetCount: m.org._count.fleets,
       })),
       error: null,
     });

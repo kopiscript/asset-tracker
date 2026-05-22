@@ -111,6 +111,21 @@ export const t = {
     appearance: "Appearance",
     notifications: "Notifications",
     profile: "Profile",
+
+    // Trip history
+    tripHistory: "History",
+    loadTrips: "Load Trips",
+    tripsFound: "trips",
+    pointsFound: "points",
+    tripLabel: "Trip",
+    tripListHeader: "Trips — click a row to show route",
+    noTripsFound: "No trips found for this time range.",
+    fromLabel: "From (MY time)",
+    toLabel: "To (MY time)",
+    durationMin: "min",
+    distanceKm: "km",
+    errorMaxWindow: "Maximum history window is 30 days.",
+    errorToBeforeFrom: "'To' must be after 'From'.",
   },
 
   bm: {
@@ -214,6 +229,21 @@ export const t = {
     appearance: "Penampilan",
     notifications: "Pemberitahuan",
     profile: "Profil",
+
+    // Trip history
+    tripHistory: "Sejarah",
+    loadTrips: "Muat Perjalanan",
+    tripsFound: "perjalanan",
+    pointsFound: "titik",
+    tripLabel: "Perjalanan",
+    tripListHeader: "Perjalanan — klik baris untuk tunjuk laluan",
+    noTripsFound: "Tiada perjalanan dijumpai untuk julat masa ini.",
+    fromLabel: "Dari (waktu MY)",
+    toLabel: "Ke (waktu MY)",
+    durationMin: "min",
+    distanceKm: "km",
+    errorMaxWindow: "Tetingkap sejarah maksimum ialah 30 hari.",
+    errorToBeforeFrom: "'Ke' mesti selepas 'Dari'.",
   },
 } as const;
 

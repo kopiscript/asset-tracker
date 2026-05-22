@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Building2, Users, Car, Layers } from "lucide-react";
+import { Plus, Building2, Users, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -19,13 +19,13 @@ export default async function OrgsPage() {
 
   const memberships = isAdmin
     ? (await prisma.organization.findMany({
-        include: { _count: { select: { members: true, vehicles: true, fleets: true } } },
+        include: { _count: { select: { members: true, vehicles: true } } },
         orderBy: { createdAt: "asc" },
       })).map((o) => ({ org: o, role: "owner", counts: o._count }))
     : (await prisma.orgMember.findMany({
         where: { userId: dbUser.id },
         include: {
-          org: { include: { _count: { select: { members: true, vehicles: true, fleets: true } } } },
+          org: { include: { _count: { select: { members: true, vehicles: true } } } },
         },
         orderBy: { createdAt: "asc" },
       })).map((m) => ({ org: m.org, role: m.role, counts: m.org._count }));
@@ -93,10 +93,6 @@ export default async function OrgsPage() {
                 <span className="flex items-center gap-1">
                   <Car className="h-3.5 w-3.5" />
                   {counts.vehicles} vehicle{counts.vehicles !== 1 ? "s" : ""}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Layers className="h-3.5 w-3.5" />
-                  {counts.fleets} fleet{counts.fleets !== 1 ? "s" : ""}
                 </span>
               </div>
             </Link>

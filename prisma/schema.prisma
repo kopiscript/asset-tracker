@@ -18,8 +18,7 @@ model User {
   usertype  String    @default("user")
   createdAt DateTime? @default(now()) @db.Timestamp(6) @map("created_at")
 
-  orgMemberships   OrgMember[]
-  fleetMemberships FleetMember[]
+  orgMemberships OrgMember[]
 
   @@map("users")
 }
@@ -31,7 +30,6 @@ model Organization {
 
   members  OrgMember[]
   vehicles Vehicle[]
-  fleets   Fleet[]
 
   @@map("organizations")
 }
@@ -51,43 +49,6 @@ model OrgMember {
   @@map("org_members")
 }
 
-model Fleet {
-  id        String   @id @default(cuid())
-  name      String
-  orgId     String   @map("org_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  org      Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  vehicles FleetVehicle[]
-  members  FleetMember[]
-
-  @@map("fleets")
-}
-
-// Junction: Fleet <-> Vehicle
-model FleetVehicle {
-  fleetId   String @map("fleet_id")
-  vehicleId BigInt @map("vehicle_id")
-
-  fleet   Fleet   @relation(fields: [fleetId], references: [id], onDelete: Cascade)
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  @@id([fleetId, vehicleId])
-  @@map("fleet_vehicles")
-}
-
-// Junction: which users can see which fleet (owner-controlled)
-model FleetMember {
-  fleetId String @map("fleet_id")
-  userId  String @db.Uuid @map("user_id")
-
-  fleet Fleet @relation(fields: [fleetId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([fleetId, userId])
-  @@map("fleet_members")
-}
-
 model Vehicle {
   id          BigInt    @id @default(autoincrement())
   imei        String    @unique
@@ -101,7 +62,6 @@ model Vehicle {
   apiKey      String?   @map("api_key")
 
   org              Organization?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
-  fleets           FleetVehicle[]
   telemetryRecords TelemetryRecord[]
 
   @@map("vehicles")
