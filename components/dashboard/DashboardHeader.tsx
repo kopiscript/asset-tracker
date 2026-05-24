@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { Bell } from "lucide-react";
+import { MobileSidebarSheet } from "@/components/dashboard/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/components/LanguageProvider";
 import type { Lang } from "@/lib/translations";
@@ -39,8 +40,8 @@ export function DashboardHeader() {
 
   return (
     <header className="h-14 border-b border-border bg-background/60 backdrop-blur-md flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-40">
-      {/* Mobile hamburger spacer */}
-      <div className="w-8 lg:hidden" />
+      {/* Mobile hamburger — lives in the header so it scrolls/sticks with it */}
+      <MobileSidebarSheet />
 
       {/* Flex spacer */}
       <div className="flex-1" />

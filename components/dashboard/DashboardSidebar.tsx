@@ -113,15 +113,9 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
 export function DashboardSidebar() {
   return (
-    <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-sidebar-border bg-sidebar shrink-0">
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile: hamburger + Sheet */}
-      <MobileSidebarSheet />
-    </>
+    <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-sidebar-border bg-sidebar shrink-0">
+      <SidebarContent />
+    </aside>
   );
 }
 
@@ -133,7 +127,7 @@ export function MobileSidebarSheet() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-3.5 left-4 z-[1001] text-muted-foreground hover:text-foreground"
+            className="lg:hidden text-muted-foreground hover:text-foreground"
             aria-label="Open menu"
           />
         }
