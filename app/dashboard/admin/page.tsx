@@ -172,7 +172,8 @@ export default async function AdminPage() {
           <AdminAddVehicleForm orgs={orgOptions} />
         </div>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[360px]">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colVehicle" /></th>
@@ -215,6 +216,7 @@ export default async function AdminPage() {
           {vehicleRows.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noVehiclesInSystem" /></div>
           )}
+          </div>
         </div>
       </div>
 
@@ -222,7 +224,8 @@ export default async function AdminPage() {
       <div>
         <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4"><PageTitle k="allOrganisations" /></h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[360px]">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="organisation" /></th>
@@ -236,7 +239,7 @@ export default async function AdminPage() {
                 <tr key={o.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{o.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{o.id}</p>
+                    <p className="text-xs text-muted-foreground font-mono hidden sm:block truncate max-w-[160px]">{o.id}</p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                     <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {o._count.members}</span>
@@ -259,6 +262,7 @@ export default async function AdminPage() {
           {orgs.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noOrgsInSystem" /></div>
           )}
+          </div>
         </div>
       </div>
 
@@ -266,7 +270,8 @@ export default async function AdminPage() {
       <div>
         <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4"><PageTitle k="allUsers" /></h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[360px]">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colUser" /></th>
@@ -300,7 +305,7 @@ export default async function AdminPage() {
                           <Link
                             key={m.org.id}
                             href={`/dashboard/orgs/${m.org.id}`}
-                            className="text-xs bg-muted px-1.5 py-0.5 rounded border border-border hover:border-primary/30 transition-colors"
+                            className="text-xs bg-muted px-2 py-1 rounded border border-border hover:border-primary/30 transition-colors"
                           >
                             {m.org.name}
                             <span className="ml-1 text-muted-foreground capitalize">({m.role})</span>
@@ -322,6 +327,7 @@ export default async function AdminPage() {
           {users.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noUsersInSystem" /></div>
           )}
+          </div>
         </div>
       </div>
     </div>

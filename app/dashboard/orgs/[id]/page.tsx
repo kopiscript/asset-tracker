@@ -74,7 +74,7 @@ export default async function OrgDetailPage(
           {org.members.map((m, i) => (
             <div
               key={m.id}
-              className={`flex items-center gap-3 px-4 py-3 ${i < org.members.length - 1 ? "border-b border-border/30" : ""}`}
+              className={`flex items-center gap-3 px-4 py-4 ${i < org.members.length - 1 ? "border-b border-border/30" : ""}`}
             >
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-semibold text-primary">
@@ -114,7 +114,7 @@ export default async function OrgDetailPage(
             {org.vehicles.map((v, i) => (
               <div
                 key={v.id.toString()}
-                className={`flex items-center gap-3 px-4 py-3 ${i < org.vehicles.length - 1 ? "border-b border-border/30" : ""}`}
+                className={`flex items-center gap-3 px-4 py-4 ${i < org.vehicles.length - 1 ? "border-b border-border/30" : ""}`}
               >
                 <Link
                   href={`/dashboard/vehicles/${v.id.toString()}`}

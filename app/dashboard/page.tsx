@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           </div>
           <Button
             size="sm"
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium active:scale-[0.98] transition-transform"
+            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium active:scale-[0.98] transition-transform min-h-[44px] px-4"
             render={<Link href="/dashboard/vehicles/new" />}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <StatusBadge status={v.status} />
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {timeAgo(v.lastSeenAt)}
                   </span>
                 </div>

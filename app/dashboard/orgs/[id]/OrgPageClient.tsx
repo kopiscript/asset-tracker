@@ -62,18 +62,18 @@ export function OrgPageClient({ orgId }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2">
       <Input
         autoFocus
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder={`${tr("emailAddress")}…`}
-        className="h-8 text-xs w-48"
+        className="h-10 text-sm w-full sm:w-48"
         required
       />
       <Select value={role} onValueChange={(v) => v && setRole(v)}>
-        <SelectTrigger className="h-8 text-xs w-24">
+        <SelectTrigger className="h-10 text-sm w-full sm:w-28">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -82,13 +82,15 @@ export function OrgPageClient({ orgId }: Props) {
           <SelectItem value="viewer">{tr("viewer")}</SelectItem>
         </SelectContent>
       </Select>
-      {error && <span className="text-xs text-red-500">{error}</span>}
-      <Button size="sm" type="submit" disabled={loading} className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90">
-        {loading ? "…" : tr("add")}
-      </Button>
-      <Button size="sm" type="button" variant="ghost" className="h-8 text-xs" onClick={() => { setOpen(false); setError(""); }}>
-        {tr("cancel")}
-      </Button>
+      {error && <span className="text-sm text-red-500 w-full sm:w-auto">{error}</span>}
+      <div className="flex gap-2 w-full sm:w-auto">
+        <Button size="sm" type="submit" disabled={loading} className="h-10 text-sm flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90">
+          {loading ? "…" : tr("add")}
+        </Button>
+        <Button size="sm" type="button" variant="ghost" className="h-10 text-sm flex-1 sm:flex-none" onClick={() => { setOpen(false); setError(""); }}>
+          {tr("cancel")}
+        </Button>
+      </div>
     </form>
   );
 }

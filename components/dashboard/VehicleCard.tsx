@@ -81,10 +81,10 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 min-w-0 gap-1.5 h-8 text-xs active:scale-[0.98] transition-transform"
+            className="flex-1 min-w-0 gap-1.5 h-10 text-xs active:scale-[0.98] transition-transform"
             render={<Link href={`/dashboard/vehicles/${vehicle.id}`} />}
           >
-            <MapPin className="h-3 w-3" />
+            <MapPin className="h-3.5 w-3.5" />
             {tr("viewOnMap")}
           </Button>
 
@@ -92,10 +92,10 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 h-8 active:scale-[0.98] transition-transform"
+              className="gap-1.5 h-10 w-10 active:scale-[0.98] transition-transform"
               render={<Link href={`/dashboard/vehicles/${vehicle.id}/edit`} />}
             >
-              <Edit className="h-3 w-3" />
+              <Edit className="h-3.5 w-3.5" />
             </Button>
           )}
 
@@ -103,10 +103,10 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 h-8 active:scale-[0.98] transition-transform"
+              className="gap-1.5 h-10 w-10 active:scale-[0.98] transition-transform"
               render={<Link href={`/dashboard/vehicles/${vehicle.id}/share`} />}
             >
-              <Share2 className="h-3 w-3" />
+              <Share2 className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

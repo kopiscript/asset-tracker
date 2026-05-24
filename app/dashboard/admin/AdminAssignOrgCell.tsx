@@ -33,7 +33,7 @@ export function AdminAssignOrgCell({ vehicleId, orgId, orgName, orgs }: Props) {
     return orgId ? (
       <button
         onClick={() => setEditing(true)}
-        className="text-left text-muted-foreground hover:text-foreground transition-colors text-xs"
+        className="text-left text-muted-foreground hover:text-foreground transition-colors text-sm min-h-[44px] flex items-center"
         title="Click to reassign"
       >
         {orgName}
@@ -41,7 +41,7 @@ export function AdminAssignOrgCell({ vehicleId, orgId, orgName, orgs }: Props) {
     ) : (
       <button
         onClick={() => setEditing(true)}
-        className="text-xs text-primary hover:underline font-medium"
+        className="text-sm text-primary hover:underline font-medium min-h-[44px] flex items-center"
       >
         Assign org
       </button>
@@ -49,13 +49,13 @@ export function AdminAssignOrgCell({ vehicleId, orgId, orgName, orgs }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <select
         autoFocus
         disabled={loading}
         defaultValue={orgId ?? ""}
         onChange={(e) => assign(e.target.value || null)}
-        className="text-xs border border-border rounded px-1.5 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+        className="text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
       >
         <option value="">— Unassigned —</option>
         {orgs.map((o) => (
@@ -64,7 +64,8 @@ export function AdminAssignOrgCell({ vehicleId, orgId, orgName, orgs }: Props) {
       </select>
       <button
         onClick={() => setEditing(false)}
-        className="text-xs text-muted-foreground hover:text-foreground"
+        className="p-2 text-muted-foreground hover:text-foreground rounded-lg"
+        aria-label="Cancel"
       >
         ✕
       </button>

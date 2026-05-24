@@ -48,7 +48,7 @@ export function SettingsClient({
               <button
                 key={l}
                 onClick={() => setLang(l)}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold border transition-all active:scale-[0.98] ${
+                className={`px-5 py-3 rounded-lg text-sm font-semibold border transition-all active:scale-[0.98] min-h-[44px] ${
                   lang === l
                     ? "bg-primary text-primary-foreground border-primary"
                     : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
