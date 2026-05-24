@@ -24,7 +24,7 @@ function StatCard({
   valueClass,
 }: {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   value: number;
   valueClass: string;
 }) {
@@ -136,25 +136,25 @@ export default async function AdminPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard
           icon={<Car className="h-3.5 w-3.5 text-muted-foreground" />}
-          label="Vehicles"
+          label={<PageTitle k="vehicles" />}
           value={vehicles.length}
           valueClass="text-foreground"
         />
         <StatCard
           icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
-          label="Users"
+          label={<PageTitle k="statUsers" />}
           value={users.length}
           valueClass="text-foreground"
         />
         <StatCard
           icon={<Activity className="h-3.5 w-3.5 text-green-600" />}
-          label="Active"
+          label={<PageTitle k="statusActive" />}
           value={activeCount}
           valueClass="text-green-600"
         />
         <StatCard
           icon={<WifiOff className="h-3.5 w-3.5 text-red-500" />}
-          label="Offline"
+          label={<PageTitle k="statusOffline" />}
           value={offlineCount}
           valueClass="text-red-600"
         />

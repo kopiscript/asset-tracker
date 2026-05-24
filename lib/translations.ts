@@ -31,6 +31,10 @@ export const t = {
     location: "Location",
     imei: "IMEI",
 
+    // Stat card labels
+    statTotal: "Total",
+    statUsers: "Users",
+
     // Status labels
     statusActive: "Active",
     statusIdle: "Idle",
@@ -175,6 +179,10 @@ export const t = {
     notes: "Nota",
     location: "Lokasi",
     imei: "IMEI",
+
+    // Stat card labels
+    statTotal: "Jumlah",
+    statUsers: "Pengguna",
 
     // Status labels
     statusActive: "Aktif",
