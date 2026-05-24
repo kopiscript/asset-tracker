@@ -2,6 +2,7 @@ import {
   LandingAuthButtons,
   LandingCtaButton,
 } from "@/components/LandingAuthButtons";
+import { PricingSection } from "@/components/PricingSection";
 import {
   MapPin,
   Users,
@@ -145,6 +146,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Pricing ──────────────────────────────────────────────────────── */}
+      <PricingSection />
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
