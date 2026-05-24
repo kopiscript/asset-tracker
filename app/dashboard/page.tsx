@@ -4,6 +4,7 @@ import { Plus, Activity, Clock, WifiOff, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
@@ -77,7 +78,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
-              Dashboard
+              <PageTitle k="dashboard" />
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in your organisations

@@ -13,19 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const USER_NAV = [
-  { icon: LayoutDashboard, label: "Dashboard",     href: "/dashboard" },
-  { icon: Car,             label: "Vehicles",      href: "/dashboard/vehicles" },
-  { icon: Building2,       label: "Organisations", href: "/dashboard/orgs" },
-  { icon: Settings,        label: "Settings",      href: "/dashboard/settings" },
-];
-
-const ADMIN_NAV = [
-  { icon: Globe2,     label: "Fleet Overview",  href: "/dashboard/admin" },
-  { icon: Building2,  label: "Organisations",   href: "/dashboard/orgs" },
-  { icon: Settings,   label: "Settings",        href: "/dashboard/settings" },
-];
+import { useLang } from "@/components/LanguageProvider";
 
 function NavLink({
   icon: Icon,
@@ -47,15 +35,13 @@ function NavLink({
       href={href}
       onClick={onClick}
       className={cn(
-        // Base
         "group flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
-        // Active: left border accent, no fill — Apple-style precision indicator
         isActive
           ? "border-l-2 border-primary text-primary pl-[10px] pr-3 bg-primary/5"
           : "pl-3 pr-3 border-l-2 border-transparent text-muted-foreground hover:text-foreground hover:bg-black/[0.04]"
       )}
     >
-      <Icon className={cn("h-4 w-4 flex-shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+      <Icon className={cn("h-4 w-4 shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
       {label}
     </Link>
   );
@@ -63,14 +49,29 @@ function NavLink({
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { data: session } = useSession();
+  const { tr } = useLang();
   const isAdmin = session?.user?.usertype === "admin";
-  const navItems = isAdmin ? ADMIN_NAV : USER_NAV;
+
+  const userNav = [
+    { icon: LayoutDashboard, label: tr("dashboard"),     href: "/dashboard" },
+    { icon: Car,             label: tr("vehicles"),      href: "/dashboard/vehicles" },
+    { icon: Building2,       label: tr("organisations"), href: "/dashboard/orgs" },
+    { icon: Settings,        label: tr("settings"),      href: "/dashboard/settings" },
+  ];
+
+  const adminNav = [
+    { icon: Globe2,    label: tr("fleetOverview"),  href: "/dashboard/admin" },
+    { icon: Building2, label: tr("organisations"),  href: "/dashboard/orgs" },
+    { icon: Settings,  label: tr("settings"),       href: "/dashboard/settings" },
+  ];
+
+  const navItems = isAdmin ? adminNav : userNav;
 
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+        <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
           <MapPin className="h-3.5 w-3.5 text-primary" />
         </div>
         <div className="flex flex-col leading-none">
@@ -78,7 +79,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             Atlas
           </span>
           <span className="text-[10px] text-muted-foreground tracking-wide mt-0.5">
-            {isAdmin ? "Admin" : "Fleet Tracking"}
+            {isAdmin ? tr("adminPanel") : "Fleet Tracking"}
           </span>
         </div>
       </div>
@@ -102,8 +103,8 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all w-full border-l-2 border-transparent"
         >
-          <LogOut className="h-4 w-4 flex-shrink-0" />
-          Sign Out
+          <LogOut className="h-4 w-4 shrink-0" />
+          {tr("signOut")}
         </button>
       </div>
     </div>
@@ -114,7 +115,7 @@ export function DashboardSidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-sidebar-border bg-sidebar flex-shrink-0">
+      <aside className="hidden lg:flex lg:flex-col w-56 min-h-screen border-r border-sidebar-border bg-sidebar shrink-0">
         <SidebarContent />
       </aside>
 

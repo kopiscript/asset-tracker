@@ -1,22 +1,13 @@
-/**
- * lib/translations.ts
- * All UI text in English (en) and Bahasa Malaysia (bm).
- *
- * HOW TO USE:
- *   import { t } from "@/lib/translations"
- *   const lang = "en" // or "bm"
- *   <button>{t[lang].addVehicle}</button>
- *
- * ✏️ EDIT: Add more keys here if you add more UI text.
- */
-
 export const t = {
   en: {
     // Navigation
     dashboard: "Dashboard",
     vehicles: "Vehicles",
+    organisations: "Organisations",
     settings: "Settings",
     signOut: "Sign Out",
+    fleetOverview: "Fleet Overview",
+    adminPanel: "Admin Panel",
 
     // Vehicle actions
     addVehicle: "Add Vehicle",
@@ -25,6 +16,7 @@ export const t = {
     shareVehicle: "Share",
     viewOnMap: "View on Map",
     viewDetails: "View Details",
+    newOrg: "New Org",
 
     // Vehicle fields
     name: "Name",
@@ -37,11 +29,13 @@ export const t = {
     lastSeen: "Last Seen",
     notes: "Notes",
     location: "Location",
+    imei: "IMEI",
 
     // Status labels
     statusActive: "Active",
     statusIdle: "Idle",
     statusOffline: "Offline",
+    allStatuses: "All Statuses",
 
     // Vehicle types
     car: "Car",
@@ -76,6 +70,28 @@ export const t = {
     selectRole: "Select role",
     manageAccess: "Manage Access",
     currentAccess: "Current Access",
+    members: "Members",
+
+    // Search & filters
+    searchPlaceholder: "Search by name, plate, or driver…",
+    noVehiclesMatch: "No vehicles match your search.",
+
+    // Vehicle detail
+    vehicleInfo: "Vehicle Info",
+    additionalInfo: "Additional Info",
+    currentSpeed: "Current Speed",
+    todayMileage: "Today's Mileage",
+    organisation: "Organisation",
+    yourRole: "Your Role",
+    coordinates: "Coordinates",
+    overview: "Overview",
+    noGpsYet: "No GPS location recorded yet. Map is centred on Kuala Lumpur.",
+
+    // Admin
+    globalOverview: "Global fleet overview — all users and vehicles",
+    allVehicles: "All Vehicles",
+    allOrganisations: "All Organisations",
+    allUsers: "All Users",
 
     // Forms
     formNamePlaceholder: "e.g. Company Van 01",
@@ -132,8 +148,11 @@ export const t = {
     // Navigation
     dashboard: "Papan Pemuka",
     vehicles: "Kenderaan",
+    organisations: "Organisasi",
     settings: "Tetapan",
     signOut: "Log Keluar",
+    fleetOverview: "Gambaran Fleet",
+    adminPanel: "Panel Pentadbir",
 
     // Vehicle actions
     addVehicle: "Tambah Kenderaan",
@@ -142,6 +161,7 @@ export const t = {
     shareVehicle: "Kongsi",
     viewOnMap: "Lihat di Peta",
     viewDetails: "Lihat Butiran",
+    newOrg: "Org Baru",
 
     // Vehicle fields
     name: "Nama",
@@ -154,11 +174,13 @@ export const t = {
     lastSeen: "Kali Terakhir Dilihat",
     notes: "Nota",
     location: "Lokasi",
+    imei: "IMEI",
 
     // Status labels
     statusActive: "Aktif",
     statusIdle: "Melahu",
     statusOffline: "Luar Talian",
+    allStatuses: "Semua Status",
 
     // Vehicle types
     car: "Kereta",
@@ -193,6 +215,28 @@ export const t = {
     selectRole: "Pilih peranan",
     manageAccess: "Urus Akses",
     currentAccess: "Akses Semasa",
+    members: "Ahli",
+
+    // Search & filters
+    searchPlaceholder: "Cari nama, plat, atau pemandu…",
+    noVehiclesMatch: "Tiada kenderaan yang sepadan dengan carian anda.",
+
+    // Vehicle detail
+    vehicleInfo: "Maklumat Kenderaan",
+    additionalInfo: "Maklumat Tambahan",
+    currentSpeed: "Kecepatan Semasa",
+    todayMileage: "Jarak Hari Ini",
+    organisation: "Organisasi",
+    yourRole: "Peranan Anda",
+    coordinates: "Koordinat",
+    overview: "Gambaran Keseluruhan",
+    noGpsYet: "Tiada lokasi GPS direkodkan lagi. Peta dipusatkan di Kuala Lumpur.",
+
+    // Admin
+    globalOverview: "Gambaran fleet global — semua pengguna dan kenderaan",
+    allVehicles: "Semua Kenderaan",
+    allOrganisations: "Semua Organisasi",
+    allUsers: "Semua Pengguna",
 
     // Forms
     formNamePlaceholder: "cth. Van Syarikat 01",

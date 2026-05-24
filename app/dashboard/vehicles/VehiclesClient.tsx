@@ -62,7 +62,7 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, plate, or driver…"
+            placeholder={tr("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-card border-border/50"
@@ -70,10 +70,10 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
         </div>
         <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)}>
           <SelectTrigger className="w-full sm:w-40 bg-card border-border/50">
-            <SelectValue placeholder="All statuses" />
+            <SelectValue placeholder={tr("allStatuses")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">{tr("allStatuses")}</SelectItem>
             <SelectItem value="active">{tr("statusActive")}</SelectItem>
             <SelectItem value="idle">{tr("statusIdle")}</SelectItem>
             <SelectItem value="offline">{tr("statusOffline")}</SelectItem>
@@ -83,7 +83,7 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
 
       {filtered.length === 0 ? (
         <div className="border border-border/50 rounded-xl py-16 text-center text-sm text-muted-foreground">
-          No vehicles match your search.
+          {tr("noVehiclesMatch")}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

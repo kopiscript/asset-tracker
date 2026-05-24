@@ -6,6 +6,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Car, Users, Activity, WifiOff, Building2 } from "lucide-react";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -124,10 +125,10 @@ export default async function AdminPage() {
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div>
         <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
-          Admin Panel
+          <PageTitle k="adminPanel" />
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Global fleet overview — all users and vehicles
+          <PageTitle k="globalOverview" />
         </p>
       </div>
 
@@ -167,7 +168,7 @@ export default async function AdminPage() {
       {/* ── Vehicle table ──────────────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between border-t border-border/40 pt-6 mb-4">
-          <h2 className="text-sm font-semibold text-foreground">All Vehicles</h2>
+          <h2 className="text-sm font-semibold text-foreground"><PageTitle k="allVehicles" /></h2>
           <AdminAddVehicleForm orgs={orgOptions} />
         </div>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
@@ -219,7 +220,7 @@ export default async function AdminPage() {
 
       {/* ── Org table ──────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4">All Organisations</h2>
+        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4"><PageTitle k="allOrganisations" /></h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -263,7 +264,7 @@ export default async function AdminPage() {
 
       {/* ── User table ─────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4">All Users</h2>
+        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4"><PageTitle k="allUsers" /></h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>

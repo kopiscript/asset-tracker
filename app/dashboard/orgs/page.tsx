@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, Building2, Users, Car, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
@@ -42,7 +43,7 @@ export default async function OrgsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
-            Organisations
+            <PageTitle k="organisations" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {memberships.length} organisation{memberships.length !== 1 ? "s" : ""}
@@ -53,7 +54,7 @@ export default async function OrgsPage() {
           render={<Link href="/dashboard/orgs/new" />}
         >
           <Plus className="h-4 w-4" />
-          New Org
+          <PageTitle k="newOrg" />
         </Button>
       </div>
 

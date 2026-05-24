@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DynamicMap } from "@/components/map/DynamicMap";
 import type { MapVehicle, HistoryPoint } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
+import { useLang } from "@/components/LanguageProvider";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="text-muted-foreground mt-0.5 flex-shrink-0">{icon}</span>
+      <span className="text-muted-foreground mt-0.5 shrink-0">{icon}</span>
       <div className="flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
         <div className="text-sm text-foreground mt-0.5">{children}</div>
@@ -106,7 +107,6 @@ function useLiveVehicle(
           lastSeenAt: (v.lastSeenAt as string | null) ?? null,
         }]);
       } else {
-        // Null coords: keep last known position, update status only
         setMapVehicles((prev) =>
           prev.length > 0
             ? [{ ...prev[0], status: v.status as string, lastSeenAt: (v.lastSeenAt as string | null) ?? null }]
@@ -141,7 +141,7 @@ function useLiveVehicle(
   return { mapVehicles, lastSeenAt, speed };
 }
 
-// ─── Overview tab (mounts/unmounts with tab — stops polling on history tab) ──
+// ─── Overview tab ─────────────────────────────────────────────────────────
 
 function OverviewTab({
   vehicle,
@@ -156,6 +156,7 @@ function OverviewTab({
   initialSpeed: number | null;
   todayKm: number;
 }) {
+  const { tr } = useLang();
   const { mapVehicles, lastSeenAt, speed } = useLiveVehicle(vehicle.id, {
     mapVehicles: initialMapVehicles,
     lastSeenAt:  initialLastSeenAt,
@@ -177,7 +178,7 @@ function OverviewTab({
       {!hasLocation && (
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="h-3 w-3" />
-          No GPS location recorded yet. Map is centred on Kuala Lumpur.
+          {tr("noGpsYet")}
         </p>
       )}
 
@@ -185,25 +186,25 @@ function OverviewTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vehicle info */}
         <div className="bg-card border border-border/50 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">Vehicle Info</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("vehicleInfo")}</h2>
           <div className="space-y-3">
-            <DetailRow icon={<User className="h-4 w-4" />} label="Driver">
-              {vehicle.driverName ?? "No driver assigned"}
+            <DetailRow icon={<User className="h-4 w-4" />} label={tr("driverName")}>
+              {vehicle.driverName ?? tr("noDriver")}
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<Clock className="h-4 w-4" />} label="Last Seen">
+            <DetailRow icon={<Clock className="h-4 w-4" />} label={tr("lastSeen")}>
               {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<FileText className="h-4 w-4" />} label="IMEI">
+            <DetailRow icon={<FileText className="h-4 w-4" />} label={tr("imei")}>
               <span className="font-mono text-xs">{vehicle.imei}</span>
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<Gauge className="h-4 w-4" />} label="Current Speed">
+            <DetailRow icon={<Gauge className="h-4 w-4" />} label={tr("currentSpeed")}>
               {speed != null ? `${speed.toFixed(1)} km/h` : "—"}
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<Route className="h-4 w-4" />} label="Today's Mileage">
+            <DetailRow icon={<Route className="h-4 w-4" />} label={tr("todayMileage")}>
               {todayKm > 0 ? `${todayKm.toFixed(1)} km` : "—"}
             </DetailRow>
           </div>
@@ -211,19 +212,19 @@ function OverviewTab({
 
         {/* Additional info */}
         <div className="bg-card border border-border/50 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">Additional Info</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("additionalInfo")}</h2>
           <div className="space-y-3">
-            <DetailRow icon={<User className="h-4 w-4" />} label="Organisation">
+            <DetailRow icon={<User className="h-4 w-4" />} label={tr("organisation")}>
               {vehicle.orgName ?? "—"}
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<User className="h-4 w-4" />} label="Your Role">
+            <DetailRow icon={<User className="h-4 w-4" />} label={tr("yourRole")}>
               <span className="capitalize">{vehicle.userRole}</span>
             </DetailRow>
             {hasLocation && (
               <>
                 <Separator className="bg-border/50" />
-                <DetailRow icon={<MapPin className="h-4 w-4" />} label="Coordinates">
+                <DetailRow icon={<MapPin className="h-4 w-4" />} label={tr("coordinates")}>
                   <span className="font-mono text-xs">
                     {mapVehicles[0].latitude.toFixed(5)}, {mapVehicles[0].longitude.toFixed(5)}
                   </span>
@@ -249,7 +250,6 @@ interface TripRecord {
   points: HistoryPoint[];
 }
 
-/** Display a "fake-UTC" MY timestamp as a human-readable MY time string. */
 function formatMyTime(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -262,25 +262,20 @@ function formatMyTime(iso: string): string {
 // ─── History tab ──────────────────────────────────────────────────────────
 
 function HistoryTab({ vehicleId }: { vehicleId: string }) {
+  const { tr } = useLang();
   const [from, setFrom] = useState(myMidnight);
   const [to, setTo]     = useState(myNow);
-  const [trips, setTrips]         = useState<TripRecord[] | null>(null);
+  const [trips, setTrips]             = useState<TripRecord[] | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
 
   const load = useCallback(async (f: string, t: string) => {
     const fromMs = new Date(f).getTime();
     const toMs   = new Date(t).getTime();
     const windowDays = (toMs - fromMs) / (1000 * 60 * 60 * 24);
-    if (windowDays > 30) {
-      setError("Maximum history window is 30 days.");
-      return;
-    }
-    if (toMs <= fromMs) {
-      setError("'To' must be after 'From'.");
-      return;
-    }
+    if (windowDays > 30) { setError(tr("errorMaxWindow")); return; }
+    if (toMs <= fromMs)  { setError(tr("errorToBeforeFrom")); return; }
     setLoading(true);
     setError("");
     try {
@@ -298,7 +293,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [vehicleId]);
+  }, [vehicleId, tr]);
 
   useEffect(() => { load(from, to); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -315,7 +310,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="flex-1 space-y-1">
             <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> From (MY time)
+              <Calendar className="h-3 w-3" /> {tr("fromLabel")}
             </label>
             <input
               type="datetime-local"
@@ -326,7 +321,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
           </div>
           <div className="flex-1 space-y-1">
             <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> To (MY time)
+              <Calendar className="h-3 w-3" /> {tr("toLabel")}
             </label>
             <input
               type="datetime-local"
@@ -337,18 +332,18 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
           </div>
           <Button
             size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 flex-shrink-0"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shrink-0"
             onClick={() => load(from, to)}
             disabled={loading}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Route className="h-3.5 w-3.5" />}
-            {loading ? "Loading…" : "Load Trips"}
+            {loading ? tr("loading") : tr("loadTrips")}
           </Button>
         </div>
         {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
         {trips !== null && !loading && (
           <p className="text-xs text-muted-foreground mt-2">
-            {trips.length} trip{trips.length !== 1 ? "s" : ""} · {totalPoints} points
+            {trips.length} {tr("tripsFound")} · {totalPoints} {tr("pointsFound")}
           </p>
         )}
       </div>
@@ -365,7 +360,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
       {/* ── Trip list ────────────────────────────────────────────────── */}
       {trips !== null && trips.length === 0 && !loading && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          No trips found for this time range.
+          {tr("noTripsFound")}
         </p>
       )}
 
@@ -373,7 +368,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 border-b border-border/30">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Trips — click a row to show route
+              {tr("tripListHeader")}
             </h3>
           </div>
           {trips.map((trip, i) => (
@@ -386,21 +381,21 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
                 ${selectedIdx === i ? "bg-primary/5" : "hover:bg-muted/30"}
               `}
             >
-              <div className={`h-2.5 w-2.5 rounded-full flex-shrink-0 transition-colors ${selectedIdx === i ? "bg-primary" : "bg-muted-foreground/25"}`} />
+              <div className={`h-2.5 w-2.5 rounded-full shrink-0 transition-colors ${selectedIdx === i ? "bg-primary" : "bg-muted-foreground/25"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-foreground">Trip {trip.id}</span>
+                  <span className="text-xs font-semibold text-foreground">{tr("tripLabel")} {trip.id}</span>
                   <span className="text-xs text-muted-foreground">
                     {formatMyTime(trip.startedAt)} → {formatMyTime(trip.endedAt)}
                   </span>
                 </div>
                 <div className="flex gap-3 mt-0.5">
-                  <span className="text-xs text-muted-foreground">{trip.durationMinutes} min</span>
-                  <span className="text-xs text-muted-foreground">{trip.distanceKm} km</span>
+                  <span className="text-xs text-muted-foreground">{trip.durationMinutes} {tr("durationMin")}</span>
+                  <span className="text-xs text-muted-foreground">{trip.distanceKm} {tr("distanceKm")}</span>
                   <span className="text-xs text-muted-foreground">{trip.pointCount} pts</span>
                 </div>
               </div>
-              <ChevronRight className={`h-3.5 w-3.5 flex-shrink-0 transition-colors ${selectedIdx === i ? "text-primary" : "text-muted-foreground/30"}`} />
+              <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-colors ${selectedIdx === i ? "text-primary" : "text-muted-foreground/30"}`} />
             </button>
           ))}
         </div>
@@ -418,25 +413,31 @@ export function VehicleDetailTabs({
   speed,
   todayKm,
 }: VehicleDetailTabsProps) {
+  const { tr } = useLang();
   const [tab, setTab] = useState<"overview" | "history">("overview");
+
+  const tabs = [
+    { key: "overview" as const, label: tr("overview") },
+    { key: "history"  as const, label: tr("tripHistory") },
+  ];
 
   return (
     <div>
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
       <div className="flex gap-1 px-4 sm:px-6 mb-4 border-b border-border">
-        {(["overview", "history"] as const).map((t) => (
+        {tabs.map(({ key, label }) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={key}
+            onClick={() => setTab(key)}
             className={`
-              px-4 py-2.5 text-sm font-medium capitalize transition-colors relative
-              ${tab === t
+              px-4 py-2.5 text-sm font-medium transition-colors relative
+              ${tab === key
                 ? "text-primary after:absolute after:bottom-0 after:inset-x-0 after:h-0.5 after:bg-primary after:rounded-t-full"
                 : "text-muted-foreground hover:text-foreground"
               }
             `}
           >
-            {t}
+            {label}
           </button>
         ))}
       </div>
