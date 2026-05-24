@@ -73,7 +73,7 @@ export default function LandingPage() {
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                   Beta · Free for all Malaysian fleets
                 </div>
-                <h1 className="font-display text-[3rem] sm:text-[3.75rem] lg:text-[4.25rem] text-foreground leading-[1.03] tracking-tight mb-6">
+                <h1 className="font-display text-[2.4rem] sm:text-[3rem] lg:text-[4.25rem] text-foreground leading-[1.03] tracking-tight mb-6">
                   Track your fleet.
                   <br />
                   <span className="text-primary">In real time.</span>
@@ -131,10 +131,10 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Secondary features: compact flex list, no card boxes */}
-          <div className="border-t border-border/40 pt-8 flex flex-wrap gap-x-8 gap-y-6">
+          {/* Secondary features: compact grid list, no card boxes */}
+          <div className="border-t border-border/40 pt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-6">
             {secondaryFeatures.map((f) => (
-              <div key={f.title} className="flex items-start gap-3 min-w-45 flex-1">
+              <div key={f.title} className="flex items-start gap-3">
                 <div className="mt-0.5 text-muted-foreground shrink-0">{f.icon}</div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">{f.title}</p>
@@ -149,7 +149,7 @@ export default function LandingPage() {
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-foreground p-10 sm:p-14 text-center">
+          <div className="relative overflow-hidden rounded-3xl bg-foreground p-8 sm:p-12 md:p-14 text-center">
             <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
             <div className="relative">
@@ -177,10 +177,10 @@ export default function LandingPage() {
             </div>
             <span>© 2026 {PRODUCT_NAME}. All rights reserved.</span>
           </div>
-          <div className="flex items-center gap-6 text-xs">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="mailto:support@atlasfleet.app" className="hover:text-foreground transition-colors">Contact</a>
+          <div className="flex items-center gap-2 text-xs">
+            <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Terms of Service</a>
+            <a href="mailto:support@atlasfleet.app" className="py-2 px-2 hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>
       </footer>
