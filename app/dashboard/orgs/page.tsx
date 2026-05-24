@@ -3,6 +3,7 @@ import { Plus, Building2, Users, Car, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/dashboard/PageTitle";
+import { OrgSubtitle } from "@/components/dashboard/OrgSubtitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
@@ -46,7 +47,7 @@ export default async function OrgsPage() {
             <PageTitle k="organisations" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {memberships.length} organisation{memberships.length !== 1 ? "s" : ""}
+            <OrgSubtitle count={memberships.length} />
           </p>
         </div>
         <Button

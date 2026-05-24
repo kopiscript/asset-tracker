@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Users, Car, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { getOrgRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { OrgPageClient } from "./OrgPageClient";
 import { RemoveMemberButton } from "./RemoveMemberButton";
+import type { TranslationKey } from "@/lib/translations";
 
 export default async function OrgDetailPage(
   props: PageProps<"/dashboard/orgs/[id]">
@@ -54,7 +56,7 @@ export default async function OrgDetailPage(
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-foreground leading-none tracking-tight">{org.name}</h1>
-          <p className="text-sm text-muted-foreground capitalize mt-1">Your role: {userRole}</p>
+          <p className="text-sm text-muted-foreground mt-1"><PageTitle k="yourRole" />: <PageTitle k={userRole as TranslationKey} /></p>
         </div>
       </div>
 
@@ -62,7 +64,7 @@ export default async function OrgDetailPage(
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Users className="h-4 w-4" /> Members ({org.members.length})
+            <Users className="h-4 w-4" /> <PageTitle k="members" /> ({org.members.length})
           </h2>
           {canManage && (
             <OrgPageClient orgId={id} />
@@ -82,11 +84,11 @@ export default async function OrgDetailPage(
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   {m.user.name}
-                  {m.userId === dbUser.id && <span className="ml-1.5 text-xs text-muted-foreground">(you)</span>}
+                  {m.userId === dbUser.id && <span className="ml-1.5 text-xs text-muted-foreground"><PageTitle k="you" /></span>}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
               </div>
-              <Badge className={`text-xs capitalize border ${roleColor(m.role)}`}>{m.role}</Badge>
+              <Badge className={`text-xs border ${roleColor(m.role)}`}><PageTitle k={m.role as TranslationKey} /></Badge>
               {canManage && m.userId !== dbUser.id && (
                 <RemoveMemberButton
                   orgId={id}
@@ -97,7 +99,7 @@ export default async function OrgDetailPage(
             </div>
           ))}
           {org.members.length === 0 && (
-            <div className="py-8 text-center text-sm text-muted-foreground">No members yet.</div>
+            <div className="py-8 text-center text-sm text-muted-foreground"><PageTitle k="noMembers" /></div>
           )}
         </div>
       </div>
@@ -106,7 +108,7 @@ export default async function OrgDetailPage(
       {org.vehicles.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-            <Car className="h-4 w-4" /> Vehicles ({org.vehicles.length})
+            <Car className="h-4 w-4" /> <PageTitle k="vehicles" /> ({org.vehicles.length})
           </h2>
           <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
             {org.vehicles.map((v, i) => (

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { useLang } from "@/components/LanguageProvider";
 
 interface Props {
   orgId: string;
@@ -15,6 +16,7 @@ interface Props {
 
 export function OrgPageClient({ orgId }: Props) {
   const router = useRouter();
+  const { tr } = useLang();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("viewer");
@@ -37,7 +39,7 @@ export function OrgPageClient({ orgId }: Props) {
     setLoading(false);
 
     if (!res.ok) {
-      setError(json?.error ?? "Failed.");
+      setError(json?.error ?? tr("noData"));
       return;
     }
 
@@ -54,7 +56,7 @@ export function OrgPageClient({ orgId }: Props) {
         className="gap-1.5 text-xs"
         onClick={() => setOpen(true)}
       >
-        <UserPlus className="h-3.5 w-3.5" /> Invite
+        <UserPlus className="h-3.5 w-3.5" /> {tr("invite")}
       </Button>
     );
   }
@@ -66,7 +68,7 @@ export function OrgPageClient({ orgId }: Props) {
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email address…"
+        placeholder={`${tr("emailAddress")}…`}
         className="h-8 text-xs w-48"
         required
       />
@@ -75,17 +77,17 @@ export function OrgPageClient({ orgId }: Props) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="owner">Owner</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
-          <SelectItem value="viewer">Viewer</SelectItem>
+          <SelectItem value="owner">{tr("owner")}</SelectItem>
+          <SelectItem value="admin">{tr("admin")}</SelectItem>
+          <SelectItem value="viewer">{tr("viewer")}</SelectItem>
         </SelectContent>
       </Select>
       {error && <span className="text-xs text-red-500">{error}</span>}
       <Button size="sm" type="submit" disabled={loading} className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90">
-        {loading ? "…" : "Add"}
+        {loading ? "…" : tr("add")}
       </Button>
       <Button size="sm" type="button" variant="ghost" className="h-8 text-xs" onClick={() => { setOpen(false); setError(""); }}>
-        Cancel
+        {tr("cancel")}
       </Button>
     </form>
   );

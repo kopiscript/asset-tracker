@@ -50,11 +50,13 @@ export const t = {
 
     // Roles
     owner: "Owner",
+    admin: "Admin",
     editor: "Editor",
     viewer: "Viewer",
 
     // Common
     save: "Save",
+    add: "Add",
     cancel: "Cancel",
     delete: "Delete",
     loading: "Loading...",
@@ -156,7 +158,14 @@ export const t = {
     ctaTitle: "Ready to take control of your fleet?",
     ctaSubtitle: "Sign up in seconds — no credit card required.",
 
+    // Org detail
+    you: "(you)",
+    noMembers: "No members yet.",
+    removeConfirm: "Remove {name} from this organisation?",
+    failedRemove: "Failed to remove member.",
+
     // Settings
+    settingsSubtitle: "Manage your account and preferences.",
     settingsTitle: "Account Settings",
     language: "Language",
     appearance: "Appearance",
@@ -230,11 +239,13 @@ export const t = {
 
     // Roles
     owner: "Pemilik",
+    admin: "Admin",
     editor: "Penyunting",
     viewer: "Penonton",
 
     // Common
     save: "Simpan",
+    add: "Tambah",
     cancel: "Batal",
     delete: "Padam",
     loading: "Memuatkan...",
@@ -337,7 +348,14 @@ export const t = {
     ctaTitle: "Bersedia untuk mengawal fleet anda?",
     ctaSubtitle: "Daftar dalam beberapa saat — tiada kad kredit diperlukan.",
 
+    // Org detail
+    you: "(anda)",
+    noMembers: "Tiada ahli lagi.",
+    removeConfirm: "Buang {name} daripada organisasi ini?",
+    failedRemove: "Gagal membuang ahli.",
+
     // Settings
+    settingsSubtitle: "Urus akaun dan keutamaan anda.",
     settingsTitle: "Tetapan Akaun",
     language: "Bahasa",
     appearance: "Penampilan",

@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { PageTitle } from "@/components/dashboard/PageTitle";
 import { SettingsClient } from "./SettingsClient";
 
+
 export default async function SettingsPage() {
   const session = await auth();
 
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight"><PageTitle k="settings" /></h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage your account and preferences.
+          <PageTitle k="settingsSubtitle" />
         </p>
       </div>
 
