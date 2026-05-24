@@ -13,7 +13,7 @@ export default function NotFound() {
               <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center shrink-0">
                 <MapPin className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">Atlas</span>
+              <span className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">Mirae</span>
             </div>
 
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4">

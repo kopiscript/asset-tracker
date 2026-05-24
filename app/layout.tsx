@@ -32,7 +32,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Atlas — Fleet Tracking",
+  title: "Mirae — Fleet Tracking",
   description:
     "Real-time vehicle tracking for Malaysian fleets. Monitor positions, manage access, and review trip history.",
 };

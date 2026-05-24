@@ -14,7 +14,7 @@ import {
   Check,
 } from "lucide-react";
 
-const PRODUCT_NAME = "Atlas";
+const PRODUCT_NAME = "Mirae";
 
 const primaryFeatures = [
   {
@@ -113,7 +113,7 @@ export default function LandingPage() {
           {/* Section header */}
           <div className="mb-14">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-3">
-              What Atlas does
+              What Mirae does
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <h2 className="font-display text-3xl sm:text-4xl text-foreground max-w-[18ch] leading-tight">
@@ -184,7 +184,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 text-xs">
             <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Privacy Policy</a>
             <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="mailto:support@atlasfleet.app" className="py-2 px-2 hover:text-foreground transition-colors">Contact</a>
+            <a href="mailto:support@miraefleet.app" className="py-2 px-2 hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>
       </footer>
@@ -217,7 +217,7 @@ function DashboardPreview() {
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
           <div className="ml-3 flex-1 bg-white/80 rounded-md h-5 flex items-center px-2.5">
-            <span className="text-[10px] text-[#999] font-mono">atlas.app/dashboard</span>
+            <span className="text-[10px] text-[#999] font-mono">mirae.app/dashboard</span>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ function DashboardPreview() {
                   <path d="M3.5 0C1.57 0 0 1.57 0 3.5C0 6.125 3.5 9 3.5 9C3.5 9 7 6.125 7 3.5C7 1.57 5.43 0 3.5 0Z" fill="white" />
                 </svg>
               </div>
-              <span className="text-[9px] font-bold tracking-widest text-[#1d1d1f] uppercase">Atlas</span>
+              <span className="text-[9px] font-bold tracking-widest text-[#1d1d1f] uppercase">Mirae</span>
             </div>
             {navItems.map((item, i) => (
               <div

@@ -75,7 +75,7 @@ export function PricingSection() {
                 <p className="text-[11px] text-muted-foreground">per device, one-time</p>
               </div>
               <a
-                href="mailto:support@atlasfleet.app?subject=Hardware Purchase Inquiry"
+                href="mailto:support@miraefleet.app?subject=Hardware Purchase Inquiry"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors min-h-[44px]"
               >
                 Order device <ArrowRight className="h-3.5 w-3.5" />
@@ -224,7 +224,7 @@ export function PricingSection() {
             </p>
           </div>
           <a
-            href="mailto:support@atlasfleet.app?subject=Enterprise Inquiry"
+            href="mailto:support@miraefleet.app?subject=Enterprise Inquiry"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold text-foreground border border-border/60 hover:border-primary/40 hover:text-primary px-6 py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px] shrink-0"
           >
             Talk to us <ArrowRight className="h-3.5 w-3.5" />

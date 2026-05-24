@@ -1,4 +1,4 @@
-# Atlas — Product Requirements Document
+# Mirae — Product Requirements Document
 
 **Version:** 1.4
 **Audience:** Developers
@@ -9,19 +9,19 @@
 
 ## 1. Overview
 
-Atlas is a web-based vehicle asset tracking platform. It receives GPS location data from hardware installed in client vehicles, stores it, and presents it through a live map and trip history interface.
+Mirae is a web-based vehicle asset tracking platform. It receives GPS location data from hardware installed in client vehicles, stores it, and presents it through a live map and trip history interface.
 
-Atlas is mobile-friendly (responsive web, not a native app).
+Mirae is mobile-friendly (responsive web, not a native app).
 
 **Go-to-market:**
 - **Plan A (primary):** Purpose-built for Perodua car dealerships operating vehicle fleets (demo cars, service loaners, staff vehicles).
-- **Plan B (fallback):** If Perodua does not proceed, Atlas pivots to commercial SaaS open to any fleet operator. Multi-tenancy (Organisation model) is already implemented.
+- **Plan B (fallback):** If Perodua does not proceed, Mirae pivots to commercial SaaS open to any fleet operator. Multi-tenancy (Organisation model) is already implemented.
 
 ---
 
 ## 2. Problem Statement
 
-Perodua car dealerships have GPS hardware installed in their vehicles but no software layer to receive, store, or visualise that data. Atlas fills that gap.
+Perodua car dealerships have GPS hardware installed in their vehicles but no software layer to receive, store, or visualise that data. Mirae fills that gap.
 
 ---
 
@@ -242,7 +242,7 @@ Two tabs:
 
 | # | Decision | Alternatives | Why |
 |---|---|---|---|
-| 1 | Product named **Atlas** | FleetTrack, Tractus | Short, map connotation; client preference |
+| 1 | Product named **Mirae** | FleetTrack, Tractus | Short, map connotation; client preference |
 | 2 | **60s polling** for live map | SSE, WebSockets | GPS updates at ~60s make SSE indistinguishable; simpler stack |
 | 3 | **TelemetryRecord** for GPS storage | Separate `LocationHistory` table | Hardware sends full telemetry payload; one model captures everything; no dual-write complexity |
 | 4 | **Position derived from latest TelemetryRecord** | Store lat/lng on Vehicle | Single source of truth; no dual-write; position is always consistent with history |

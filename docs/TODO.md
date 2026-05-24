@@ -1,4 +1,4 @@
-# Atlas v1 — Implementation To-Do
+# Mirae v1 — Implementation To-Do
 
 > **Before you start:** Read `CLAUDE.md` in the project root first. It documents breaking changes in Next.js 16, Prisma 7, shadcn/ui, and NextAuth v5 that are not obvious from training data.
 

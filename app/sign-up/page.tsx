@@ -55,7 +55,7 @@ export default function SignUpPage() {
           <div className="h-9 w-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
             <MapPin className="h-5 w-5 text-white" />
           </div>
-          <span className="text-white font-bold text-xl tracking-[0.15em] uppercase">Atlas</span>
+          <span className="text-white font-bold text-xl tracking-[0.15em] uppercase">Mirae</span>
         </div>
 
         {/* Tagline */}
@@ -94,7 +94,7 @@ export default function SignUpPage() {
             <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <MapPin className="h-3.5 w-3.5 text-primary" />
             </div>
-            <span className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">Atlas</span>
+            <span className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">Mirae</span>
           </div>
 
           <h1 className="font-display text-3xl text-foreground mb-1.5">Create account</h1>

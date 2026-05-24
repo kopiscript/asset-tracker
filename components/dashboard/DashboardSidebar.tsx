@@ -76,7 +76,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         </div>
         <div className="flex flex-col leading-none">
           <span className="text-xs font-semibold tracking-[0.2em] text-foreground uppercase">
-            Atlas
+            Mirae
           </span>
           <span className="text-[10px] text-muted-foreground tracking-wide mt-0.5">
             {isAdmin ? tr("adminPanel") : "Fleet Tracking"}

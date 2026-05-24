@@ -65,7 +65,7 @@
 }
 
 /* ─── Light mode — Apple Clarity Light ──────────────────────────────────── */
-/* Color story: Apple's exact light palette + Atlas blue accent.             */
+/* Color story: Apple's exact light palette + Mirae blue accent.             */
 /*   Background  #ffffff  — pure white (Apple marketing pages)              */
 /*   Card        #f5f5f7  — Apple systemGroupedBackground                   */
 /*   Secondary   #e8e8ed  — Apple secondaryGroupedBackground                */
@@ -120,7 +120,7 @@
 /* ─── Dark mode — Apple Precision Dark ──────────────────────────────────── */
 /* To reskin: edit only this block. All components use these variables.      */
 /*                                                                           */
-/* Color story: Apple's exact dark palette + Atlas teal accent.              */
+/* Color story: Apple's exact dark palette + Mirae teal accent.              */
 /*   Background  #000000  — OLED true black (Apple signature)                */
 /*   Card        #1c1c1e  — Apple systemGroupedBackground                    */
 /*   Secondary   #2c2c2e  — Apple secondaryGroupedBackground                 */
