@@ -41,14 +41,16 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
 
   if (initialVehicles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Car className="h-12 w-12 text-muted-foreground/30 mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          No vehicles yet
-        </h3>
-        <p className="text-sm text-muted-foreground max-w-sm">
-          Add your first vehicle to start tracking it on the map.
-        </p>
+      <div className="border border-border/50 rounded-xl overflow-hidden">
+        <div className="flex flex-col items-center justify-center py-24 text-center px-6">
+          <div className="h-14 w-14 rounded-2xl bg-muted/60 border border-border/40 flex items-center justify-center mb-5">
+            <Car className="h-6 w-6 text-muted-foreground/40" />
+          </div>
+          <p className="text-sm font-medium text-foreground mb-1">No vehicles yet</p>
+          <p className="text-sm text-muted-foreground max-w-[36ch]">
+            Add your first GPS device to start tracking your fleet on the live map.
+          </p>
+        </div>
       </div>
     );
   }
@@ -80,9 +82,9 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">
+        <div className="border border-border/50 rounded-xl py-16 text-center text-sm text-muted-foreground">
           No vehicles match your search.
-        </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((v) => (

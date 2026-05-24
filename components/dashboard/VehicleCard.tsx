@@ -1,12 +1,7 @@
-/**
- * components/dashboard/VehicleCard.tsx
- * Card component that displays a single vehicle's summary.
- */
 "use client";
 
 import Link from "next/link";
 import { Car, Edit, Share2, MapPin, Clock, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useLang } from "@/components/LanguageProvider";
@@ -30,71 +25,88 @@ interface VehicleCardProps {
   vehicle: VehicleCardData;
 }
 
+const statusAccent: Record<string, string> = {
+  active:  "bg-green-500",
+  idle:    "bg-amber-400",
+  offline: "bg-zinc-300",
+};
+
 export function VehicleCard({ vehicle }: VehicleCardProps) {
   const { tr } = useLang();
-  const canEdit = vehicle.userRole === "editor" || vehicle.userRole === "owner";
+  const canEdit  = vehicle.userRole === "editor" || vehicle.userRole === "owner";
   const canShare = vehicle.userRole === "owner";
+  const accent   = statusAccent[vehicle.status] ?? statusAccent.offline;
 
   return (
-    <div className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/20 transition-all duration-300 flex flex-col">
-      {/* ── Vehicle placeholder ─────────────────────────────────────── */}
-      <div className="h-32 bg-secondary flex items-center justify-center relative flex-shrink-0">
-        <Car className="h-12 w-12 text-primary/30" />
-        <div className="absolute top-2 right-2">
-          <StatusBadge status={vehicle.status} />
-        </div>
-      </div>
+    <div className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/20 hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.07)] transition-all duration-200 flex flex-col group">
+      {/* Status accent line */}
+      <div className={`h-0.5 w-full ${accent}`} />
 
-      {/* ── Card body ───────────────────────────────────────────────── */}
       <div className="p-4 flex flex-col flex-1">
-        <div className="mb-3">
-          <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">
-            {vehicle.name ?? vehicle.imei}
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs bg-muted text-foreground px-2 py-0.5 rounded border border-border">
+        {/* Header: name + status badge */}
+        <div className="flex items-start justify-between gap-2 mb-3.5">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground text-sm leading-tight truncate mb-1.5">
+              {vehicle.name ?? vehicle.imei}
+            </h3>
+            <span className="font-mono text-xs bg-muted text-foreground px-2 py-0.5 rounded-md border border-border/60">
               {vehicle.plateNumber ?? "—"}
             </span>
-            {vehicle.type && (
-              <Badge variant="secondary" className="text-xs">
-                {vehicle.type}
-              </Badge>
-            )}
           </div>
+          <StatusBadge status={vehicle.status} />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <User className="h-3 w-3" />
-            <span className="truncate">
-              {vehicle.driverName ?? tr("noDriver")}
-            </span>
+        {/* Meta rows */}
+        <div className="space-y-1.5 mb-4 text-xs text-muted-foreground">
+          {vehicle.type && (
+            <div className="flex items-center gap-1.5">
+              <Car className="h-3 w-3 shrink-0" />
+              <span className="capitalize">{vehicle.type}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <User className="h-3 w-3 shrink-0" />
+            <span className="truncate">{vehicle.driverName ?? tr("noDriver")}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
-            <Clock className="h-3 w-3" />
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3 shrink-0" />
             <span>{timeAgo(vehicle.lastSeenAt)}</span>
           </div>
         </div>
 
         <div className="flex-1" />
 
-        <div className="flex gap-2 mt-2 flex-wrap">
-          <Button size="sm" variant="outline" className="flex-1 min-w-0 gap-1.5" render={<Link href={`/dashboard/vehicles/${vehicle.id}`} />}>
+        {/* Actions */}
+        <div className="flex gap-1.5 pt-3 border-t border-border/40">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 min-w-0 gap-1.5 h-8 text-xs active:scale-[0.98] transition-transform"
+            render={<Link href={`/dashboard/vehicles/${vehicle.id}`} />}
+          >
             <MapPin className="h-3 w-3" />
-            <span className="text-xs">{tr("viewOnMap")}</span>
+            {tr("viewOnMap")}
           </Button>
 
           {canEdit && (
-            <Button size="sm" variant="outline" className="gap-1.5" render={<Link href={`/dashboard/vehicles/${vehicle.id}/edit`} />}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 h-8 active:scale-[0.98] transition-transform"
+              render={<Link href={`/dashboard/vehicles/${vehicle.id}/edit`} />}
+            >
               <Edit className="h-3 w-3" />
-              <span className="text-xs sr-only sm:not-sr-only">{tr("editVehicle")}</span>
             </Button>
           )}
 
           {canShare && (
-            <Button size="sm" variant="outline" className="gap-1.5" render={<Link href={`/dashboard/vehicles/${vehicle.id}/share`} />}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 h-8 active:scale-[0.98] transition-transform"
+              render={<Link href={`/dashboard/vehicles/${vehicle.id}/share`} />}
+            >
               <Share2 className="h-3 w-3" />
-              <span className="text-xs sr-only sm:not-sr-only">{tr("shareVehicle")}</span>
             </Button>
           )}
         </div>

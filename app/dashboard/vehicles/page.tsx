@@ -90,15 +90,15 @@ export default async function VehiclesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Vehicles</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">Vehicles</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} total
           </p>
         </div>
         <Button
-          className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold active:scale-[0.98] transition-transform"
           render={<Link href="/dashboard/vehicles/new" />}
         >
           <Plus className="h-4 w-4" />

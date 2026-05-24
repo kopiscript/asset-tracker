@@ -25,7 +25,7 @@ export function LandingAuthButtons({
 
   if (isHero) {
     return (
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3">
         {isSignedIn ? (
           <Link href="/dashboard">
             <Button

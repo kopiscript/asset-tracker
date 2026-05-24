@@ -37,14 +37,16 @@ export default function NewVehiclePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-8">
         <Button variant="ghost" size="icon" render={<Link href="/dashboard/vehicles" />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Add Vehicle</h1>
-          <p className="text-sm text-muted-foreground">
-            Fill in the details to add a new vehicle to your fleet.
+          <h1 className="text-xl font-semibold text-foreground tracking-tight leading-none">
+            Add Vehicle
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Register a new GPS device to your fleet.
           </p>
         </div>
       </div>

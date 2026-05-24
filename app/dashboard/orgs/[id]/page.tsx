@@ -53,8 +53,8 @@ export default async function OrgDetailPage(
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">{org.name}</h1>
-          <p className="text-sm text-muted-foreground capitalize">Your role: {userRole}</p>
+          <h1 className="text-xl font-semibold text-foreground leading-none tracking-tight">{org.name}</h1>
+          <p className="text-sm text-muted-foreground capitalize mt-1">Your role: {userRole}</p>
         </div>
       </div>
 

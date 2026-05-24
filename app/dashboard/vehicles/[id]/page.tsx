@@ -89,7 +89,7 @@ export default async function VehicleDetailPage(
 
         <div className="flex items-center gap-2">
           {userCanEdit && (
-            <Button variant="outline" size="sm" className="gap-1.5" render={<Link href={`/dashboard/vehicles/${id}/edit`} />}>
+            <Button variant="outline" size="sm" className="gap-1.5 active:scale-[0.98] transition-transform" render={<Link href={`/dashboard/vehicles/${id}/edit`} />}>
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Edit</span>
             </Button>

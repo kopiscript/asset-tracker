@@ -28,15 +28,14 @@ function StatCard({
   valueClass: string;
 }) {
   return (
-    <div className="bg-card border border-border rounded-xl px-4 py-3.5">
+    <div className="bg-card border border-border/60 rounded-xl px-4 py-4">
+      <div className="flex items-center gap-2 mb-3">
+        {icon}
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      </div>
       <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
         {value}
       </p>
-      <div className="h-px bg-border my-3" />
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-        {icon}
-      </div>
     </div>
   );
 }
@@ -124,7 +123,7 @@ export default async function AdminPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div>
-        <h1 className="font-display text-2xl text-foreground leading-none tracking-tight">
+        <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
           Admin Panel
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -167,7 +166,7 @@ export default async function AdminPage() {
 
       {/* ── Vehicle table ──────────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between border-t border-border/40 pt-6 mb-4">
           <h2 className="text-sm font-semibold text-foreground">All Vehicles</h2>
           <AdminAddVehicleForm orgs={orgOptions} />
         </div>
@@ -220,7 +219,7 @@ export default async function AdminPage() {
 
       {/* ── Org table ──────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">All Organisations</h2>
+        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4">All Organisations</h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -264,7 +263,7 @@ export default async function AdminPage() {
 
       {/* ── User table ─────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">All Users</h2>
+        <h2 className="text-sm font-semibold text-foreground border-t border-border/40 pt-6 mb-4">All Users</h2>
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>

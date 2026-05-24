@@ -217,7 +217,7 @@ function OverviewTab({
               {vehicle.orgName ?? "—"}
             </DetailRow>
             <Separator className="bg-border/50" />
-            <DetailRow icon={<div className="h-4 w-4 text-xs flex items-center">👤</div>} label="Your Role">
+            <DetailRow icon={<User className="h-4 w-4" />} label="Your Role">
               <span className="capitalize">{vehicle.userRole}</span>
             </DetailRow>
             {hasLocation && (

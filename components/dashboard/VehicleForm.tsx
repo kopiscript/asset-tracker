@@ -144,7 +144,7 @@ export function VehicleForm({
         <Button
           type="submit"
           disabled={loading}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold active:scale-[0.98] transition-transform"
         >
           {loading ? "Saving…" : submitLabel}
         </Button>
@@ -153,6 +153,7 @@ export function VehicleForm({
           variant="outline"
           onClick={() => router.back()}
           disabled={loading}
+          className="active:scale-[0.98] transition-transform"
         >
           Cancel
         </Button>

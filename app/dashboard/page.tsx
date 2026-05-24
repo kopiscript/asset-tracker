@@ -76,7 +76,7 @@ export default async function DashboardPage() {
       <div className="flex-shrink-0 px-5 sm:px-6 pt-5 pb-4">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="font-display text-2xl text-foreground leading-none tracking-tight">
+            <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
               Dashboard
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
           </div>
           <Button
             size="sm"
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium active:scale-[0.98] transition-transform"
             render={<Link href="/dashboard/vehicles/new" />}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -199,17 +199,16 @@ function StatCard({
   valueClass: string;
 }) {
   return (
-    <div className="bg-card border border-border rounded-xl px-4 py-3.5">
-      <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
-        {value}
-      </p>
-      <div className="h-px bg-border my-3" />
-      <div className="flex items-center justify-between">
+    <div className="bg-card border border-border/60 rounded-xl px-4 py-4">
+      <div className="flex items-center gap-2 mb-3">
+        {icon}
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {label}
         </p>
-        {icon}
       </div>
+      <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
+        {value}
+      </p>
     </div>
   );
 }
