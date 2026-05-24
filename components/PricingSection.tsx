@@ -50,8 +50,8 @@ export function PricingSection() {
         </div>
 
         {/* ── Step 1: Hardware ─────────────────────────────────────────── */}
-        <div className="relative mb-2">
-          <span className="absolute -top-3 left-6 bg-background px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="mb-2">
+          <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Step 1 — Hardware
           </span>
           <div className="bg-card border border-border/50 rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-5">
