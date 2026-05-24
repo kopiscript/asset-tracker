@@ -175,11 +175,11 @@ export default async function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicle</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Org</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Last Seen</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Speed</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colVehicle" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell"><PageTitle k="colOrg" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="status" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell"><PageTitle k="lastSeen" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell"><PageTitle k="colSpeed" /></th>
               </tr>
             </thead>
             <tbody>
@@ -203,7 +203,7 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {v.lastSeenAt ? timeAgo(v.lastSeenAt) : "Never"}
+                    {v.lastSeenAt ? timeAgo(v.lastSeenAt) : <PageTitle k="never" />}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                     {v.speed != null ? `${v.speed.toFixed(1)} km/h` : "—"}
@@ -213,7 +213,7 @@ export default async function AdminPage() {
             </tbody>
           </table>
           {vehicleRows.length === 0 && (
-            <div className="py-12 text-center text-sm text-muted-foreground">No vehicles in system.</div>
+            <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noVehiclesInSystem" /></div>
           )}
         </div>
       </div>
@@ -225,10 +225,10 @@ export default async function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organisation</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Members</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vehicles</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manage</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="organisation" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell"><PageTitle k="members" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="vehicles" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colManage" /></th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +249,7 @@ export default async function AdminPage() {
                       href={`/dashboard/orgs/${o.id}`}
                       className="text-xs text-primary hover:underline font-medium"
                     >
-                      Configure →
+                      <PageTitle k="configure" />
                     </Link>
                   </td>
                 </tr>
@@ -257,7 +257,7 @@ export default async function AdminPage() {
             </tbody>
           </table>
           {orgs.length === 0 && (
-            <div className="py-12 text-center text-sm text-muted-foreground">No organisations in system.</div>
+            <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noOrgsInSystem" /></div>
           )}
         </div>
       </div>
@@ -269,10 +269,10 @@ export default async function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Orgs</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Joined</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colUser" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell"><PageTitle k="colRole" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"><PageTitle k="colOrgs" /></th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell"><PageTitle k="colJoined" /></th>
               </tr>
             </thead>
             <tbody>
@@ -294,7 +294,7 @@ export default async function AdminPage() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {u.orgMemberships.length === 0 ? (
-                        <span className="text-muted-foreground text-xs">None</span>
+                        <span className="text-muted-foreground text-xs"><PageTitle k="noneAssigned" /></span>
                       ) : (
                         u.orgMemberships.slice(0, 3).map((m) => (
                           <Link
@@ -320,7 +320,7 @@ export default async function AdminPage() {
             </tbody>
           </table>
           {users.length === 0 && (
-            <div className="py-12 text-center text-sm text-muted-foreground">No users in system.</div>
+            <div className="py-12 text-center text-sm text-muted-foreground"><PageTitle k="noUsersInSystem" /></div>
           )}
         </div>
       </div>

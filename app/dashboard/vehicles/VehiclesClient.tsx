@@ -46,10 +46,8 @@ export function VehiclesClient({ initialVehicles }: VehiclesClientProps) {
           <div className="h-14 w-14 rounded-2xl bg-muted/60 border border-border/40 flex items-center justify-center mb-5">
             <Car className="h-6 w-6 text-muted-foreground/40" />
           </div>
-          <p className="text-sm font-medium text-foreground mb-1">No vehicles yet</p>
-          <p className="text-sm text-muted-foreground max-w-[36ch]">
-            Add your first GPS device to start tracking your fleet on the live map.
-          </p>
+          <p className="text-sm font-medium text-foreground mb-1">{tr("noVehicles")}</p>
+          <p className="text-sm text-muted-foreground max-w-[36ch]">{tr("noVehiclesDesc")}</p>
         </div>
       </div>
     );

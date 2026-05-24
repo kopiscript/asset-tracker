@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PageTitle } from "@/components/dashboard/PageTitle";
+import { FleetSubtitle } from "@/components/dashboard/FleetSubtitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
@@ -81,7 +82,7 @@ export default async function DashboardPage() {
               <PageTitle k="dashboard" />
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in your organisations
+              <FleetSubtitle count={vehicles.length} />
             </p>
           </div>
           <Button
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
             render={<Link href="/dashboard/vehicles/new" />}
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Vehicle
+            <PageTitle k="addVehicle" />
           </Button>
         </div>
 
@@ -134,25 +135,25 @@ export default async function DashboardPage() {
         <aside className="hidden xl:flex flex-col w-68 flex-shrink-0 overflow-y-auto gap-1.5">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Vehicles
+              <PageTitle k="vehicles" />
             </h2>
             <Link
               href="/dashboard/vehicles"
               className="text-xs text-primary hover:text-primary/80 transition-colors"
             >
-              View all
+              <PageTitle k="viewAll" />
             </Link>
           </div>
 
           {vehicles.length === 0 ? (
             <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
               <Car className="h-8 w-8 text-muted-foreground/20 mb-3" />
-              <p className="text-sm text-muted-foreground">No vehicles yet</p>
+              <p className="text-sm text-muted-foreground"><PageTitle k="noVehicles" /></p>
               <Link
                 href="/dashboard/vehicles/new"
                 className="text-xs text-primary hover:underline mt-1.5"
               >
-                Add one →
+                <PageTitle k="addOneArrow" />
               </Link>
             </div>
           ) : (

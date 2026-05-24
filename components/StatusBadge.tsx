@@ -1,38 +1,31 @@
-/**
- * components/StatusBadge.tsx
- * Coloured badge showing a vehicle's operational status.
- * Green = Active, Yellow = Idle, Red = Offline.
- */
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { useLang } from "@/components/LanguageProvider";
+import type { TranslationKey } from "@/lib/translations";
 
 type Status = "active" | "idle" | "offline";
 
-interface StatusBadgeProps {
-  status: Status | string;
-}
-
-const config: Record<string, { dot: string; badge: string; label: string }> = {
+const config: Record<string, { dot: string; badge: string; labelKey: TranslationKey }> = {
   active: {
     dot: "bg-green-500",
-    badge:
-      "bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/15",
-    label: "Active",
+    badge: "bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/15",
+    labelKey: "statusActive",
   },
   idle: {
     dot: "bg-yellow-500",
-    badge:
-      "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/15",
-    label: "Idle",
+    badge: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/15",
+    labelKey: "statusIdle",
   },
   offline: {
     dot: "bg-red-500",
-    badge:
-      "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/15",
-    label: "Offline",
+    badge: "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/15",
+    labelKey: "statusOffline",
   },
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status }: { status: Status | string }) {
+  const { tr } = useLang();
   const cfg = config[status] ?? config.offline;
   return (
     <Badge
@@ -40,7 +33,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       className={`gap-1.5 font-medium text-xs ${cfg.badge}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot} animate-pulse`} />
-      {cfg.label}
+      {tr(cfg.labelKey)}
     </Badge>
   );
 }

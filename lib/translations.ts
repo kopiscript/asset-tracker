@@ -91,6 +91,37 @@ export const t = {
     overview: "Overview",
     noGpsYet: "No GPS location recorded yet. Map is centred on Kuala Lumpur.",
 
+    // Admin table columns
+    colVehicle: "Vehicle",
+    colOrg: "Org",
+    colSpeed: "Speed",
+    colManage: "Manage",
+    colUser: "User",
+    colRole: "Role",
+    colOrgs: "Orgs",
+    colJoined: "Joined",
+
+    // Fallbacks & empties
+    never: "Never",
+    configure: "Configure →",
+    noneAssigned: "None",
+    noVehiclesInSystem: "No vehicles in system.",
+    noOrgsInSystem: "No organisations in system.",
+    noUsersInSystem: "No users in system.",
+    noVehiclesDesc: "Add your first GPS device to start tracking your fleet on the live map.",
+
+    // Dashboard
+    inYourOrgs: "in your organisations",
+    viewAll: "View all",
+    addOneArrow: "Add one →",
+
+    // Settings
+    profileSubtitle: "Your account information.",
+    noNameSet: "No name set",
+    languageSubtitle: "Choose the display language for the dashboard.",
+    support: "Support",
+    needHelpContact: "Need help? Contact us at",
+
     // Admin
     globalOverview: "Global fleet overview — all users and vehicles",
     allVehicles: "All Vehicles",
@@ -239,6 +270,37 @@ export const t = {
     coordinates: "Koordinat",
     overview: "Gambaran Keseluruhan",
     noGpsYet: "Tiada lokasi GPS direkodkan lagi. Peta dipusatkan di Kuala Lumpur.",
+
+    // Admin table columns
+    colVehicle: "Kenderaan",
+    colOrg: "Org",
+    colSpeed: "Kelajuan",
+    colManage: "Urus",
+    colUser: "Pengguna",
+    colRole: "Peranan",
+    colOrgs: "Org",
+    colJoined: "Tarikh Daftar",
+
+    // Fallbacks & empties
+    never: "Tidak Pernah",
+    configure: "Konfigurasi →",
+    noneAssigned: "Tiada",
+    noVehiclesInSystem: "Tiada kenderaan dalam sistem.",
+    noOrgsInSystem: "Tiada organisasi dalam sistem.",
+    noUsersInSystem: "Tiada pengguna dalam sistem.",
+    noVehiclesDesc: "Tambah peranti GPS pertama anda untuk mula menjejak fleet anda di peta langsung.",
+
+    // Dashboard
+    inYourOrgs: "dalam organisasi anda",
+    viewAll: "Lihat semua",
+    addOneArrow: "Tambah →",
+
+    // Settings
+    profileSubtitle: "Maklumat akaun anda.",
+    noNameSet: "Nama belum ditetapkan",
+    languageSubtitle: "Pilih bahasa paparan untuk papan pemuka.",
+    support: "Sokongan",
+    needHelpContact: "Perlukan bantuan? Hubungi kami di",
 
     // Admin
     globalOverview: "Gambaran fleet global — semua pengguna dan kenderaan",
