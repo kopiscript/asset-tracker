@@ -133,7 +133,7 @@ export function MobileSidebarSheet() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-3.5 left-4 z-50 text-muted-foreground hover:text-foreground"
+            className="lg:hidden fixed top-3.5 left-4 z-[1001] text-muted-foreground hover:text-foreground"
             aria-label="Open menu"
           />
         }
