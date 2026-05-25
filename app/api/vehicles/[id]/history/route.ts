@@ -20,7 +20,9 @@ import { todayMidnightMy, totalDistanceKm } from "@/lib/geo";
 const MAX_DAYS = 30;
 const MAX_POINTS = 5000;
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000;
-const TRIP_GAP_MS = 10 * 60 * 1000; // 10-minute silence = new trip
+const TRIP_GAP_MS          = 10 * 60 * 1000; // 10-minute silence = new trip
+const MIN_DISTANCE_KM      = 0.1;            // trips under 100 m are stationary noise
+const MIN_DURATION_MINUTES = 2;              // trips under 2 min are stationary noise
 
 export async function GET(
   req: NextRequest,
@@ -140,7 +142,11 @@ export async function GET(
       trips.push(buildTrip(trips.length + 1, currentPoints));
     }
 
-    return Response.json({ data: trips, error: null });
+    const filteredTrips = trips
+      .filter(t => t.distanceKm >= MIN_DISTANCE_KM && t.durationMinutes >= MIN_DURATION_MINUTES)
+      .map((t, i) => ({ ...t, id: i + 1 }));
+
+    return Response.json({ data: filteredTrips, error: null });
   } catch (e) {
     console.error("[GET /api/vehicles/[id]/history]", e);
     return Response.json({ data: null, error: "Internal server error." }, { status: 500 });

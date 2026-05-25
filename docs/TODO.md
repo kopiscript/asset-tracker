@@ -2,7 +2,7 @@
 
 > **Before you start:** Read `CLAUDE.md` in the project root first. It documents breaking changes in Next.js 16, Prisma 7, shadcn/ui, and NextAuth v5 that are not obvious from training data.
 
-**Last updated:** 2026-05-22 (session 3)
+**Last updated:** 2026-05-25 (session 4)
 **PRD:** `docs/PRD.md`
 
 ---
@@ -17,138 +17,141 @@
 
 ## Current state summary
 
-The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (60s polling), trip history with segmentation, and bilingual (EN/BM) translations are all working. Fleet concept was removed — access control is org membership only. The GPS hardware writes directly to `telemetry_records`; the IoT endpoint (`PATCH /api/vehicles/[id]/location`) exists but is unused by the actual hardware. Remaining work is production readiness only.
+The app is functional end-to-end. Auth, vehicle CRUD, org management, live map (60s polling), trip history with segmentation, and bilingual (EN/BM) translations are all working. Fleet concept was removed — access control is org membership only. The GPS hardware writes directly to `telemetry_records`; the IoT endpoint (`PATCH /api/vehicles/[id]/location`) exists but is unused by the actual hardware. The app has been renamed from Atlas to Mirae across all files. A landing page with pricing section is live. Remaining work is production readiness and a few open cleanup items.
 
 ---
 
 ## Phase 0b — Fleet removal
 
-**Decision (2026-05-21):** The Fleet concept was removed. Access control simplified to org membership — any org member sees all org vehicles.
-
 **Status: Complete (2026-05-22)**
 
-- [x] **0b.1** Remove `Fleet`, `FleetVehicle`, `FleetMember` models from `prisma/schema.prisma`; remove `fleets` relation from `Organization`; remove `fleetMemberships` from `User`
-- [x] **0b.2** Drop the tables from the database (`prisma db push`)
-  > ⚠️ DB push failed during session due to connectivity (P1001). Tables may still exist in the DB. Re-run `npx prisma db push` when connected to confirm.
-- [x] **0b.3** `npm run db:generate` — Prisma client regenerated without fleet types
-- [x] **0b.4** Deleted `app/api/orgs/[id]/fleets/` route tree
-- [x] **0b.5** Deleted `app/dashboard/orgs/[id]/fleets/` page tree
-- [x] **0b.6** `app/dashboard/vehicles/page.tsx` — uses org membership only
-- [x] **0b.7** `app/api/orgs/[id]/route.ts` and `app/api/orgs/route.ts` — `_count.fleets` removed
-- [x] **0b.8** `app/dashboard/orgs/[id]/page.tsx` — Fleets section removed; "Unassigned Vehicles" renamed "Vehicles"
-- [x] **0b.9** `app/dashboard/orgs/[id]/OrgPageClient.tsx` — simplified to invite-member only
-- [x] **0b.10** `app/dashboard/orgs/page.tsx` — `_count.fleets` and Layers icon removed
-- [x] **0b.11** Build passes with no TypeScript errors
+- [x] **0b.1** Remove `Fleet`, `FleetVehicle`, `FleetMember` models from `prisma/schema.prisma` — confirmed absent
+- [x] **0b.2** Tables dropped from database
+- [x] **0b.3** Prisma client regenerated without fleet types
+- [x] **0b.4–0b.11** Route trees, pages, and UI references removed; build passes
+
+> **Note:** A dead share route remains at `app/api/vehicles/[id]/share/` — it returns a tombstone error referencing the removed fleet management. See Cleanup section.
 
 ---
 
 ## Phase 1 — Database
 
 - [x] **1.1** `apiKey String? @map("api_key")` field present on `Vehicle` model
-- [x] **1.2** `TelemetryRecord` model exists as the append-only GPS log (replaces the originally-planned lightweight `LocationHistory` — see note)
-  > **Note:** The original plan called for a `LocationHistory` model with only 6 fields. The actual implementation uses `TelemetryRecord` (20+ fields from the GPS hardware payload). Functionally equivalent; history endpoint queries `telemetry_records`. No further schema change needed.
+- [x] **1.2** `TelemetryRecord` model exists as the append-only GPS log (20+ fields)
 - [x] **1.3** `@@index([imei, timestampUtc(sort: Desc)])` exists on `TelemetryRecord`
-- [x] **1.4** Schema applied to database via `prisma db push` (dev only)
-  > ⚠️ Before production: run a proper `npm run db:migrate` with a migration name to get a versioned file.
-- [x] **1.5** Prisma client generated
-- [ ] **1.6** *(Manual)* Open `npm run db:studio`, navigate to `Vehicle`, set `apiKey` on at least one row for end-to-end IoT testing
+- [x] **1.4** Schema applied to database
+- [ ] **1.5** Proper versioned migration — `prisma/migrations/20260504081616_init/` exists but predates the NextAuth rewrite (still has `clerkId`). The working schema was applied via `db push`. Before production: reset migrations and run `npm run db:migrate` to get a clean versioned baseline.
+- [ ] **1.6** *(Manual)* Set `apiKey` on at least one vehicle row in Prisma Studio for IoT testing
 
 ---
 
 ## Phase 2 — IoT location endpoint
 
-**Status:** Endpoint exists but is NOT used by actual hardware. The GPS hardware writes directly to the `telemetry_records` table in the database — no HTTP endpoint involved. This endpoint is effectively dead code for v1.
+**Status:** Endpoint exists but is NOT used by actual hardware. The GPS hardware writes directly to `telemetry_records`. This endpoint is effectively dead code for v1.
 
-- [x] **2.1** `PATCH /api/vehicles/[id]/location` exists with API key auth (bearer token)
-- [x] **2.2** Validates `vehicle.apiKey` when set
-- [x] **2.3–2.4** Writes one `TelemetryRecord` row per ping
-- [N/A] **2.5** Manual test — irrelevant; hardware bypasses this endpoint entirely
+- [x] **2.1** `PATCH /api/vehicles/[id]/location` exists with API key auth
+- [x] **2.2–2.4** Validates key, writes `TelemetryRecord`
+- [N/A] **2.5** Manual test — irrelevant; hardware bypasses this endpoint
 
 ---
 
 ## Phase 3 — Trip history endpoint
 
-**Status:** Complete.
+**Status: Complete.**
 
 - [x] **3.1** `GET /api/vehicles/[id]/history?from=ISO&to=ISO` exists
-- [x] **3.2** Validates date range: missing params → 400; `>30 days` → 400; invalid dates → 400
-- [x] **3.3** Segments pings into trips by 10-minute silence threshold; returns `TripRecord[]` with `id`, `startedAt`, `endedAt`, `durationMinutes`, `distanceKm`, `pointCount`, `points[]`
-- [x] **3.4** `canView` permission enforced — users without org membership get 404
-- [x] **3.5** Deduplicates same-minute pings using `DISTINCT ON (date_trunc('minute', timestamp_my))` before segmentation
+- [x] **3.2** Validates date range (400 on missing/invalid/> 30 days)
+- [x] **3.3** Segments pings into trips by 10-min silence threshold
+- [x] **3.4** `canView` permission enforced
+- [x] **3.5** Deduplicates same-minute pings with `DISTINCT ON`
 
 ---
 
 ## Phase 4 — Live map
 
-**Status:** Complete.
+**Status: Complete.**
 
-- [x] **4.1** `components/dashboard/LiveMap.tsx` polls `GET /api/vehicles` every 60 seconds
-- [x] **4.2** Pauses polling when tab is hidden; resumes and refreshes immediately on tab focus
-- [x] **4.3** "Live · X ago" badge with green pulse in bottom-right of map
-- [x] **4.4** Single-vehicle detail page polls `GET /api/vehicles/[id]` every 10 seconds in the Overview tab; polling stops when History tab is active
+- [x] **4.1** `components/dashboard/LiveMap.tsx` polls every 60 seconds
+- [x] **4.2** Pauses on hidden tab; resumes on focus
+- [x] **4.3** "Live · X ago" badge with green pulse
+- [x] **4.4** Single-vehicle detail polls every 10s; stops when History tab is active
 
 ---
 
 ## Phase 5 — Trip history UI
 
-**Status:** Complete.
+**Status: Complete.**
 
-- [x] **5.1** Vehicle detail page has Overview / History tabs (`VehicleDetailTabs.tsx`)
-- [x] **5.2** History tab has From/To datetime pickers (MY time) defaulting to today
-- [x] **5.3** Client-side validation: rejects ranges > 30 days or `to` before `from`
-- [x] **5.4** Loads trips from `GET /api/vehicles/[id]/history`; shows trip count + total point count
-- [x] **5.5** Trip list: Trip N, time range, duration (min), distance (km), point count; clicking a row focuses that trip's polyline on the map
-- [x] **5.6** Map shows selected trip's polyline with start (green) / end (red) markers and intermediate dots with speed tooltips
-- [x] **5.7** Empty state: "No trips found for this time range"
+- [x] **5.1–5.7** Overview/History tabs, date pickers, trip list, polyline display, empty state all working
 
 ---
 
 ## Phase 6 — Translations + polish
 
-**Status: Complete (2026-05-22)**
+**Status: Complete.**
 
-- [x] **6.1** Added EN + BM strings to `lib/translations.ts` for all Phase 5 trip history UI text:
-  - `tripHistory`, `loadTrips`, `tripsFound`, `pointsFound`, `tripLabel`
-  - `tripListHeader`, `noTripsFound`
-  - `fromLabel`, `toLabel`, `durationMin`, `distanceKm`
-  - `errorMaxWindow`, `errorToBeforeFrom`
-- [x] **6.2** No duplicate keys introduced
-- [ ] **6.3** Update `README.md` — document `GET /api/vehicles/[id]/history` endpoint; document `SUPPORT_EMAIL` env var
+- [x] **6.1** EN + BM strings added for all Phase 5 trip history UI text
+- [x] **6.2** No duplicate keys
+- [ ] **6.3** Update `README.md`:
+  - Title is still "FleetTrack" — rename to "Mirae"
+  - Document `GET /api/vehicles/[id]/history` endpoint
+  - Document `SUPPORT_EMAIL` env var
 
 ---
 
 ## Org management — member removal
 
-**Status:** Complete (2026-05-22).
+**Status: Complete (2026-05-22).**
 
-- [x] `DELETE /api/orgs/[id]/members/[userId]` — removes a member; prevents removing the last owner
-- [x] `RemoveMemberButton` component wired into org detail page — visible to owners only, hidden for self
+- [x] `DELETE /api/orgs/[id]/members/[userId]` — removes member; prevents removing last owner
+- [x] `RemoveMemberButton` — wired into org detail page, visible to owners only
+
+---
+
+## Landing page
+
+**Status: Complete (2026-05-25).**
+
+- [x] Hero, Features, CTA, Footer sections
+- [x] `PricingSection` — hardware step (RM 399/device) + subscription tiers (Starter/Growth/Fleet) with monthly/annual toggle
+- [x] App renamed Atlas → Mirae across all UI strings, page titles, email addresses, and documentation
+- [x] Mobile hamburger moved into `DashboardHeader` (no longer a rogue `fixed` overlay)
+- [ ] Add "Pricing" anchor link to landing nav (currently no nav link points to `#pricing`)
+
+---
+
+## Cleanup
+
+- [ ] **C.1** Remove or replace the dead share route at `app/api/vehicles/[id]/share/` — currently returns a tombstone error referencing removed fleet management. Either delete the directory or replace with a proper 410 Gone response.
+- [ ] **C.2** Fix settings page email fallback: `app/dashboard/settings/page.tsx` line 26 still has `"support@assettracker.my"` — update to `"support@miraefleet.app"` to match the renamed brand.
 
 ---
 
 ## Production readiness (before go-live)
 
-These are not feature tasks but must be done before the app is used with real hardware and real data:
-
-- [ ] **P.1** Run `npm run db:migrate` (with a proper migration name) instead of relying on `db push`
-- [ ] **P.2** Hash `apiKey` values with bcrypt before storing — currently plaintext (acceptable for v1 dev, not for production)
-- [ ] **P.3** Implement a data retention policy — delete `telemetry_records` rows older than N months; exact window TBD based on fleet size
-- [ ] **P.4** Restrict or remove `POST /api/simulate/tick` if it exists — must not run in production with real hardware data
-- [ ] **P.5** Set `SUPPORT_EMAIL` env var in production environment (settings page falls back to `support@assettracker.my` if unset)
+- [ ] **P.1** Run `npm run db:migrate` — reset stale `20260504081616_init` migration and create a clean versioned baseline from the current schema
+- [ ] **P.2** Hash `apiKey` values with bcrypt before storing — currently plaintext
+- [ ] **P.3** Implement a data retention policy — delete `telemetry_records` rows older than N months; window TBD
+- [ ] **P.4** Gate `POST /api/simulate/tick` behind an env flag or remove it — the route exists and is not currently called by any UI code, but it must not be reachable in production with real hardware data
+- [ ] **P.5** Set `SUPPORT_EMAIL` env var in production (settings page fallback is `support@assettracker.my` — wrong after rename; also fix C.2 above)
+- [ ] **P.6** Add rate limiting to `PATCH /api/vehicles/[id]/location` — guard against misconfigured hardware flooding `telemetry_records` (e.g. max 2 req/min per API key via Upstash Redis)
+- [ ] **P.7** Add `/api/health` endpoint (basic DB ping, returns 200) and wire to an external uptime monitor (UptimeRobot free tier)
+- [ ] **P.8** Add Vercel project config (`vercel.ts` or `vercel.json`) — no deployment config exists; required before first production deploy
 
 ---
 
 ## Dependency map
 
 ```
-Phase 0b — Fleet schema cleanup  (self-contained)
-Phase 1   — Schema               (done)
-  └── Phase 2 — IoT endpoint     (done)
-  └── Phase 3 — History endpoint (done)
-        └── Phase 5 — History UI (done)
+Phase 0b — Fleet schema cleanup  (complete)
+Phase 1   — Schema               (complete, P.1 migration cleanup pending)
+  └── Phase 2 — IoT endpoint     (complete, unused by hardware)
+  └── Phase 3 — History endpoint (complete)
+        └── Phase 5 — History UI (complete)
 
-Phase 4 — Live map               (done, independent)
-Phase 6 — Translations           (alongside / after Phase 5)
+Phase 4 — Live map               (complete)
+Phase 6 — Translations           (complete, 6.3 README pending)
+Landing page                     (complete, pricing nav link pending)
 ```
 
 ---
