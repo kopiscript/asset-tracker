@@ -132,7 +132,7 @@ These are not feature tasks but must be done before the app is used with real ha
 
 - [ ] **P.1** Run `npm run db:migrate` (with a proper migration name) instead of relying on `db push`
 - [ ] **P.2** Hash `apiKey` values with bcrypt before storing — currently plaintext (acceptable for v1 dev, not for production)
-- [ ] **P.3** Implement a data retention policy — delete `telemetry_records` rows older than N months; exact window TBD based on fleet size
+- [x] **P.3** Implement a data retention policy — `POST /api/cron/retention` deletes rows older than `RETENTION_MONTHS` months (default 6); called by external cron (cron-job.org); auth via `CRON_SECRET` env var; batched at 50k rows/call. See `docs/PRICING.md` for window rationale.
 - [ ] **P.4** Restrict or remove `POST /api/simulate/tick` if it exists — must not run in production with real hardware data
 - [ ] **P.5** Set `SUPPORT_EMAIL` env var in production environment (settings page falls back to `support@assettracker.my` if unset)
 

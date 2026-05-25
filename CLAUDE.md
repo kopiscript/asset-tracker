@@ -78,6 +78,8 @@ A single `.env` file is sufficient — Next.js reads `.env` in addition to `.env
 ```
 AUTH_SECRET="run: openssl rand -base64 32"
 DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+CRON_SECRET="run: openssl rand -base64 32"   # protects /api/cron/retention
+RETENTION_MONTHS=6                             # how many months of telemetry to keep (default 6)
 ```
 
 > Do not create `.env.local` unless you specifically need to override `.env` values per environment.
@@ -111,3 +113,5 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 **Tailwind v4**: Theme customization lives in `app/globals.css` (CSS variables), not in `tailwind.config.ts`. The accent color is `--color-accent: #00c2cc`.
 
 **Shared utilities**: `lib/format.ts` exports `timeAgo(date)`, `formatNumber(n)`, and `clamp(n, min, max)` — use these before writing new formatting logic.
+
+**Data retention cron**: `POST /api/cron/retention` deletes `telemetry_records` rows older than `RETENTION_MONTHS` months. Auth: `Authorization: Bearer <CRON_SECRET>`. Deletes up to 50,000 rows per call (batched to avoid Neon HTTP timeouts). Called by an external cron service (e.g. cron-job.org) on a daily schedule — **not** a Vercel cron. See `docs/PRICING.md` for the retention window rationale.
