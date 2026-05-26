@@ -78,9 +78,27 @@ export function PricingSection() {
           <div className="flex-1 h-px bg-border/40" />
         </div>
 
-        <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-6">
-          Step 2 — Subscription
-        </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Step 2 — Subscription
+          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-muted rounded-full p-1 border border-border/40">
+              <button className="px-4 py-1.5 rounded-full text-sm font-medium bg-background text-foreground shadow-sm min-h-[36px]">
+                Monthly
+              </button>
+              <button
+                disabled
+                className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground/50 min-h-[36px] cursor-not-allowed flex items-center gap-1.5"
+              >
+                Annual
+                <span className="text-[9px] font-semibold uppercase tracking-wide bg-muted-foreground/10 px-1.5 py-0.5 rounded-full">
+                  Soon
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* ── Tier cards — asymmetric grid ─────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4 mb-4">
