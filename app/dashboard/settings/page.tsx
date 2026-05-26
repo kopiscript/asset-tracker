@@ -23,7 +23,7 @@ export default async function SettingsPage() {
       <SettingsClient
         userName={session?.user?.name ?? null}
         userEmail={session?.user?.email ?? null}
-        supportEmail={process.env.SUPPORT_EMAIL ?? "support@assettracker.my"}
+        supportEmail={process.env.SUPPORT_EMAIL ?? "support@miraefleet.app"}
       />
     </div>
   );

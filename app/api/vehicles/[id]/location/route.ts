@@ -12,8 +12,27 @@
  */
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
+
+// Rate limiter: 2 pings per minute per vehicle. Requires UPSTASH_REDIS_REST_URL + TOKEN env vars.
+// Gracefully bypassed when Upstash is not configured (logs a warning in production).
+let ratelimit: Ratelimit | null = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  ratelimit = new Ratelimit({
+    redis: new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    }),
+    limiter: Ratelimit.slidingWindow(2, "1 m"),
+    prefix: "rl:location",
+  });
+} else if (process.env.NODE_ENV === "production") {
+  console.warn("[location] Rate limiting disabled — set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN");
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -35,9 +54,20 @@ export async function PATCH(
   if (!vehicle) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  // If the vehicle has an API key configured, it must match exactly
-  if (vehicle.apiKey !== null && vehicle.apiKey !== providedKey) {
-    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
+  // If the vehicle has an API key configured, the provided key must match its bcrypt hash
+  if (vehicle.apiKey !== null) {
+    const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
+    if (!valid) {
+      return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
+  // Rate limit: 2 pings/min per vehicle
+  if (ratelimit) {
+    const { success } = await ratelimit.limit(`vehicle:${id}`);
+    if (!success) {
+      return Response.json({ data: null, error: "Too many requests" }, { status: 429 });
+    }
   }
 
   let body: { latitude?: unknown; longitude?: unknown; speed?: unknown; recordedAt?: unknown };
