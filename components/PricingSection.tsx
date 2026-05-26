@@ -1,16 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Check, Cpu, ArrowRight, Zap } from "lucide-react";
-
-const PRICES = {
-  starter: { monthly: 49,  annual: 490  },
-  growth:  { monthly: 99,  annual: 990  },
-  fleet:   { monthly: 199, annual: 1990 },
-} as const;
-
-type PlanKey = keyof typeof PRICES;
 
 const INCLUDED = [
   "Live GPS tracking",
@@ -24,12 +15,6 @@ const INCLUDED = [
 ];
 
 export function PricingSection() {
-  const [isAnnual, setIsAnnual] = useState(false);
-
-  function price(key: PlanKey) {
-    return isAnnual ? Math.round(PRICES[key].annual / 12) : PRICES[key].monthly;
-  }
-
   return (
     <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-border/40">
       <div className="max-w-7xl mx-auto">
@@ -93,45 +78,9 @@ export function PricingSection() {
           <div className="flex-1 h-px bg-border/40" />
         </div>
 
-        {/* ── Step 2 header + toggle ────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Step 2 — Subscription
-          </span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-muted rounded-full p-1 border border-border/40">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
-                  !isAnnual
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all min-h-[36px] ${
-                  isAnnual
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Annual
-              </button>
-            </div>
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-all duration-200 ${
-                isAnnual
-                  ? "text-green-600 bg-green-500/10 border-green-500/20"
-                  : "text-transparent bg-transparent border-transparent select-none"
-              }`}
-            >
-              2 months free
-            </span>
-          </div>
-        </div>
+        <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+          Step 2 — Subscription
+        </span>
 
         {/* ── Tier cards — asymmetric grid ─────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4 mb-4">
@@ -145,16 +94,13 @@ export function PricingSection() {
             <h3 className="font-display text-3xl sm:text-4xl text-white leading-none tracking-tight mb-1">
               Growth
             </h3>
-            <p className="text-white/40 text-sm mb-8">4–15 vehicles</p>
-            <div className="flex items-end gap-1 mb-1">
+            <p className="text-white/40 text-sm mb-8">Up to 20 vehicles · 1 ping / 10 sec</p>
+            <div className="flex items-end gap-1 mb-8">
               <span className="text-5xl font-bold text-white tabular-nums leading-none">
-                RM {price("growth")}
+                RM 149
               </span>
               <span className="text-white/40 text-sm mb-1.5">/mo</span>
             </div>
-            <p className={`text-xs mb-8 transition-all ${isAnnual ? "text-white/40" : "text-transparent select-none"}`}>
-              billed RM {PRICES.growth.annual.toLocaleString()} annually
-            </p>
             <div className="mt-auto">
               <Link
                 href="/sign-up"
@@ -165,21 +111,18 @@ export function PricingSection() {
             </div>
           </div>
 
-          {/* Starter + Fleet stacked */}
+          {/* Personal + Fleet stacked */}
           <div className="flex flex-col gap-4">
 
             <div className="flex-1 bg-card border border-border/50 rounded-2xl p-7 flex flex-col hover:border-primary/20 transition-colors group">
-              <h3 className="font-display text-2xl text-foreground leading-none tracking-tight mb-1">Starter</h3>
-              <p className="text-muted-foreground text-sm mb-5">1–3 vehicles</p>
-              <div className="flex items-end gap-1 mb-1">
+              <h3 className="font-display text-2xl text-foreground leading-none tracking-tight mb-1">Personal</h3>
+              <p className="text-muted-foreground text-sm mb-5">Up to 3 vehicles · 1 ping / min</p>
+              <div className="flex items-end gap-1 mb-5">
                 <span className="text-4xl font-bold text-foreground tabular-nums leading-none">
-                  RM {price("starter")}
+                  RM 29
                 </span>
                 <span className="text-muted-foreground text-sm mb-1">/mo</span>
               </div>
-              <p className={`text-xs mb-5 transition-all ${isAnnual ? "text-muted-foreground" : "text-transparent select-none"}`}>
-                billed RM {PRICES.starter.annual.toLocaleString()} annually
-              </p>
               <Link
                 href="/sign-up"
                 className="w-full flex items-center justify-center text-sm font-semibold text-foreground border border-border/60 group-hover:border-primary/30 group-hover:text-primary py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px]"
@@ -190,22 +133,18 @@ export function PricingSection() {
 
             <div className="flex-1 bg-card border border-border/50 rounded-2xl p-7 flex flex-col hover:border-primary/20 transition-colors group">
               <h3 className="font-display text-2xl text-foreground leading-none tracking-tight mb-1">Fleet</h3>
-              <p className="text-muted-foreground text-sm mb-5">16–50 vehicles</p>
-              <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-bold text-foreground tabular-nums leading-none">
-                  RM {price("fleet")}
+              <p className="text-muted-foreground text-sm mb-5">Up to 50 vehicles · 1 ping / 10 sec</p>
+              <div className="flex items-end gap-1 mb-5">
+                <span className="text-lg font-semibold text-muted-foreground leading-none">
+                  Contact us
                 </span>
-                <span className="text-muted-foreground text-sm mb-1">/mo</span>
               </div>
-              <p className={`text-xs mb-5 transition-all ${isAnnual ? "text-muted-foreground" : "text-transparent select-none"}`}>
-                billed RM {PRICES.fleet.annual.toLocaleString()} annually
-              </p>
-              <Link
-                href="/sign-up"
+              <a
+                href="mailto:support@miraefleet.app?subject=Fleet Plan Inquiry"
                 className="w-full flex items-center justify-center text-sm font-semibold text-foreground border border-border/60 group-hover:border-primary/30 group-hover:text-primary py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px]"
               >
-                Get Started
-              </Link>
+                Get a quote
+              </a>
             </div>
           </div>
         </div>
