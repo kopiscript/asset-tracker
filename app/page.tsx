@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   LandingAuthButtons,
   LandingCtaButton,
@@ -173,19 +174,32 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border/40 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded bg-primary flex items-center justify-center shrink-0">
-              <MapPin className="h-3 w-3 text-white" />
+      <footer className="border-t border-border/40 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 rounded bg-primary flex items-center justify-center shrink-0">
+                  <MapPin className="h-3 w-3 text-white" />
+                </div>
+                <span className="text-sm font-bold tracking-[0.15em] text-foreground uppercase">{PRODUCT_NAME}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">[COMPANY NAME] (SSM No. [SSM NUMBER])</p>
+              <p className="text-xs text-muted-foreground">[BUSINESS ADDRESS], Malaysia</p>
+              <a href="mailto:support@miraefleet.app" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                support@miraefleet.app
+              </a>
             </div>
-            <span>© 2026 {PRODUCT_NAME}. All rights reserved.</span>
+            <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+              <Link href="/privacy" className="py-2 px-2 hover:text-foreground transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="py-2 px-2 hover:text-foreground transition-colors">Terms of Service</Link>
+              <Link href="/refund" className="py-2 px-2 hover:text-foreground transition-colors">Refund Policy</Link>
+              <Link href="/contact" className="py-2 px-2 hover:text-foreground transition-colors">Contact</Link>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="py-2 px-2 hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="mailto:support@miraefleet.app" className="py-2 px-2 hover:text-foreground transition-colors">Contact</a>
-          </div>
+          <p className="text-xs text-muted-foreground border-t border-border/40 pt-6">
+            © 2026 {PRODUCT_NAME}. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>

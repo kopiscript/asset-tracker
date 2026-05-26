@@ -24,9 +24,13 @@ model User {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
+  id                String    @id @default(cuid())
+  name              String
+  createdAt         DateTime  @default(now()) @map("created_at")
+  plan              String    @default("free")          // "free"|"personal"|"growth"|"fleet"|"enterprise"
+  planExpiresAt     DateTime? @map("plan_expires_at")   // null = never expires
+  billplzSubId      String?   @map("billplz_sub_id")   // Billplz Subscription/Collection ID
+  gracePeriodEndsAt DateTime? @map("grace_period_ends_at") // set on lapsed payment; locks dashboard after
 
   members  OrgMember[]
   vehicles Vehicle[]

@@ -4,15 +4,36 @@
  * Includes the sidebar navigation and top header.
  * Wraps content in the LanguageProvider so all dashboard pages can use translations.
  */
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Grace period check: if any owner org has lapsed, lock the dashboard
+  const session = await auth();
+  if (session?.user?.id) {
+    const now = new Date();
+    const lapsedOrg = await prisma.orgMember.findFirst({
+      where: {
+        userId: session.user.id,
+        role: "owner",
+        org: {
+          gracePeriodEndsAt: { lt: now },
+          plan: { not: "free" },
+        },
+      },
+      select: { id: true },
+    });
+    if (lapsedOrg) redirect("/billing/lapsed");
+  }
+
   return (
     <LanguageProvider>
       <div className="flex h-screen overflow-hidden bg-background">
