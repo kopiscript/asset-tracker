@@ -163,6 +163,9 @@ export function PricingSection() {
               >
                 Get a quote
               </a>
+              <p className="text-center text-[11px] text-muted-foreground mt-2">
+                support@miraefleet.app
+              </p>
             </div>
           </div>
         </div>
