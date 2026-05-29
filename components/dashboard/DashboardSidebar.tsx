@@ -2,33 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Car, Settings, MapPin, LogOut, Menu, Globe2, Building2 } from "lucide-react";
+import {
+  LayoutDashboard, Car, Settings, MapPin, LogOut,
+  Menu, Globe2, Building2, CreditCard, Zap,
+} from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/components/LanguageProvider";
+import { usePlan, resolvedVehicleLimit } from "@/components/PlanProvider";
 
 function NavLink({
-  icon: Icon,
-  label,
-  href,
-  onClick,
+  icon: Icon, label, href, onClick,
 }: {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  onClick?: () => void;
+  icon: React.ElementType; label: string; href: string; onClick?: () => void;
 }) {
   const pathname = usePathname();
-  const isActive =
-    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+  const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
     <Link
@@ -47,6 +40,55 @@ function NavLink({
   );
 }
 
+function PlanChip() {
+  const planInfo = usePlan();
+  if (!planInfo) return null;
+
+  const limit = resolvedVehicleLimit(planInfo.vehicleLimit);
+  const hasLimit = limit !== Infinity;
+  const pct = hasLimit ? Math.min(1, planInfo.vehicleCount / (limit as number)) : 0;
+  const isUpgradable = !["growth", "fleet", "enterprise"].includes(planInfo.plan);
+  const isWarning = hasLimit && pct >= 0.8;
+
+  return (
+    <div className="mx-3 mb-2 rounded-xl border border-border/50 bg-muted/30 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-foreground">{planInfo.planLabel}</span>
+        {isUpgradable && (
+          <Link
+            href="/dashboard/billing"
+            className="flex items-center gap-0.5 text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors"
+          >
+            <Zap className="h-2.5 w-2.5" />
+            Upgrade
+          </Link>
+        )}
+      </div>
+
+      {hasLimit ? (
+        <>
+          <div className="h-1.5 w-full rounded-full bg-border/60 overflow-hidden mb-1.5">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                isWarning ? "bg-amber-500" : "bg-primary/60"
+              )}
+              style={{ width: `${pct * 100}%` }}
+            />
+          </div>
+          <p className={cn("text-[10px]", isWarning ? "text-amber-600" : "text-muted-foreground")}>
+            {planInfo.vehicleCount} / {limit as number} vehicles
+          </p>
+        </>
+      ) : (
+        <p className="text-[10px] text-muted-foreground">
+          {planInfo.vehicleCount} vehicle{planInfo.vehicleCount !== 1 ? "s" : ""} · Unlimited
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { data: session } = useSession();
   const { tr } = useLang();
@@ -56,6 +98,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
     { icon: LayoutDashboard, label: tr("dashboard"),     href: "/dashboard" },
     { icon: Car,             label: tr("vehicles"),      href: "/dashboard/vehicles" },
     { icon: Building2,       label: tr("organisations"), href: "/dashboard/orgs" },
+    { icon: CreditCard,      label: "Billing",           href: "/dashboard/billing" },
     { icon: Settings,        label: tr("settings"),      href: "/dashboard/settings" },
   ];
 
@@ -69,8 +112,11 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+      {/* Logo — links back to the landing page */}
+      <Link
+        href="/"
+        className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border hover:bg-black/[0.03] transition-colors group"
+      >
         <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
           <MapPin className="h-3.5 w-3.5 text-primary" />
         </div>
@@ -82,20 +128,17 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
             {isAdmin ? tr("adminPanel") : "Fleet Tracking"}
           </span>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map(({ icon, label, href }) => (
-          <NavLink
-            key={href}
-            icon={icon}
-            label={label}
-            href={href}
-            onClick={onNavClick}
-          />
+          <NavLink key={href} icon={icon} label={label} href={href} onClick={onNavClick} />
         ))}
       </nav>
+
+      {/* Plan chip — only for non-admin users */}
+      {!isAdmin && <PlanChip />}
 
       {/* Sign out */}
       <div className="px-3 pb-5 pt-3 border-t border-sidebar-border">

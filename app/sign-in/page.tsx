@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,27 +9,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Check, ArrowRight } from "lucide-react";
 
-export default function SignInPage() {
-  const [email, setEmail] = useState("");
+function SignInForm() {
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan") ?? "";
+  const plan = ["personal", "growth"].includes(planParam) ? planParam : null;
+
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) {
         setError("Invalid email or password.");
         return;
       }
-      window.location.href = "/dashboard";
+      // If redirected here from the wizard, resume the payment flow
+      window.location.href = plan ? `/api/billing/start?plan=${plan}` : "/dashboard";
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -37,13 +39,12 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-dvh grid grid-cols-1 md:grid-cols-2">
+    <div className="min-h-[100dvh] grid grid-cols-1 md:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────────────────── */}
       <div className="hidden md:flex flex-col justify-between bg-primary p-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 -translate-y-1/3 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-black/10 translate-y-1/3 -translate-x-1/3 pointer-events-none" />
 
-        {/* Logo */}
         <div className="relative flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
             <MapPin className="h-5 w-5 text-white" />
@@ -51,7 +52,6 @@ export default function SignInPage() {
           <span className="text-white font-bold text-xl tracking-[0.15em] uppercase">Mirae</span>
         </div>
 
-        {/* Tagline */}
         <div className="relative">
           <p className="text-white/50 text-xs font-semibold uppercase tracking-[0.2em] mb-4">Fleet management</p>
           <h2 className="font-display text-4xl text-white leading-tight mb-4">
@@ -62,7 +62,6 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* Callouts */}
         <div className="relative space-y-3">
           {[
             "Live GPS updates from your hardware",
@@ -82,7 +81,6 @@ export default function SignInPage() {
       {/* ── Form panel ───────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
           <div className="md:hidden flex items-center gap-2.5 mb-10 justify-center">
             <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <MapPin className="h-3.5 w-3.5 text-primary" />
@@ -92,33 +90,17 @@ export default function SignInPage() {
 
           <h1 className="font-display text-3xl text-foreground mb-1.5">Sign in</h1>
           <p className="text-sm text-muted-foreground mb-8">
-            Welcome back. Enter your details below.
+            {plan ? "Sign in to continue to payment." : "Welcome back. Enter your details below."}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
             </div>
 
             {error && (
@@ -133,7 +115,7 @@ export default function SignInPage() {
               disabled={loading}
             >
               {loading ? "Signing in…" : (
-                <><span>Sign in</span><ArrowRight className="h-4 w-4" /></>
+                <><span>{plan ? "Sign in & pay" : "Sign in"}</span><ArrowRight className="h-4 w-4" /></>
               )}
             </Button>
           </form>
@@ -141,13 +123,21 @@ export default function SignInPage() {
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <Link href="/sign-up" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                Sign up free
+              <Link href="/get-started" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                Get started
               </Link>
             </p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
   );
 }

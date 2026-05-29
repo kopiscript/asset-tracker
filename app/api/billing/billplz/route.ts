@@ -1,12 +1,12 @@
 /**
- * app/api/billing/billplz/route.ts
  * POST — Billplz payment callback (webhook).
  *
  * Billplz sends a form-encoded POST to this URL on every bill state change.
  * We verify the X-Signature HMAC, then activate or lapse the org's plan.
+ * The plan key is read from reference_2 (set when creating the bill).
  *
  * Env vars required:
- *   BILLPLZ_WEBHOOK_SECRET  — your Billplz collection's X-Signature key
+ *   BILLPLZ_WEBHOOK_SECRET  — X-Signature Key from Billplz settings
  *
  * Billplz retries on any non-200 response, so always return 200 once auth passes.
  */
@@ -16,9 +16,9 @@ import { prisma } from "@/lib/prisma";
 
 const GRACE_DAYS = 7;
 const PLAN_DAYS = 31;
+const VALID_PLANS = new Set(["personal", "growth", "fleet", "enterprise"]);
 
 function verifySignature(params: URLSearchParams, secret: string, signature: string): boolean {
-  // Billplz signature: sorted keys (excluding x_signature), joined as "key|value", HMAC-SHA256
   const keys = [...params.keys()]
     .filter((k) => k !== "x_signature")
     .sort();
@@ -50,9 +50,9 @@ export async function POST(request: NextRequest) {
 
   const billId = params.get("id") ?? "";
   const paid = params.get("paid") === "true";
-  // Billplz puts your metadata in the reference_1 / reference_2 fields.
-  // We store orgId in reference_1 when creating the bill.
   const orgId = params.get("reference_1") ?? "";
+  const planRaw = params.get("reference_2") ?? "";
+  const plan = VALID_PLANS.has(planRaw) ? planRaw : "personal";
 
   if (!orgId) {
     console.warn("[billplz webhook] no orgId in reference_1, billId:", billId);
@@ -68,10 +68,6 @@ export async function POST(request: NextRequest) {
   const now = new Date();
 
   if (paid) {
-    // Determine the plan from the collection ID
-    const collectionId = params.get("collection_id") ?? "";
-    const plan = resolvePlan(collectionId);
-
     const planExpiresAt = new Date(now.getTime() + PLAN_DAYS * 24 * 60 * 60 * 1000);
 
     await prisma.organization.update({
@@ -79,14 +75,13 @@ export async function POST(request: NextRequest) {
       data: {
         plan,
         planExpiresAt,
-        gracePeriodEndsAt: null, // clear any active grace period
-        billplzSubId: collectionId || org.billplzSubId,
+        gracePeriodEndsAt: null,
+        billplzSubId: billId,
       },
     });
 
-    console.log(`[billplz webhook] org ${orgId} activated on plan "${plan}" until ${planExpiresAt.toISOString()}`);
+    console.log(`[billplz webhook] org ${orgId} → plan "${plan}" until ${planExpiresAt.toISOString()}`);
   } else {
-    // Payment failed or bill expired — start grace period
     const gracePeriodEndsAt = new Date(now.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000);
 
     await prisma.organization.update({
@@ -98,13 +93,4 @@ export async function POST(request: NextRequest) {
   }
 
   return new Response("ok", { status: 200 });
-}
-
-function resolvePlan(collectionId: string): string {
-  const map: Record<string, string> = {
-    [process.env.BILLPLZ_COLLECTION_ID_PERSONAL ?? ""]: "personal",
-    [process.env.BILLPLZ_COLLECTION_ID_GROWTH ?? ""]:   "growth",
-    [process.env.BILLPLZ_COLLECTION_ID_FLEET ?? ""]:    "fleet",
-  };
-  return map[collectionId] ?? "personal";
 }

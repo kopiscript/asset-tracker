@@ -36,7 +36,7 @@ export function LandingAuthButtons({
             </Button>
           </Link>
         ) : (
-          <Link href="/sign-up" className="w-full sm:w-auto">
+          <Link href="/get-started" className="w-full sm:w-auto">
             <Button
               size="lg"
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
@@ -73,7 +73,7 @@ export function LandingAuthButtons({
           Sign In
         </Button>
       </Link>
-      <Link href="/sign-up">
+      <Link href="/get-started">
         <Button
           size={size}
           className="min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
@@ -104,7 +104,7 @@ export function LandingCtaButton() {
   }
 
   return (
-    <Link href="/sign-up" className="w-full sm:w-auto">
+    <Link href="/get-started" className="w-full sm:w-auto">
       <Button
         size="lg"
         className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 px-8"

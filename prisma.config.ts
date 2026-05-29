@@ -17,7 +17,6 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx ./prisma/seed.ts",
   },
   datasource: {
     // Reads DATABASE_URL from .env (loaded above by dotenv/config)

@@ -121,7 +121,7 @@ export function PricingSection() {
             </div>
             <div className="mt-auto">
               <Link
-                href="/sign-up"
+                href="/get-started"
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-sm font-semibold py-3.5 rounded-xl transition-colors active:scale-[0.98] min-h-[44px]"
               >
                 Get Started <ArrowRight className="h-3.5 w-3.5" />
@@ -142,7 +142,7 @@ export function PricingSection() {
                 <span className="text-muted-foreground text-sm mb-1">/mo</span>
               </div>
               <Link
-                href="/sign-up"
+                href="/get-started"
                 className="w-full flex items-center justify-center text-sm font-semibold text-foreground border border-border/60 group-hover:border-primary/30 group-hover:text-primary py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px]"
               >
                 Get Started
