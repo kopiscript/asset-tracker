@@ -185,7 +185,7 @@ export default function LandingPage() {
                 <span className="text-sm font-bold tracking-[0.15em] text-foreground uppercase">{PRODUCT_NAME}</span>
               </div>
               <p className="text-xs text-muted-foreground">AZP Group Sdn Bhd (1654709-U)</p>
-              <p className="text-xs text-muted-foreground">[BUSINESS ADDRESS], Malaysia</p>
+              <p className="text-xs text-muted-foreground">E2 Ground Floor, Kulliyyah Of Engineering, IIUM, 53100 Kuala Lumpur, Malaysia</p>
               <a href="mailto:support@miraefleet.app" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 support@miraefleet.app
               </a>
