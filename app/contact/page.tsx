@@ -1,5 +1,5 @@
 import { LegalLayout } from "@/components/LegalLayout";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 export const metadata = { title: "Contact — Mirae Fleet" };
 
@@ -19,15 +19,9 @@ export default function ContactPage() {
           href="mailto:support@miraefleet.app"
         />
         <ContactCard
-          icon={<Phone className="h-5 w-5 text-primary" />}
-          label="Phone / WhatsApp"
-          value="[PHONE NUMBER]"
-          href="tel:[PHONE NUMBER]"
-        />
-        <ContactCard
           icon={<MapPin className="h-5 w-5 text-primary" />}
           label="Registered Business Address"
-          value={`AZP Group Sdn Bhd (1654709-U)\n[STREET ADDRESS]\n[CITY], [POSTCODE]\n[STATE], Malaysia`}
+          value={`AZP Group Sdn Bhd (1654709-U)\nE2 Ground Floor, Kulliyyah Of Engineering\nInternational Islamic University Malaysia (IIUM)\nKuala Lumpur, 53100\nWilayah Persekutuan, Malaysia`}
         />
       </div>
 

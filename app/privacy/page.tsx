@@ -88,6 +88,8 @@ export default function PrivacyPage() {
         We implement industry-standard security measures including TLS encryption in transit,
         bcrypt password hashing, API key hashing, HTTP security headers, and rate limiting on all
         inbound endpoints. Access to production data is restricted to authorised personnel only.
+        However, no system is completely secure and we cannot guarantee absolute protection against
+        all threats.
       </p>
 
       <h2>7. Your Rights (PDPA)</h2>

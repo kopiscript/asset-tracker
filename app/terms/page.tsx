@@ -40,10 +40,20 @@ export default function TermsPage() {
         debit/credit card, or supported e-wallets. A subscription remains active for 31 days from
         the date of payment. Failure to renew within a 7-day grace period will result in suspension
         of your organisation&rsquo;s dashboard access. GPS hardware will continue to submit data
-        during the grace period.
+        during the grace period. We do not store your full card or bank account details — payment
+        credentials are handled exclusively by Billplz.
       </p>
 
-      <h2>4. Acceptable Use</h2>
+      <h2>4. Account Security</h2>
+      <p>
+        You are responsible for maintaining the confidentiality of your account credentials. You agree
+        to notify us immediately at{" "}
+        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> if you suspect any
+        unauthorised access to your account. We are not liable for any loss arising from unauthorised
+        use of your account where you have failed to take reasonable steps to protect your credentials.
+      </p>
+
+      <h2>5. Acceptable Use</h2>
       <p>You agree not to:</p>
       <ul>
         <li>Use the Service to track individuals without their knowledge or consent</li>
@@ -53,7 +63,7 @@ export default function TermsPage() {
         <li>Submit false, misleading, or unlawful data through the Service</li>
       </ul>
 
-      <h2>5. Data and Privacy</h2>
+      <h2>6. Data and Privacy</h2>
       <p>
         Your use of the Service is also governed by our{" "}
         <a href="/privacy">Privacy Policy</a>, which is incorporated into these Terms by reference.
@@ -61,14 +71,14 @@ export default function TermsPage() {
         to store and process that data solely to provide the Service.
       </p>
 
-      <h2>6. Intellectual Property</h2>
+      <h2>7. Intellectual Property</h2>
       <p>
         All software, designs, and content comprising the Mirae Fleet platform are owned by
         AZP Group Sdn Bhd or its licensors. Nothing in these Terms transfers any intellectual property
         rights to you.
       </p>
 
-      <h2>7. Limitation of Liability</h2>
+      <h2>8. Limitation of Liability</h2>
       <p>
         To the maximum extent permitted by Malaysian law, we shall not be liable for any indirect,
         incidental, special, consequential, or punitive damages, including loss of profits or data,
@@ -76,14 +86,14 @@ export default function TermsPage() {
         any claim shall not exceed the total fees paid by you in the three months preceding the claim.
       </p>
 
-      <h2>8. Service Availability</h2>
+      <h2>9. Service Availability</h2>
       <p>
         We aim to maintain high availability but do not guarantee uninterrupted service. Scheduled
         maintenance will be communicated in advance where possible. We are not liable for downtime
         caused by third-party providers (including Neon, Vercel, or Upstash).
       </p>
 
-      <h2>9. Termination</h2>
+      <h2>10. Termination</h2>
       <p>
         You may cancel your subscription at any time by contacting us at{" "}
         <a href="mailto:support@miraefleet.app">support@miraefleet.app</a>. We reserve the right
@@ -91,20 +101,20 @@ export default function TermsPage() {
         be retained for 30 days before deletion.
       </p>
 
-      <h2>10. Governing Law</h2>
+      <h2>11. Governing Law</h2>
       <p>
         These Terms are governed by the laws of Malaysia. Any disputes shall be subject to the
         exclusive jurisdiction of the courts of Malaysia.
       </p>
 
-      <h2>11. Changes to These Terms</h2>
+      <h2>12. Changes to These Terms</h2>
       <p>
         We may update these Terms from time to time. We will notify you of material changes via
         email or a notice within the platform. Continued use of the Service after changes take
         effect constitutes acceptance of the revised Terms.
       </p>
 
-      <h2>12. Contact</h2>
+      <h2>13. Contact</h2>
       <p>
         For questions about these Terms, contact us at{" "}
         <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> or visit our{" "}
