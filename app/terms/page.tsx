@@ -7,8 +7,7 @@ export default function TermsPage() {
     <LegalLayout title="Terms of Service" lastUpdated="1 June 2026">
       <p>
         These Terms of Service govern your use of the Mirae Fleet vehicle tracking platform
-        (&ldquo;Service&rdquo;) operated by <strong>[COMPANY NAME]</strong> (SSM No.{" "}
-        <strong>[SSM NUMBER]</strong>) (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;).
+        (&ldquo;Service&rdquo;) operated by <strong>AZP Group Sdn Bhd</strong> (1654709-U) (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;).
         By accessing or using the Service, you agree to be bound by these Terms.
       </p>
 
@@ -65,7 +64,7 @@ export default function TermsPage() {
       <h2>6. Intellectual Property</h2>
       <p>
         All software, designs, and content comprising the Mirae Fleet platform are owned by
-        [COMPANY NAME] or its licensors. Nothing in these Terms transfers any intellectual property
+        AZP Group Sdn Bhd or its licensors. Nothing in these Terms transfers any intellectual property
         rights to you.
       </p>
 

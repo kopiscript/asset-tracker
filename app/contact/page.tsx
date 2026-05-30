@@ -27,7 +27,7 @@ export default function ContactPage() {
         <ContactCard
           icon={<MapPin className="h-5 w-5 text-primary" />}
           label="Registered Business Address"
-          value={`[COMPANY NAME] (SSM No. [SSM NUMBER])\n[STREET ADDRESS]\n[CITY], [POSTCODE]\n[STATE], Malaysia`}
+          value={`AZP Group Sdn Bhd (1654709-U)\n[STREET ADDRESS]\n[CITY], [POSTCODE]\n[STATE], Malaysia`}
         />
       </div>
 

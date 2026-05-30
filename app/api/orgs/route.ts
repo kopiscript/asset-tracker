@@ -79,10 +79,10 @@ export async function POST(request: Request) {
 
   try {
     const org = await prisma.organization.create({
-      data: {
-        name: body.name.trim(),
-        members: { create: { userId: dbUser.id, role: "owner" } },
-      },
+      data: { name: body.name.trim() },
+    });
+    await prisma.orgMember.create({
+      data: { orgId: org.id, userId: dbUser.id, role: "owner" },
     });
     return Response.json({ data: { id: org.id, name: org.name, userRole: "owner" }, error: null }, { status: 201 });
   } catch (e) {

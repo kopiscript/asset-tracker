@@ -7,7 +7,7 @@ export default function RefundPage() {
     <LegalLayout title="Refund Policy" lastUpdated="1 June 2026">
       <p>
         This Refund Policy applies to all subscription payments made to{" "}
-        <strong>[COMPANY NAME]</strong> (SSM No. <strong>[SSM NUMBER]</strong>) for the Mirae Fleet
+        <strong>AZP Group Sdn Bhd</strong> (1654709-U) for the Mirae Fleet
         platform (&ldquo;Service&rdquo;). Please read this policy carefully before subscribing.
       </p>
 

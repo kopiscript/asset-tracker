@@ -179,17 +179,10 @@ export default async function OnboardingPage(props: PageProps<"/onboarding">) {
               {/* CTA */}
               <a
                 href={`/api/billing/start?plan=${planParam}`}
-                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.98] min-h-[48px] mb-3"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.98] min-h-[48px]"
               >
                 Pay with Billplz <ArrowRight className="h-4 w-4" />
               </a>
-
-              <Link
-                href="/dashboard"
-                className="w-full flex items-center justify-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors py-2.5"
-              >
-                I&apos;ll decide later
-              </Link>
 
               {/* Trust note */}
               <div className="mt-5 pt-5 border-t border-border/40 flex items-start gap-2.5">

@@ -8,7 +8,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const PLAN_LABELS: Record<string, string> = {
-  free: "Free", personal: "Personal", growth: "Growth",
+  free: "No active plan", personal: "Personal", growth: "Growth",
   fleet: "Fleet", enterprise: "Enterprise",
 };
 
@@ -19,9 +19,10 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
 
-  // Grace period check: lock dashboard if any owner org has lapsed
+  // Plan gate: redirect unpaid/lapsed owners out of the dashboard
   if (session?.user?.id) {
     const now = new Date();
+
     const lapsedOrg = await prisma.orgMember.findFirst({
       where: {
         userId: session.user.id,
@@ -31,6 +32,12 @@ export default async function DashboardLayout({
       select: { id: true },
     });
     if (lapsedOrg) redirect("/billing/lapsed");
+
+    const unpaidOrg = await prisma.orgMember.findFirst({
+      where: { userId: session.user.id, role: "owner", org: { plan: "free" } },
+      select: { id: true },
+    });
+    if (unpaidOrg) redirect("/billing/activate");
   }
 
   // Fetch plan info for the sidebar chip and header dropdown

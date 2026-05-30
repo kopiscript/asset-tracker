@@ -6,7 +6,7 @@ import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 export const metadata = { title: "Billing — Mirae Fleet" };
 
 const PLAN_LABELS: Record<string, string> = {
-  free: "Free",
+  free: "No active plan",
   personal: "Personal",
   growth: "Growth",
   fleet: "Fleet",

@@ -6,8 +6,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout title="Privacy Policy" lastUpdated="1 June 2026">
       <p>
-        This Privacy Policy describes how <strong>[COMPANY NAME]</strong> (SSM No.{" "}
-        <strong>[SSM NUMBER]</strong>) collects, uses, and protects your personal data when you use
+        This Privacy Policy describes how <strong>AZP Group Sdn Bhd</strong> (1654709-U) collects, uses, and protects your personal data when you use
         the Mirae Fleet platform (&ldquo;Service&rdquo;). We are committed to complying with the
         Personal Data Protection Act 2010 (PDPA) of Malaysia.
       </p>
