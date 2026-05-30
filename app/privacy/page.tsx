@@ -58,8 +58,7 @@ export default function PrivacyPage() {
         to operate the Service:
       </p>
       <ul>
-        <li><strong>Neon</strong> — managed PostgreSQL database hosting (data stored in AWS Singapore region)</li>
-        <li><strong>Vercel</strong> — application hosting and CDN</li>
+        <li><strong>Cloud infrastructure providers</strong> — database hosting and application delivery (data processed within secure, contracted third-party environments)</li>
         <li><strong>Billplz</strong> — payment processing (subject to Billplz&rsquo;s own Privacy Policy)</li>
       </ul>
       <p>
