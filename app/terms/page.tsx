@@ -90,7 +90,7 @@ export default function TermsPage() {
       <p>
         We aim to maintain high availability but do not guarantee uninterrupted service. Scheduled
         maintenance will be communicated in advance where possible. We are not liable for downtime
-        caused by third-party providers (including Neon, Vercel, or Upstash).
+        caused by third-party providers (including Neon or Vercel).
       </p>
 
       <h2>10. Termination</h2>
