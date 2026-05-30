@@ -8,18 +8,18 @@ export default function ContactPage() {
     <LegalLayout title="Contact Us" lastUpdated="1 June 2026">
       <p>
         We&rsquo;re here to help. Reach out via any of the channels below and we&rsquo;ll get back
-        to you as soon as possible (typically within 1 business day).
+        to you as soon as possible — typically within 1 business day.
       </p>
 
-      <div className="not-prose mt-8 grid gap-5">
-        <ContactCard
-          icon={<Mail className="h-5 w-5 text-primary" />}
+      <div className="not-prose mt-8 divide-y divide-border/40">
+        <ContactRow
+          icon={<Mail className="h-4 w-4 text-primary" />}
           label="Email"
           value="support@miraefleet.app"
           href="mailto:support@miraefleet.app"
         />
-        <ContactCard
-          icon={<MapPin className="h-5 w-5 text-primary" />}
+        <ContactRow
+          icon={<MapPin className="h-4 w-4 text-primary" />}
           label="Registered Business Address"
           value={`AZP Group Sdn Bhd (1654709-U)\nE2 Ground Floor, Kulliyyah Of Engineering\nInternational Islamic University Malaysia (IIUM)\nKuala Lumpur, 53100\nWilayah Persekutuan, Malaysia`}
         />
@@ -44,7 +44,7 @@ export default function ContactPage() {
   );
 }
 
-function ContactCard({
+function ContactRow({
   icon,
   label,
   value,
@@ -56,21 +56,23 @@ function ContactCard({
   href?: string;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-border/60 bg-card p-5">
-      <div className="mt-0.5 shrink-0">{icon}</div>
+    <div className="flex items-start gap-4 py-5 first:pt-0">
+      <div className="h-8 w-8 rounded-lg bg-primary/8 border border-primary/12 flex items-center justify-center shrink-0 mt-0.5">
+        {icon}
+      </div>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-1">
           {label}
         </p>
         {href ? (
           <a
             href={href}
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground hover:text-primary transition-colors duration-150"
           >
             {value}
           </a>
         ) : (
-          <p className="text-sm font-medium text-foreground whitespace-pre-line">{value}</p>
+          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{value}</p>
         )}
       </div>
     </div>
