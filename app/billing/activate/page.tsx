@@ -5,7 +5,13 @@ import { MapPin, Zap, ArrowRight } from "lucide-react";
 
 export const metadata = { title: "Choose a plan — Mirae Fleet" };
 
-const PLANS = [
+const PLANS: Array<{
+  key: string;
+  label: string;
+  price: number;
+  tagline: string;
+  highlighted?: boolean;
+}> = [
   {
     key: "personal",
     label: "Personal",
