@@ -148,10 +148,13 @@ export function VehicleMap({
         zoom={zoom}
         style={{ height: "100%", width: "100%" }}
         className="rounded-lg"
+        attributionControl={false}
       >
+        {/* CartoDB Voyager — closest free tile to Apple Maps */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
         />
 
         <MapFocus
@@ -264,6 +267,15 @@ export function VehicleMap({
           </div>
         </div>
       )}
+
+      {/* Minimal attribution — required by OSM & CartoDB licences */}
+      <div className="absolute bottom-1 right-1 z-[500] pointer-events-none">
+        <span className="text-[9px] text-muted-foreground/60 bg-background/70 px-1 rounded">
+          © <a href="https://carto.com/" className="hover:underline pointer-events-auto" target="_blank" rel="noopener noreferrer">CartoDB</a>
+          {" · "}
+          <a href="https://www.openstreetmap.org/copyright" className="hover:underline pointer-events-auto" target="_blank" rel="noopener noreferrer">OSM</a>
+        </span>
+      </div>
     </div>
   );
 }
