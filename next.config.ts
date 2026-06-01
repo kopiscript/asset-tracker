@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
+              "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com",
               "connect-src 'self' https://*.neon.tech wss:",
               "frame-ancestors 'none'",
             ].join("; "),
