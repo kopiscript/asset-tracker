@@ -26,7 +26,11 @@
       "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\asset-tracker\\\\asset-tracker\\\\.next\" -ErrorAction SilentlyContinue)",
       "Bash(Write-Host \"Done\")",
       "Bash(Get-ChildItem -Recurse .github, app/api/health, \"app/api/vehicles/[id]/api-key\", vercel.json)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(git commit *)",
+      "Bash(git rm *)",
+      "Bash(rmdir \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\asset-tracker\\\\asset-tracker\\\\scripts\")",
+      "WebSearch"
     ]
   }
 }
