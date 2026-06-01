@@ -150,20 +150,12 @@ export function VehicleMap({
         className="rounded-lg"
         attributionControl={false}
       >
-        {/* Stadia Alidade Smooth — closest free tile to Apple Maps.
-            Falls back to CartoDB Voyager if NEXT_PUBLIC_STADIA_API_KEY is unset. */}
-        {process.env.NEXT_PUBLIC_STADIA_API_KEY ? (
-          <TileLayer
-            url={`https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`}
-            maxZoom={20}
-          />
-        ) : (
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            subdomains="abcd"
-            maxZoom={20}
-          />
-        )}
+        {/* CartoDB Voyager — closest free tile to Apple Maps */}
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
+        />
 
         <MapFocus
           vehicles={mappable}
