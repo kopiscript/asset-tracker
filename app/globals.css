@@ -8,7 +8,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS
    To reskin: edit .dark variables below. Nothing else needs to change.
-   Brand accent:   --primary (#0071e3 Apple blue)
+   Brand accent:   --primary (#ff453a red)
    Background:     --background (pure white)
    Surfaces:       --card, --secondary, --sidebar
    Text:           --foreground, --muted-foreground
@@ -92,10 +92,10 @@
   --muted-foreground: #6e6e73;
   --sidebar-foreground: #1d1d1f;
 
-  /* Brand — Apple light mode blue */
-  --primary: #0071e3;
+  /* Brand — red accent (was Apple light mode blue #0071e3) */
+  --primary: #ff453a;
   --primary-foreground: #ffffff;
-  --sidebar-primary: #0071e3;
+  --sidebar-primary: #ff453a;
   --sidebar-primary-foreground: #ffffff;
 
   /* Borders — Apple separator values */
@@ -106,8 +106,8 @@
   --sidebar-accent-foreground: #1d1d1f;
 
   /* System */
-  --ring: #0071e3;
-  --sidebar-ring: #0071e3;
+  --ring: #ff453a;
+  --sidebar-ring: #ff453a;
   --radius: 0.75rem;
   --destructive: #ff3b30;
   --chart-1: oklch(0.546 0.245 262.881);
@@ -147,10 +147,10 @@
   --muted-foreground: #86868b;
   --sidebar-foreground: #aeaeb2;
 
-  /* Brand — Apple dark mode blue */
-  --primary: #0a84ff;
+  /* Brand — red accent (was Apple dark mode blue #0a84ff) */
+  --primary: #ff453a;
   --primary-foreground: #ffffff;
-  --sidebar-primary: #0a84ff;
+  --sidebar-primary: #ff453a;
   --sidebar-primary-foreground: #ffffff;
 
   /* Borders — Apple separator values */
@@ -161,8 +161,8 @@
   --sidebar-accent-foreground: #f5f5f7;
 
   /* System */
-  --ring: #0a84ff;
-  --sidebar-ring: #0a84ff;
+  --ring: #ff453a;
+  --sidebar-ring: #ff453a;
   --destructive: #ff453a;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);

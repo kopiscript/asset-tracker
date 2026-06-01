@@ -362,9 +362,9 @@ function PrimaryFeatureCard({
   accent: "blue" | "green";
 }) {
   const bg = accent === "blue"
-    ? "bg-gradient-to-br from-sky-500/10 to-blue-500/[0.04]"
+    ? "bg-gradient-to-br from-primary/10 to-primary/[0.03]"
     : "bg-gradient-to-br from-emerald-500/10 to-teal-500/[0.04]";
-  const border = accent === "blue" ? "border-sky-500/15" : "border-emerald-500/15";
+  const border = accent === "blue" ? "border-primary/15" : "border-emerald-500/15";
 
   return (
     <div className={`${bg} border ${border} rounded-2xl p-7 flex flex-col justify-between min-h-55`}>
