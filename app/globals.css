@@ -207,6 +207,17 @@
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
 
+/* ─── Leaflet popup: allow Tailwind color utilities to win ───────────────── */
+/* Leaflet's .leaflet-container a { color: #0078A8 } has specificity (0,1,1) */
+/* which beats Tailwind's single-class rules (0,1,0). These overrides restore */
+/* the expected colours for button-style links rendered inside popups.        */
+.leaflet-container a.text-primary-foreground {
+  color: var(--color-primary-foreground);
+}
+.leaflet-container a.text-primary-foreground:hover {
+  color: var(--color-primary-foreground);
+}
+
 /* ─── Leaflet dark theme ─────────────────────────────────────────────────── */
 .dark .leaflet-popup-content-wrapper {
   background: #1c1c1e;
