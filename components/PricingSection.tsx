@@ -104,7 +104,7 @@ export function PricingSection() {
         <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4 mb-4">
 
           {/* Growth — dominant featured card */}
-          <div className="relative bg-foreground rounded-2xl p-8 flex flex-col">
+          <div className="relative bg-gradient-to-br from-primary/15 to-card border border-primary/30 rounded-2xl p-8 flex flex-col">
             <div className="inline-flex items-center gap-1.5 bg-primary/20 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-6 self-start border border-primary/25">
               <Zap className="h-3 w-3" />
               Most Popular

@@ -73,10 +73,10 @@ export default async function WelcomePage(props: PageProps<"/welcome">) {
 
         {/* Payment confirmation */}
         <div className="flex flex-col items-center text-center mb-16 animate-fade-up">
-          <div className="h-14 w-14 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-6">
-            <CheckCircle className="h-7 w-7 text-emerald-600" />
+          <div className="h-14 w-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-6">
+            <CheckCircle className="h-7 w-7 text-emerald-400" />
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600 mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400 mb-3">
             Payment received
           </p>
           <h1 className="font-display text-4xl sm:text-5xl text-foreground leading-tight tracking-tight mb-3">

@@ -66,11 +66,11 @@ export default async function BillingPage() {
 
       {/* Grace period warning */}
       {isGrace && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 p-4">
+          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-amber-900">Payment overdue</p>
-            <p className="text-xs text-amber-700 mt-0.5">
+            <p className="text-sm font-semibold text-amber-200">Payment overdue</p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
               Grace period ends{" "}
               {org.gracePeriodEndsAt!.toLocaleDateString("en-MY", {
                 day: "numeric",
@@ -100,7 +100,7 @@ export default async function BillingPage() {
               <AlertTriangle className="h-3 w-3" /> Expired
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium px-3 py-1">
               <CheckCircle className="h-3 w-3" /> Active
             </span>
           )}
@@ -190,7 +190,7 @@ function Stat({ label, value, warn }: { label: string; value: string; warn?: boo
   return (
     <div className="rounded-xl bg-muted/40 border border-border/40 p-4">
       <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`text-lg font-bold ${warn ? "text-amber-600" : "text-foreground"}`}>{value}</p>
+      <p className={`text-lg font-bold ${warn ? "text-amber-400" : "text-foreground"}`}>{value}</p>
     </div>
   );
 }

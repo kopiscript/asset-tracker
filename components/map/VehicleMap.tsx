@@ -131,8 +131,8 @@ export function VehicleMap({
   focusVehicleId,
   historyPath,
   className = "h-full w-full",
-  tileTheme = "light",
-  routeColor = "#00c2cc",
+  tileTheme = "dark",
+  routeColor = "#ff453a",
 }: VehicleMapProps) {
   const mappable = vehicles.filter(
     (v) => v.latitude != null && v.longitude != null

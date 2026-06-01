@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function VehicleDetailLoading() {
   return (
-    <div className="dark theme-red-accent bg-background flex flex-col h-full">
+    <div className="flex flex-col h-full">
       <div className="px-4 sm:px-6 pt-4 pb-3 flex items-center gap-3">
         <Skeleton className="h-8 w-8 bg-white/5 rounded-md" />
         <div>

@@ -106,7 +106,7 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
 **Live simulation (dev/demo only)**: `lib/simulation-routes.ts` defines looping KL street routes for the 6 active seeded vehicles. `POST /api/simulate/tick` computes each vehicle's current position from `(currentTime % loopMs)` — stateless, deterministic. `LiveMap` calls this endpoint every 5 seconds to animate markers. **Remove or gate this endpoint before production** — real hardware will push positions via `PATCH /api/vehicles/[id]/location`.
 
-**Dark mode**: Removed — the app uses light mode (Apple Clarity palette). `"dark"` class is NOT on `<html>` in `app/layout.tsx`. Theme variables live in the `:root` block in `app/globals.css`.
+**Theme**: The whole site is dark with a red accent. `app/layout.tsx` puts `dark theme-red-accent` on `<html>`, so the `.dark` palette (Apple Precision Dark) in `app/globals.css` applies site-wide, and `.theme-red-accent` overrides the brand accent (`--primary`, `--ring`, `--sidebar-primary`) to Apple system red `#ff453a`. The `:root` block still holds the light "Apple Clarity" palette but is unused while `dark` is on `<html>`. Maps default to dark tiles (CartoDB Dark Matter) + a red route line via `VehicleMap`'s `tileTheme`/`routeColor` defaults. When adding marketing/onboarding UI, use theme tokens (`bg-card`, `text-foreground`, `text-primary`) — avoid hardcoded light colors like `bg-foreground` panels with white text or pale `*-50/*-100` alert boxes, which invert/wash out on dark; use the translucent idiom (`bg-amber-500/10 text-amber-300`) instead.
 
 **Tailwind v4**: Theme customization lives in `app/globals.css` (CSS variables), not in `tailwind.config.ts`. The accent color is `--color-accent: #00c2cc`.
 

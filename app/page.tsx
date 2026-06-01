@@ -154,17 +154,17 @@ export default function LandingPage() {
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-foreground p-8 sm:p-12 md:p-14 text-center">
-            <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+          <div className="relative overflow-hidden rounded-3xl bg-card border border-border/60 p-8 sm:p-12 md:p-14 text-center">
+            <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
             <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40 mb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4">
                 Get started today
               </p>
-              <h2 className="font-display text-3xl sm:text-4xl text-white mb-4 leading-tight">
+              <h2 className="font-display text-3xl sm:text-4xl text-foreground mb-4 leading-tight">
                 Ready to see your fleet?
               </h2>
-              <p className="text-white/60 text-base mb-8 max-w-[42ch] mx-auto leading-relaxed">
+              <p className="text-muted-foreground text-base mb-8 max-w-[42ch] mx-auto leading-relaxed">
                 Sign up in under a minute. No credit card required. Cancel any time.
               </p>
               <LandingCtaButton />
@@ -210,10 +210,10 @@ export default function LandingPage() {
 function DashboardPreview() {
   const navItems = ["Dashboard", "Vehicles", "Orgs", "Settings"];
   const stats = [
-    { label: "Total",   value: "8", color: "#1d1d1f" },
-    { label: "Active",  value: "5", color: "#16a34a" },
-    { label: "Idle",    value: "2", color: "#d97706" },
-    { label: "Offline", value: "1", color: "#dc2626" },
+    { label: "Total",   value: "8", color: "#f5f5f7" },
+    { label: "Active",  value: "5", color: "#22c55e" },
+    { label: "Idle",    value: "2", color: "#f59e0b" },
+    { label: "Offline", value: "1", color: "#ff453a" },
   ];
   const vehicles = [
     { name: "WKE 8812", status: "active" },
@@ -223,40 +223,40 @@ function DashboardPreview() {
 
   return (
     <div className="relative">
-      <div className="absolute inset-8 bg-primary/8 blur-3xl rounded-full pointer-events-none" />
-      <div className="relative rounded-2xl overflow-hidden border border-black/10 shadow-[0_28px_80px_-16px_rgba(0,0,0,0.18)]">
+      <div className="absolute inset-8 bg-primary/15 blur-3xl rounded-full pointer-events-none" />
+      <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_28px_80px_-16px_rgba(0,0,0,0.6)]">
         {/* Browser chrome */}
-        <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#f0f0f0] border-b border-black/6">
+        <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#2c2c2e] border-b border-white/8">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-          <div className="ml-3 flex-1 bg-white/80 rounded-md h-5 flex items-center px-2.5">
-            <span className="text-[10px] text-[#999] font-mono">mirae.app/dashboard</span>
+          <div className="ml-3 flex-1 bg-white/10 rounded-md h-5 flex items-center px-2.5">
+            <span className="text-[10px] text-[#86868b] font-mono">mirae.app/dashboard</span>
           </div>
         </div>
 
         {/* Body */}
-        <div className="flex bg-[#f8f9fa]" style={{ height: 320 }}>
+        <div className="flex bg-[#1c1c1e]" style={{ height: 320 }}>
           {/* Sidebar */}
-          <div className="w-30 bg-[#fbfbfd] border-r border-black/5 flex flex-col p-2 gap-0.5 shrink-0">
+          <div className="w-30 bg-[#111111] border-r border-white/8 flex flex-col p-2 gap-0.5 shrink-0">
             <div className="flex items-center gap-1.5 px-2 py-2.5 mb-0.5">
-              <div className="h-4 w-4 rounded-lg bg-[#0071e3] flex items-center justify-center shrink-0">
+              <div className="h-4 w-4 rounded-lg bg-[#ff453a] flex items-center justify-center shrink-0">
                 <svg width="7" height="9" viewBox="0 0 7 9" fill="none">
                   <path d="M3.5 0C1.57 0 0 1.57 0 3.5C0 6.125 3.5 9 3.5 9C3.5 9 7 6.125 7 3.5C7 1.57 5.43 0 3.5 0Z" fill="white" />
                 </svg>
               </div>
-              <span className="text-[9px] font-bold tracking-widest text-[#1d1d1f] uppercase">Mirae</span>
+              <span className="text-[9px] font-bold tracking-widest text-[#f5f5f7] uppercase">Mirae</span>
             </div>
             {navItems.map((item, i) => (
               <div
                 key={item}
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[9px] font-medium ${
                   i === 0
-                    ? "bg-[#0071e3]/10 text-[#0071e3] border-l-2 border-[#0071e3] pl-1.5"
-                    : "text-[#6e6e73]"
+                    ? "bg-[#ff453a]/15 text-[#ff453a] border-l-2 border-[#ff453a] pl-1.5"
+                    : "text-[#86868b]"
                 }`}
               >
-                <div className={`h-2 w-2 rounded-md shrink-0 ${i === 0 ? "bg-[#0071e3]" : "bg-[#d1d1d6]"}`} />
+                <div className={`h-2 w-2 rounded-md shrink-0 ${i === 0 ? "bg-[#ff453a]" : "bg-[#3a3a3c]"}`} />
                 {item}
               </div>
             ))}
@@ -267,10 +267,10 @@ function DashboardPreview() {
             {/* Title row */}
             <div className="flex items-center justify-between shrink-0">
               <div>
-                <p className="text-[11px] font-semibold text-[#1d1d1f] leading-none">Dashboard</p>
-                <p className="text-[8.5px] text-[#6e6e73] mt-0.5">8 vehicles across 2 orgs</p>
+                <p className="text-[11px] font-semibold text-[#f5f5f7] leading-none">Dashboard</p>
+                <p className="text-[8.5px] text-[#86868b] mt-0.5">8 vehicles across 2 orgs</p>
               </div>
-              <div className="h-5 px-2 rounded-md bg-[#0071e3] flex items-center">
+              <div className="h-5 px-2 rounded-md bg-[#ff453a] flex items-center">
                 <span className="text-[9px] text-white font-medium">+ Add Vehicle</span>
               </div>
             </div>
@@ -278,10 +278,10 @@ function DashboardPreview() {
             {/* Stats */}
             <div className="grid grid-cols-4 gap-1.5 shrink-0">
               {stats.map((s) => (
-                <div key={s.label} className="bg-white border border-black/5 rounded-lg p-2">
+                <div key={s.label} className="bg-[#1c1c1e] border border-white/8 rounded-lg p-2">
                   <p className="text-sm font-bold tabular-nums leading-none" style={{ color: s.color }}>{s.value}</p>
-                  <div className="h-px bg-black/5 my-1.5" />
-                  <p className="text-[7.5px] text-[#6e6e73] uppercase tracking-wider">{s.label}</p>
+                  <div className="h-px bg-white/8 my-1.5" />
+                  <p className="text-[7.5px] text-[#86868b] uppercase tracking-wider">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -297,40 +297,40 @@ function DashboardPreview() {
                   preserveAspectRatio="xMidYMid slice"
                   className="absolute inset-0"
                 >
-                  <rect width="240" height="160" fill="#dce8dc" />
-                  <path d="M0,80 C40,65 80,75 120,80 S180,90 240,82" stroke="#c2d5c2" strokeWidth="3" fill="none" />
-                  <path d="M0,110 C50,105 90,112 140,108 S200,115 240,115" stroke="#c2d5c2" strokeWidth="2" fill="none" />
-                  <path d="M120,0 C117,40 120,80 118,120 S120,145 119,160" stroke="#c2d5c2" strokeWidth="2" fill="none" />
-                  <path d="M60,0 C58,40 62,80 60,120 S58,145 60,160" stroke="#c2d5c2" strokeWidth="1.5" fill="none" />
-                  <path d="M190,0 C188,40 192,80 190,160" stroke="#c2d5c2" strokeWidth="1.5" fill="none" />
+                  <rect width="240" height="160" fill="#15171c" />
+                  <path d="M0,80 C40,65 80,75 120,80 S180,90 240,82" stroke="#2e323c" strokeWidth="3" fill="none" />
+                  <path d="M0,110 C50,105 90,112 140,108 S200,115 240,115" stroke="#2e323c" strokeWidth="2" fill="none" />
+                  <path d="M120,0 C117,40 120,80 118,120 S120,145 119,160" stroke="#2e323c" strokeWidth="2" fill="none" />
+                  <path d="M60,0 C58,40 62,80 60,120 S58,145 60,160" stroke="#2e323c" strokeWidth="1.5" fill="none" />
+                  <path d="M190,0 C188,40 192,80 190,160" stroke="#2e323c" strokeWidth="1.5" fill="none" />
                   {/* Active */}
                   <circle cx="88" cy="60" r="5.5" fill="#22c55e" />
-                  <circle cx="88" cy="60" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="88" cy="60" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
                   <circle cx="148" cy="82" r="5.5" fill="#22c55e" />
-                  <circle cx="148" cy="82" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="148" cy="82" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
                   <circle cx="52" cy="95" r="5.5" fill="#22c55e" />
-                  <circle cx="52" cy="95" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="52" cy="95" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
                   {/* Idle */}
                   <circle cx="182" cy="44" r="5.5" fill="#f59e0b" />
-                  <circle cx="182" cy="44" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="182" cy="44" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
                   <circle cx="28" cy="42" r="5.5" fill="#f59e0b" />
-                  <circle cx="28" cy="42" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
+                  <circle cx="28" cy="42" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
                   {/* Offline */}
-                  <circle cx="215" cy="118" r="5.5" fill="#ef4444" />
-                  <circle cx="215" cy="118" r="7.5" fill="none" stroke="white" strokeWidth="1.5" />
-                  <text x="4" y="156" fontSize="6" fill="#6e6e73" opacity="0.7">© OpenStreetMap contributors</text>
+                  <circle cx="215" cy="118" r="5.5" fill="#ff453a" />
+                  <circle cx="215" cy="118" r="7.5" fill="none" stroke="#1c1c1e" strokeWidth="1.5" />
+                  <text x="4" y="156" fontSize="6" fill="#86868b" opacity="0.7">© OpenStreetMap contributors</text>
                 </svg>
               </div>
 
               {/* Vehicle list */}
               <div className="w-25 flex flex-col gap-1.5 overflow-hidden shrink-0">
-                <p className="text-[8px] font-semibold text-[#6e6e73] uppercase tracking-wider shrink-0">Vehicles</p>
+                <p className="text-[8px] font-semibold text-[#86868b] uppercase tracking-wider shrink-0">Vehicles</p>
                 {vehicles.map((v) => (
-                  <div key={v.name} className="bg-white border border-black/5 rounded-md p-1.5 shrink-0">
-                    <p className="text-[8.5px] font-mono font-semibold text-[#1d1d1f]">{v.name}</p>
+                  <div key={v.name} className="bg-[#1c1c1e] border border-white/8 rounded-md p-1.5 shrink-0">
+                    <p className="text-[8.5px] font-mono font-semibold text-[#f5f5f7]">{v.name}</p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${v.status === "active" ? "bg-green-500" : "bg-amber-500"}`} />
-                      <span className={`text-[7.5px] font-medium ${v.status === "active" ? "text-green-700" : "text-amber-700"}`}>
+                      <span className={`text-[7.5px] font-medium ${v.status === "active" ? "text-green-400" : "text-amber-400"}`}>
                         {v.status}
                       </span>
                     </div>
@@ -362,9 +362,9 @@ function PrimaryFeatureCard({
   accent: "blue" | "green";
 }) {
   const bg = accent === "blue"
-    ? "bg-gradient-to-br from-sky-50 to-blue-50/50"
-    : "bg-gradient-to-br from-emerald-50 to-teal-50/50";
-  const border = accent === "blue" ? "border-blue-100" : "border-emerald-100";
+    ? "bg-gradient-to-br from-sky-500/10 to-blue-500/[0.04]"
+    : "bg-gradient-to-br from-emerald-500/10 to-teal-500/[0.04]";
+  const border = accent === "blue" ? "border-sky-500/15" : "border-emerald-500/15";
 
   return (
     <div className={`${bg} border ${border} rounded-2xl p-7 flex flex-col justify-between min-h-55`}>
@@ -373,7 +373,7 @@ function PrimaryFeatureCard({
         <h3 className="font-semibold text-foreground text-xl mb-2.5 leading-tight tracking-tight">{title}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
       </div>
-      <div className="mt-6 pt-5 border-t border-black/6 flex items-baseline gap-1.5">
+      <div className="mt-6 pt-5 border-t border-border flex items-baseline gap-1.5">
         <span className="text-sm font-semibold text-foreground">{stat}</span>
         <span className="text-xs text-muted-foreground">{statDetail}</span>
       </div>

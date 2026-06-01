@@ -217,9 +217,9 @@ export default function GetStartedPage() {
               </p>
 
               {/* Hardware note */}
-              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200/80 rounded-2xl p-4 mb-8">
-                <Cpu className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 leading-relaxed">
+              <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-8">
+                <Cpu className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200/90 leading-relaxed">
                   Each vehicle requires a GPS device <strong>(RM 399 one-time)</strong>. Our team will reach out after signup to arrange delivery.
                 </p>
               </div>
@@ -498,7 +498,7 @@ export default function GetStartedPage() {
               {error && (
                 <div className={`px-3 py-2.5 rounded-lg mb-5 border text-sm ${
                   error === "__existing_account__"
-                    ? "bg-amber-50 border-amber-200 text-amber-900"
+                    ? "bg-amber-500/10 border-amber-500/25 text-amber-200"
                     : "bg-destructive/10 border-destructive/15 text-destructive"
                 }`}>
                   {error === "__existing_account__" ? (

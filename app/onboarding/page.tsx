@@ -121,17 +121,17 @@ export default async function OnboardingPage(props: PageProps<"/onboarding">) {
             </div>
 
             {/* Hardware note */}
-            <div className="animate-fade-up delay-200 border border-amber-200/80 bg-amber-50 rounded-2xl p-5 flex items-start gap-4">
-              <div className="h-8 w-8 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5">
-                <Cpu className="h-4 w-4 text-amber-600" />
+            <div className="animate-fade-up delay-200 border border-amber-500/20 bg-amber-500/10 rounded-2xl p-5 flex items-start gap-4">
+              <div className="h-8 w-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                <Cpu className="h-4 w-4 text-amber-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-amber-900 mb-1">GPS hardware required</p>
-                <p className="text-xs text-amber-700 leading-relaxed">
+                <p className="text-sm font-semibold text-amber-200 mb-1">GPS hardware required</p>
+                <p className="text-xs text-amber-200/80 leading-relaxed">
                   Each vehicle needs a GPS device (RM 399 one-time). Email{" "}
                   <a
                     href="mailto:support@miraefleet.app"
-                    className="underline underline-offset-2 hover:text-amber-900 transition-colors"
+                    className="underline underline-offset-2 hover:text-amber-100 transition-colors"
                   >
                     support@miraefleet.app
                   </a>{" "}

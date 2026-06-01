@@ -17,8 +17,8 @@ export default function DashboardError({
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-      <div className="h-12 w-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-5">
-        <AlertTriangle className="h-5 w-5 text-red-500" />
+      <div className="h-12 w-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5">
+        <AlertTriangle className="h-5 w-5 text-red-400" />
       </div>
       <h2 className="text-lg font-semibold text-foreground tracking-tight mb-1.5">
         Something went wrong
