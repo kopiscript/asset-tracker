@@ -218,17 +218,57 @@
   color: var(--color-primary-foreground);
 }
 
-/* ─── Leaflet dark theme ─────────────────────────────────────────────────── */
-.dark .leaflet-popup-content-wrapper {
+/* ─── Leaflet dark map theme (always-on — we use CartoDB Dark Matter tiles) ── */
+.leaflet-container {
+  background: #1c1c1e;
+}
+
+/* Popup */
+.leaflet-popup-content-wrapper {
   background: #1c1c1e;
   color: #f5f5f7;
   border: 1px solid rgba(84, 84, 88, 0.65);
   border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8);
 }
-.dark .leaflet-popup-tip {
+.leaflet-popup-tip {
   background: #1c1c1e;
 }
-.dark .leaflet-container {
-  background: #1c1c1e;
+.leaflet-popup-content a {
+  color: #86868b;
+}
+
+/* Zoom controls */
+.leaflet-control-zoom a {
+  background: #2c2c2e !important;
+  color: #f5f5f7 !important;
+  border-color: rgba(84, 84, 88, 0.45) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: #3a3a3c !important;
+}
+.leaflet-bar {
+  border: 1px solid rgba(84, 84, 88, 0.45) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.leaflet-bar a:first-child {
+  border-radius: 10px 10px 0 0 !important;
+}
+.leaflet-bar a:last-child {
+  border-radius: 0 0 10px 10px !important;
+  border-bottom: none !important;
+}
+
+/* Tooltip (speed/time labels on history path) */
+.leaflet-tooltip {
+  background: #2c2c2e;
+  color: #f5f5f7;
+  border: 1px solid rgba(84, 84, 88, 0.55);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.leaflet-tooltip::before {
+  border-top-color: rgba(84, 84, 88, 0.55);
 }

@@ -150,9 +150,9 @@ export function VehicleMap({
         className="rounded-lg"
         attributionControl={false}
       >
-        {/* CartoDB Voyager — closest free tile to Apple Maps */}
+        {/* CartoDB Dark Matter — dark GPS-tracker style */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={20}
         />
