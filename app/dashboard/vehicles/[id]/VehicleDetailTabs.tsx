@@ -173,6 +173,8 @@ function OverviewTab({
           vehicles={mapVehicles}
           focusVehicleId={vehicle.id}
           className="h-full w-full"
+          tileTheme="dark"
+          routeColor="#ff453a"
         />
       </div>
       {!hasLocation && (
@@ -354,6 +356,8 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
           vehicles={[]}
           historyPath={selectedTrip?.points ?? undefined}
           className="h-full w-full"
+          tileTheme="dark"
+          routeColor="#ff453a"
         />
       </div>
 

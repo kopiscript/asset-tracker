@@ -66,7 +66,7 @@ export default async function VehicleDetailPage(
       : [];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="dark theme-red-accent bg-background text-foreground flex flex-col min-h-full overflow-y-auto">
       {/* ── Header bar ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 sm:px-6 pt-4 pb-3 flex-shrink-0">
         <div className="flex items-center gap-3">

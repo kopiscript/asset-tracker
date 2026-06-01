@@ -69,7 +69,16 @@ interface VehicleMapProps {
   /** When provided, renders a history polyline instead of live markers */
   historyPath?: HistoryPoint[];
   className?: string;
+  /** "light" = CartoDB Voyager (default); "dark" = CartoDB Dark Matter */
+  tileTheme?: "light" | "dark";
+  /** Polyline / intermediate-node colour. Defaults to the teal accent. */
+  routeColor?: string;
 }
+
+const TILE_URLS = {
+  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  dark:  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+} as const;
 
 function MapFocus({
   vehicles,
@@ -122,6 +131,8 @@ export function VehicleMap({
   focusVehicleId,
   historyPath,
   className = "h-full w-full",
+  tileTheme = "light",
+  routeColor = "#00c2cc",
 }: VehicleMapProps) {
   const mappable = vehicles.filter(
     (v) => v.latitude != null && v.longitude != null
@@ -150,9 +161,9 @@ export function VehicleMap({
         className="rounded-lg"
         attributionControl={false}
       >
-        {/* CartoDB Voyager — closest free tile to Apple Maps */}
+        {/* CartoDB raster tiles — Voyager (light) or Dark Matter (dark) */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url={TILE_URLS[tileTheme]}
           subdomains="abcd"
           maxZoom={20}
         />
@@ -168,7 +179,7 @@ export function VehicleMap({
           <>
             <Polyline
               positions={historyPath.map((p) => [p.latitude, p.longitude])}
-              pathOptions={{ color: "#00c2cc", weight: 3, opacity: 0.85 }}
+              pathOptions={{ color: routeColor, weight: 3, opacity: 0.85 }}
             />
             {/* Start marker */}
             <CircleMarker
@@ -196,7 +207,7 @@ export function VehicleMap({
                 key={i}
                 center={[p.latitude, p.longitude]}
                 radius={4}
-                pathOptions={{ color: "#00c2cc", fillColor: "#00c2cc", fillOpacity: 0.7, weight: 1 }}
+                pathOptions={{ color: routeColor, fillColor: routeColor, fillOpacity: 0.7, weight: 1 }}
               >
                 <Tooltip direction="top" offset={[0, -6]}>
                   <div className="text-xs leading-tight">

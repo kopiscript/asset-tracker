@@ -171,6 +171,19 @@
   --chart-5: oklch(0.269 0 0);
 }
 
+/* ─── Scoped red accent ──────────────────────────────────────────────────── */
+/* Applied as `class="dark theme-red-accent"` on a wrapper: the .dark palette  */
+/* supplies the dark surfaces/text, this class overrides the brand accent to   */
+/* a vivid red (Apple system red, dark variant). Declared after .dark so the   */
+/* equal-specificity --primary override wins the cascade.                      */
+.theme-red-accent {
+  --primary: #ff453a;
+  --primary-foreground: #ffffff;
+  --ring: #ff453a;
+  --sidebar-primary: #ff453a;
+  --sidebar-ring: #ff453a;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

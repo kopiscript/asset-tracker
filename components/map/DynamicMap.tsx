@@ -30,6 +30,8 @@ interface DynamicMapProps {
   focusVehicleId?: string;
   historyPath?: HistoryPoint[];
   className?: string;
+  tileTheme?: "light" | "dark";
+  routeColor?: string;
 }
 
 export function DynamicMap(props: DynamicMapProps) {
