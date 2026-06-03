@@ -46,11 +46,26 @@ model OrgMember {
   role      String   // "owner" | "admin" | "viewer"
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org           Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  vehicleAccess ViewerVehicleAccess[]
 
   @@unique([userId, orgId])
   @@map("org_members")
+}
+
+// Per-viewer vehicle allowlist. No rows = viewer sees all org vehicles (unrestricted).
+// One or more rows = viewer sees only those vehicles.
+model ViewerVehicleAccess {
+  id        String @id @default(cuid())
+  memberId  String @map("member_id")
+  vehicleId BigInt @map("vehicle_id")
+
+  member  OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  vehicle Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, vehicleId])
+  @@map("viewer_vehicle_access")
 }
 
 model Vehicle {
@@ -65,8 +80,9 @@ model Vehicle {
   orgId       String?   @map("org_id")
   apiKey      String?   @map("api_key")
 
-  org              Organization?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  org              Organization?        @relation(fields: [orgId], references: [id], onDelete: SetNull)
   telemetryRecords TelemetryRecord[]
+  viewerAccess     ViewerVehicleAccess[]
 
   @@map("vehicles")
 }

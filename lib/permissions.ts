@@ -45,10 +45,19 @@ export async function getEffectiveVehicleRole(
   });
   if (!vehicle?.orgId) return null;
 
-  const orgRole = await getOrgRole(userId, vehicle.orgId);
-  if (!orgRole) return null;
-  // All org members (owner, admin, viewer) can access all vehicles in the org
-  return orgRole as "owner" | "admin" | "viewer";
+  const member = await prisma.orgMember.findUnique({
+    where: { userId_orgId: { userId, orgId: vehicle.orgId } },
+    select: { role: true, vehicleAccess: { select: { vehicleId: true } } },
+  });
+  if (!member) return null;
+
+  // Viewers with an allowlist can only see their granted vehicles
+  if (member.role === "viewer" && member.vehicleAccess.length > 0) {
+    const allowed = member.vehicleAccess.some((a) => a.vehicleId === BigInt(vehicleId));
+    if (!allowed) return null;
+  }
+
+  return member.role as "owner" | "admin" | "viewer";
 }
 
 export async function canView(userId: string, vehicleId: string): Promise<boolean> {

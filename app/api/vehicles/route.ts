@@ -33,19 +33,25 @@ export async function GET() {
         },
       });
     } else {
-      // All org memberships — any role grants access to all org vehicles
       const orgMemberships = await prisma.orgMember.findMany({
         where: { userId: dbUser.id },
-        select: { orgId: true, role: true },
+        select: { orgId: true, role: true, vehicleAccess: { select: { vehicleId: true } } },
       });
 
-      const allOrgIds = orgMemberships.map((m) => m.orgId);
-      if (allOrgIds.length === 0) {
+      if (orgMemberships.length === 0) {
         return Response.json({ data: [], error: null });
       }
 
+      // For restricted viewers (has allowlist rows), only include their granted vehicles
+      const orClauses = orgMemberships.map((m) => {
+        if (m.role === "viewer" && m.vehicleAccess.length > 0) {
+          return { orgId: m.orgId, id: { in: m.vehicleAccess.map((a) => a.vehicleId) } };
+        }
+        return { orgId: m.orgId };
+      });
+
       vehiclesRaw = await prisma.vehicle.findMany({
-        where: { orgId: { in: allOrgIds } },
+        where: { OR: orClauses },
         include: {
           org: { select: { id: true, name: true } },
           telemetryRecords: {

@@ -163,6 +163,11 @@ export const t = {
     noMembers: "No members yet.",
     removeConfirm: "Remove {name} from this organisation?",
     failedRemove: "Failed to remove member.",
+    vehicleAccess: "Vehicle Access",
+    viewerAccessHint: "Uncheck all to let this viewer see every vehicle. Select specific vehicles to restrict access.",
+    vehiclesSelected: "vehicles selected",
+    noRestriction: "No restriction — sees all vehicles",
+    failedSaveAccess: "Failed to save vehicle access.",
 
     // Settings
     settingsSubtitle: "Manage your account and preferences.",
@@ -353,6 +358,11 @@ export const t = {
     noMembers: "Tiada ahli lagi.",
     removeConfirm: "Buang {name} daripada organisasi ini?",
     failedRemove: "Gagal membuang ahli.",
+    vehicleAccess: "Akses Kenderaan",
+    viewerAccessHint: "Nyahtanda semua untuk benarkan penonton lihat semua kenderaan. Pilih kenderaan tertentu untuk hadkan akses.",
+    vehiclesSelected: "kenderaan dipilih",
+    noRestriction: "Tiada sekatan — nampak semua kenderaan",
+    failedSaveAccess: "Gagal simpan akses kenderaan.",
 
     // Settings
     settingsSubtitle: "Urus akaun dan keutamaan anda.",

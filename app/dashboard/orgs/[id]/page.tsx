@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Car, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/dashboard/PageTitle";
@@ -9,6 +9,7 @@ import { getOrgRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { OrgPageClient } from "./OrgPageClient";
 import { RemoveMemberButton } from "./RemoveMemberButton";
+import { ViewerAccessButton } from "./ViewerAccessButton";
 import type { TranslationKey } from "@/lib/translations";
 
 export default async function OrgDetailPage(
@@ -27,7 +28,10 @@ export default async function OrgDetailPage(
     where: { id },
     include: {
       members: {
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          vehicleAccess: { select: { vehicleId: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
       vehicles: {
@@ -39,6 +43,12 @@ export default async function OrgDetailPage(
   if (!org) return notFound();
 
   const canManage = userRole === "owner";
+  const canManageViewerAccess = userRole === "owner" || userRole === "admin";
+  const orgVehicles = org.vehicles.map((v) => ({
+    id: v.id.toString(),
+    name: v.name,
+    plateNumber: v.plateNumber,
+  }));
 
   const roleColor = (role: string) =>
     role === "owner"
@@ -89,6 +99,15 @@ export default async function OrgDetailPage(
                 <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
               </div>
               <Badge className={`text-xs border ${roleColor(m.role)}`}><PageTitle k={m.role as TranslationKey} /></Badge>
+              {canManageViewerAccess && m.role === "viewer" && (
+                <ViewerAccessButton
+                  orgId={id}
+                  userId={m.userId}
+                  memberName={m.user.name ?? m.user.email}
+                  vehicles={orgVehicles}
+                  currentVehicleIds={m.vehicleAccess.map((a) => a.vehicleId.toString())}
+                />
+              )}
               {canManage && m.userId !== dbUser.id && (
                 <RemoveMemberButton
                   orgId={id}
