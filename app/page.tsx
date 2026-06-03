@@ -86,9 +86,13 @@ export default function LandingPage() {
                 GPS tracking, driver management, and role-based access control for Malaysian logistics — no subscription required to start.
               </p>
 
-              <div className="mb-8 animate-fade-up delay-200">
+              <div className="mb-3 animate-fade-up delay-200">
                 <LandingAuthButtons variant="hero" size="lg" />
               </div>
+
+              <p className="text-xs text-muted-foreground/70 max-w-[46ch] mb-8 leading-relaxed animate-fade-up delay-200">
+                Joining someone else&apos;s fleet? You&apos;ll receive an invite link from your fleet owner — no sign-up needed here.
+              </p>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground animate-fade-up delay-300">
                 {["No credit card", "Free OpenStreetMap tiles", "Bahasa Malaysia support"].map((t) => (
@@ -142,6 +146,54 @@ export default function LandingPage() {
                   <p className="text-sm font-semibold text-foreground">{f.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{f.desc}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Team roles ───────────────────────────────────────────────────── */}
+      <section id="team" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-border/40">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-14 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-3">
+              Roles &amp; access
+            </p>
+            <h2 className="font-display text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+              Built for your whole team
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-[48ch] mx-auto leading-relaxed">
+              Invite your whole team — each person sees exactly what they need, nothing more.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                icon: <Shield className="h-5 w-5 text-primary" />,
+                title: "Owner",
+                desc: "Sets up the fleet, manages billing, and has full control over vehicles and team.",
+              },
+              {
+                icon: <Gauge className="h-5 w-5 text-primary" />,
+                title: "Admin",
+                desc: "Views and edits vehicle details, driver info, and trip history.",
+              },
+              {
+                icon: <Activity className="h-5 w-5 text-primary" />,
+                title: "Viewer",
+                desc: "Tracks vehicles live on the map with read-only access.",
+              },
+            ].map((r) => (
+              <div
+                key={r.title}
+                className="rounded-2xl border border-border/60 bg-card p-7 flex flex-col"
+              >
+                <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
+                  {r.icon}
+                </div>
+                <h3 className="font-semibold text-foreground text-lg mb-2">{r.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{r.desc}</p>
               </div>
             ))}
           </div>

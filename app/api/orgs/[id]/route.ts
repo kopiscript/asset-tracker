@@ -73,7 +73,10 @@ export async function PATCH(
   }
 
   try {
-    const org = await prisma.organization.update({ where: { id }, data: { name: body.name.trim() } });
+    const org = await prisma.organization.update({
+      where: { id },
+      data: { name: body.name.trim(), nameSetAt: new Date() },
+    });
     return Response.json({ data: { id: org.id, name: org.name }, error: null });
   } catch (e) {
     console.error("[PATCH /api/orgs/[id]]", e);

@@ -191,6 +191,39 @@ export const t = {
     distanceKm: "km",
     errorMaxWindow: "Maximum history window is 30 days.",
     errorToBeforeFrom: "'To' must be after 'From'.",
+
+    // Onboarding
+    welcomeTitle: "Welcome",
+    welcomeSubtitleViewer: "You can track all vehicles in real time on the live map.",
+    welcomeSubtitleAdmin: "You can view vehicle details and edit vehicle information.",
+    goToFleet: "Go to your fleet",
+    setupYourFleet: "Set up your fleet",
+    renameYourFleet: "Name your fleet",
+    addFirstVehicle: "Add your first vehicle",
+    inviteYourTeam: "Invite your team",
+    skipForNow: "Skip for now",
+    setupComplete: "You're all set",
+
+    // Invite page
+    inviteJoinAs: "You've been invited to join",
+    inviteRole: "as a",
+    inviteAccept: "Accept & Join",
+    inviteExpired: "This invite link has expired.",
+    inviteExpiredHint: "Ask {name} to send you a new invite.",
+    inviteAlreadyJoined: "You've already joined this fleet.",
+    inviteWrongAccount: "This invite is for {email}. Sign out to use a different account.",
+    inviteCreateAccount: "Create account to join",
+
+    // Landing
+    landingInviteNote: "Joining someone else's fleet? You'll receive an invite link from your fleet owner — no sign-up needed here.",
+    landingTeamTitle: "Built for your whole team",
+    landingTeamSubtitle: "Invite your whole team — each person sees exactly what they need, nothing more.",
+    landingOwnerTitle: "Owner",
+    landingOwnerDesc: "Sets up the fleet, manages billing, and has full control over vehicles and team.",
+    landingAdminTitle: "Admin",
+    landingAdminDesc: "Views and edits vehicle details, driver info, and trip history.",
+    landingViewerTitle: "Viewer",
+    landingViewerDesc: "Tracks vehicles live on the map with read-only access.",
   },
 
   bm: {
@@ -386,6 +419,39 @@ export const t = {
     distanceKm: "km",
     errorMaxWindow: "Tetingkap sejarah maksimum ialah 30 hari.",
     errorToBeforeFrom: "'Ke' mesti selepas 'Dari'.",
+
+    // Onboarding
+    welcomeTitle: "Selamat datang",
+    welcomeSubtitleViewer: "Anda boleh menjejaki semua kenderaan secara langsung di peta.",
+    welcomeSubtitleAdmin: "Anda boleh melihat butiran kenderaan dan mengemas kini maklumat kenderaan.",
+    goToFleet: "Pergi ke armada anda",
+    setupYourFleet: "Sediakan armada anda",
+    renameYourFleet: "Namakan armada anda",
+    addFirstVehicle: "Tambah kenderaan pertama anda",
+    inviteYourTeam: "Jemput pasukan anda",
+    skipForNow: "Langkau buat masa ini",
+    setupComplete: "Anda sudah sedia",
+
+    // Invite page
+    inviteJoinAs: "Anda telah dijemput untuk menyertai",
+    inviteRole: "sebagai",
+    inviteAccept: "Terima & Sertai",
+    inviteExpired: "Pautan jemputan ini telah tamat tempoh.",
+    inviteExpiredHint: "Minta {name} menghantar jemputan baharu kepada anda.",
+    inviteAlreadyJoined: "Anda telah pun menyertai armada ini.",
+    inviteWrongAccount: "Jemputan ini untuk {email}. Log keluar untuk menggunakan akaun lain.",
+    inviteCreateAccount: "Cipta akaun untuk menyertai",
+
+    // Landing
+    landingInviteNote: "Menyertai armada orang lain? Anda akan menerima pautan jemputan daripada pemilik armada anda — tidak perlu mendaftar di sini.",
+    landingTeamTitle: "Dibina untuk seluruh pasukan anda",
+    landingTeamSubtitle: "Jemput seluruh pasukan anda — setiap orang melihat tepat apa yang mereka perlukan, tidak lebih.",
+    landingOwnerTitle: "Pemilik",
+    landingOwnerDesc: "Menyediakan armada, menguruskan pengebilan, dan mempunyai kawalan penuh ke atas kenderaan dan pasukan.",
+    landingAdminTitle: "Admin",
+    landingAdminDesc: "Melihat dan mengemas kini butiran kenderaan, maklumat pemandu, dan sejarah perjalanan.",
+    landingViewerTitle: "Pemerhati",
+    landingViewerDesc: "Menjejaki kenderaan secara langsung di peta dengan akses baca sahaja.",
   },
 } as const;
 

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPlan } from "@/lib/plans";
@@ -38,6 +39,16 @@ export default async function DashboardLayout({
       select: { id: true },
     });
     if (unpaidOrg) redirect("/billing/activate");
+
+    // Welcome gate: invited members with an unseen welcome screen land there first.
+    const pathname = (await headers()).get("x-current-path") ?? "";
+    if (!pathname.startsWith("/dashboard/welcome")) {
+      const unwelcomed = await prisma.orgMember.findFirst({
+        where: { userId: session.user.id, seenWelcomeAt: null },
+        select: { id: true },
+      });
+      if (unwelcomed) redirect("/dashboard/welcome");
+    }
   }
 
   // Fetch plan info for the sidebar chip and header dropdown

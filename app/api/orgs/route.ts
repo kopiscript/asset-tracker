@@ -81,8 +81,10 @@ export async function POST(request: Request) {
     const org = await prisma.organization.create({
       data: { name: body.name.trim() },
     });
+    // Owners get the onboarding/setup checklist, not the invited-member welcome
+    // screen — mark their welcome as already seen.
     await prisma.orgMember.create({
-      data: { orgId: org.id, userId: dbUser.id, role: "owner" },
+      data: { orgId: org.id, userId: dbUser.id, role: "owner", seenWelcomeAt: new Date() },
     });
     return Response.json({ data: { id: org.id, name: org.name, userRole: "owner" }, error: null }, { status: 201 });
   } catch (e) {

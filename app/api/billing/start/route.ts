@@ -65,7 +65,7 @@ export const GET = auth(async function GET(request) {
       amountCents: planDef.priceRm * 100,
       description: `Mirae ${PLAN_LABELS[plan]} Plan — Monthly`,
       callbackUrl: `${appUrl}/api/billing/billplz`,
-      redirectUrl: `${appUrl}/welcome?plan=${plan}`,
+      redirectUrl: `${appUrl}/onboarding/setup?plan=${plan}`,
       reference1: membership.org.id,
       reference2: plan,
     });

@@ -13,6 +13,9 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") ?? "";
   const plan = ["personal", "growth"].includes(planParam) ? planParam : null;
+  // Only honor same-origin relative callback paths (prevents open-redirect).
+  const callbackParam = searchParams.get("callbackUrl") ?? "";
+  const callbackUrl = callbackParam.startsWith("/") ? callbackParam : null;
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +32,12 @@ function SignInForm() {
         setError("Invalid email or password.");
         return;
       }
-      // If redirected here from the wizard, resume the payment flow
-      window.location.href = plan ? `/api/billing/start?plan=${plan}` : "/dashboard";
+      // Priority: explicit callback (e.g. invite flow) → payment wizard → dashboard
+      window.location.href = callbackUrl
+        ? callbackUrl
+        : plan
+          ? `/api/billing/start?plan=${plan}`
+          : "/dashboard";
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
