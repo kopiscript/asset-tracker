@@ -13,9 +13,10 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") ?? "";
   const plan = ["personal", "growth"].includes(planParam) ? planParam : null;
-  // Only honor same-origin relative callback paths (prevents open-redirect).
+  // Only honor same-origin relative paths. Reject protocol-relative URLs like
+  // //evil.com which start with "/" but navigate off-site.
   const callbackParam = searchParams.get("callbackUrl") ?? "";
-  const callbackUrl = callbackParam.startsWith("/") ? callbackParam : null;
+  const callbackUrl = callbackParam.startsWith("/") && !callbackParam.startsWith("//") ? callbackParam : null;
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");

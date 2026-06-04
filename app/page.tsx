@@ -13,6 +13,7 @@ import {
   Shield,
   Zap,
   Check,
+  Mail,
 } from "lucide-react";
 
 const PRODUCT_NAME = "Mirae";
@@ -20,26 +21,26 @@ const PRODUCT_NAME = "Mirae";
 const primaryFeatures = [
   {
     icon: <Activity className="h-5 w-5 text-primary" />,
-    title: "Real-Time Tracking",
-    desc: "See exactly where each vehicle is on a live map, updated continuously as GPS pings arrive from your hardware over free OpenStreetMap tiles.",
+    title: "Live Map Tracking",
+    desc: "See exactly where each vehicle is on a live map, refreshed every minute as GPS pings arrive from your hardware — no Google Maps required.",
     stat: "Live updates",
-    statDetail: "as data arrives from hardware",
+    statDetail: "refreshed every 60 seconds",
     accent: "blue" as const,
   },
   {
     icon: <Shield className="h-5 w-5 text-emerald-600" />,
     title: "Role-Based Access",
-    desc: "Share fleet access with drivers and managers. Assign Viewer, Editor, or Owner roles per person — everyone sees only what they need.",
+    desc: "Share fleet access with drivers and managers. Assign Viewer, Admin, or Owner roles per person — everyone sees only what they need.",
     stat: "3 access levels",
-    statDetail: "Owner · Editor · Viewer",
+    statDetail: "Owner · Admin · Viewer",
     accent: "green" as const,
   },
 ];
 
 const secondaryFeatures = [
-  { icon: <Gauge className="h-4 w-4" />, title: "Vehicle Health", desc: "Fuel level, mileage, and driver assignments in one view." },
+  { icon: <Gauge className="h-4 w-4" />, title: "Vehicle Details", desc: "Speed, today's distance, and driver assignments in one view." },
   { icon: <Globe className="h-4 w-4" />, title: "Malaysian-First", desc: "Full Bahasa Malaysia support and local plate formats." },
-  { icon: <MapPin className="h-4 w-4" />, title: "No API Keys", desc: "Free OpenStreetMap tiles — no Google Maps billing." },
+  { icon: <MapPin className="h-4 w-4" />, title: "No Google Maps", desc: "CartoDB tiles built on OpenStreetMap data — no Google billing, no API key." },
   { icon: <Users className="h-4 w-4" />, title: "Team-Friendly", desc: "Invite your whole ops team with role-based permissions." },
   { icon: <Zap className="h-4 w-4" />, title: "Fast & Light", desc: "Built on Next.js 16 — loads instantly on mobile networks." },
 ];
@@ -73,7 +74,7 @@ export default function LandingPage() {
               <div className="animate-fade-up">
                 <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-7 tracking-wide">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  Beta · Free for all Malaysian fleets
+                  Beta · Now open
                 </div>
                 <h1 className="font-display text-[2.4rem] sm:text-[3rem] lg:text-[4.25rem] text-foreground leading-[1.03] tracking-tight mb-6">
                   Track your fleet.
@@ -83,19 +84,22 @@ export default function LandingPage() {
               </div>
 
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-[50ch] mb-8 animate-fade-up delay-100">
-                GPS tracking, driver management, and role-based access control for Malaysian logistics — no subscription required to start.
+                GPS tracking, driver management, and role-based access control for Malaysian logistics — from RM 29/mo, cancel anytime.
               </p>
 
               <div className="mb-3 animate-fade-up delay-200">
                 <LandingAuthButtons variant="hero" size="lg" />
               </div>
 
-              <p className="text-xs text-muted-foreground/70 max-w-[46ch] mb-8 leading-relaxed animate-fade-up delay-200">
-                Joining someone else&apos;s fleet? You&apos;ll receive an invite link from your fleet owner — no sign-up needed here.
-              </p>
+              <div className="flex items-start gap-2.5 mb-8 animate-fade-up delay-200 max-w-[46ch]">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                  Joining someone else&apos;s fleet? Your fleet owner will send you an invite link by email — no sign-up needed here.
+                </p>
+              </div>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground animate-fade-up delay-300">
-                {["No credit card", "Free OpenStreetMap tiles", "Bahasa Malaysia support"].map((t) => (
+                {["Pay via FPX", "No Google Maps fees", "Bahasa Malaysia support"].map((t) => (
                   <div key={t} className="flex items-center gap-1.5">
                     <Check className="h-3 w-3 text-primary shrink-0" />
                     {t}
@@ -217,7 +221,7 @@ export default function LandingPage() {
                 Ready to see your fleet?
               </h2>
               <p className="text-muted-foreground text-base mb-8 max-w-[42ch] mx-auto leading-relaxed">
-                Sign up in under a minute. No credit card required. Cancel any time.
+                Get set up in minutes. Pay via FPX. Cancel any time.
               </p>
               <LandingCtaButton />
             </div>

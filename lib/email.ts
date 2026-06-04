@@ -7,7 +7,9 @@
  */
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 const FROM = "Mirae Fleet <noreply@miraefleet.app>";
 
@@ -19,6 +21,15 @@ const ROLE_LABELS: Record<string, string> = {
 
 function roleLabel(role: string): string {
   return ROLE_LABELS[role] ?? role;
+}
+
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 // Shared shell — dark, minimal, inline-styled for email-client compatibility.
@@ -49,29 +60,32 @@ export async function sendInviteEmail(opts: {
   inviteUrl: string;
 }) {
   const role = roleLabel(opts.role);
+  const orgName = esc(opts.orgName);
+  const inviterName = esc(opts.inviterName);
+  const inviteUrl = esc(opts.inviteUrl);
   const html = shell(`
     <h1 style="font-size:20px;font-weight:600;margin:0 0 12px;color:#f5f5f7;">
-      You've been invited to ${opts.orgName}
+      You've been invited to ${orgName}
     </h1>
     <p style="font-size:14px;line-height:1.6;color:#c7c7cc;margin:0 0 8px;">
-      <strong style="color:#f5f5f7;">${opts.inviterName}</strong> has invited you to join
-      <strong style="color:#f5f5f7;">${opts.orgName}</strong> on Mirae Fleet as a
+      <strong style="color:#f5f5f7;">${inviterName}</strong> has invited you to join
+      <strong style="color:#f5f5f7;">${orgName}</strong> on Mirae Fleet as a
       <strong style="color:#ff453a;">${role}</strong>.
     </p>
     <p style="font-size:14px;line-height:1.6;color:#c7c7cc;margin:0 0 24px;">
       Click below to create your account and join the fleet. This link expires in 7 days.
     </p>
-    <a href="${opts.inviteUrl}"
+    <a href="${inviteUrl}"
        style="display:inline-block;background:#ff453a;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:10px;">
       Accept invite &rarr;
     </a>
     <p style="font-size:12px;line-height:1.5;color:#86868b;margin:24px 0 0;">
       If the button doesn't work, copy and paste this link:<br/>
-      <span style="color:#c7c7cc;word-break:break-all;">${opts.inviteUrl}</span>
+      <span style="color:#c7c7cc;word-break:break-all;">${inviteUrl}</span>
     </p>
   `);
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `You've been invited to ${opts.orgName} on Mirae Fleet`,
@@ -90,14 +104,16 @@ export async function sendInviteNotificationEmail(opts: {
   role: string;
 }) {
   const role = roleLabel(opts.role);
+  const orgName = esc(opts.orgName);
+  const inviterName = esc(opts.inviterName);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://miraefleet.app";
   const html = shell(`
     <h1 style="font-size:20px;font-weight:600;margin:0 0 12px;color:#f5f5f7;">
-      You've been added to ${opts.orgName}
+      You've been added to ${orgName}
     </h1>
     <p style="font-size:14px;line-height:1.6;color:#c7c7cc;margin:0 0 8px;">
-      <strong style="color:#f5f5f7;">${opts.inviterName}</strong> has added you to
-      <strong style="color:#f5f5f7;">${opts.orgName}</strong> on Mirae Fleet as a
+      <strong style="color:#f5f5f7;">${inviterName}</strong> has added you to
+      <strong style="color:#f5f5f7;">${orgName}</strong> on Mirae Fleet as a
       <strong style="color:#ff453a;">${role}</strong>.
     </p>
     <p style="font-size:14px;line-height:1.6;color:#c7c7cc;margin:0 0 24px;">
@@ -109,7 +125,7 @@ export async function sendInviteNotificationEmail(opts: {
     </a>
   `);
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to: opts.to,
     subject: `You've been added to ${opts.orgName} on Mirae Fleet`,

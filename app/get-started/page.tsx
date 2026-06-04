@@ -4,14 +4,14 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import {
-  MapPin, ArrowRight, ArrowLeft, Check, Cpu, Mail,
+  MapPin, ArrowRight, ArrowLeft, Check, Cpu, Mail, Car, Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-type Step = 1 | 2 | 3 | 4 | 5 | "contact";
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | "contact" | "member";
 type RangeKey = "1-3" | "4-10" | "11-20" | "21-50" | "50+";
 type PlanKey = "personal" | "growth";
 
@@ -45,7 +45,7 @@ function derivePlan(count: number): PlanKey {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function GetStartedPage() {
-  const [step, setStep]               = useState<Step>(1);
+  const [step, setStep]               = useState<Step>(0);
   const [range, setRange]             = useState<RangeKey | null>(null);
   const [vehicleCount, setVehicleCount] = useState(1);
   const [name, setName]               = useState("");
@@ -121,8 +121,8 @@ export default function GetStartedPage() {
             <span className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">Mirae</span>
           </Link>
 
-          {/* Step indicator */}
-          {typeof step === "number" && (
+          {/* Step indicator — hidden on the role-picker (step 0) */}
+          {typeof step === "number" && step > 0 && (
             <div className="hidden sm:flex items-center gap-1.5">
               {STEP_LABELS.map((label, i) => {
                 const n = i + 1;
@@ -161,6 +161,75 @@ export default function GetStartedPage() {
       {/* ── Wizard content ─────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-16">
         <div className="w-full max-w-lg">
+
+          {/* ── Step 0: Role picker ───────────────────────────────────────── */}
+          {step === 0 && (
+            <div className="animate-fade-up">
+              <h1 className="font-display text-4xl sm:text-5xl text-foreground leading-none tracking-tight mb-3">
+                How are you using Mirae?
+              </h1>
+              <p className="text-sm text-muted-foreground mb-10 leading-relaxed">
+                Tell us your goal and we&apos;ll point you in the right direction.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex flex-col items-start p-6 rounded-2xl border border-border/50 hover:border-primary/40 hover:bg-primary/5 text-left transition-all active:scale-[0.97]"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                    <Car className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-base font-semibold text-foreground mb-1">Starting a fleet</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">I own or manage vehicles and want to track them</span>
+                </button>
+
+                <button
+                  onClick={() => setStep("member")}
+                  className="flex flex-col items-start p-6 rounded-2xl border border-border/50 hover:border-border hover:bg-muted/20 text-left transition-all active:scale-[0.97]"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-muted border border-border/60 flex items-center justify-center mb-4">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <span className="text-base font-semibold text-foreground mb-1">Joining a team</span>
+                  <span className="text-xs text-muted-foreground leading-relaxed">I&apos;ve been invited to view or manage someone else&apos;s fleet</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Member: joining a team (terminal) ─────────────────────────── */}
+          {step === "member" && (
+            <div className="animate-fade-up text-center">
+              <div className="mx-auto h-14 w-14 rounded-2xl bg-muted border border-border/60 flex items-center justify-center mb-7">
+                <Mail className="h-6 w-6 text-muted-foreground" />
+              </div>
+
+              <h1 className="font-display text-4xl sm:text-5xl text-foreground leading-none tracking-tight mb-3">
+                Check your inbox
+              </h1>
+              <p className="text-sm text-muted-foreground mb-10 leading-relaxed max-w-[38ch] mx-auto">
+                Your fleet owner will send you an invite link by email. Click it to create your account and join — no sign-up needed here.
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex items-center justify-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors mx-auto"
+                >
+                  Are you a fleet owner? Get started <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+                <div>
+                  <Link
+                    href="/sign-in"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Already have an account? Sign in
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── Step 1: Vehicle count ─────────────────────────────────────── */}
           {step === 1 && (

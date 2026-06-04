@@ -33,7 +33,7 @@ const statusAccent: Record<string, string> = {
 
 export function VehicleCard({ vehicle }: VehicleCardProps) {
   const { tr } = useLang();
-  const canEdit  = vehicle.userRole === "editor" || vehicle.userRole === "owner";
+  const canEdit  = vehicle.userRole === "admin" || vehicle.userRole === "owner";
   const canShare = vehicle.userRole === "owner";
   const accent   = statusAccent[vehicle.status] ?? statusAccent.offline;
 
