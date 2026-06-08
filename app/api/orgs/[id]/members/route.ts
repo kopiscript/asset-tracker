@@ -150,9 +150,12 @@ export async function POST(
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    // Preserve acceptedAt if the invite was previously accepted (e.g. user
+    // registered then their account was deleted). For a genuinely pending
+    // invite, acceptedAt is already null so omitting it is safe.
     const invite = await prisma.orgInvite.upsert({
       where: { email_orgId: { email: targetEmail!, orgId: id } },
-      update: { role, token: hashedToken, invitedBy: dbUser.id, expiresAt, acceptedAt: null },
+      update: { role, token: hashedToken, invitedBy: dbUser.id, expiresAt },
       create: { email: targetEmail!, orgId: id, role, token: hashedToken, invitedBy: dbUser.id, expiresAt },
     });
 

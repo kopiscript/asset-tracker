@@ -23,9 +23,17 @@ export function WelcomeClient({ orgName, role }: Props) {
   async function handleContinue() {
     setLoading(true);
     try {
-      await fetch("/api/dashboard/welcome/seen", { method: "POST" });
+      const res = await fetch("/api/dashboard/welcome/seen", { method: "POST" });
+      // Only navigate once the server has stamped seenWelcomeAt. If we proceed
+      // on a non-200, the layout will find seenWelcomeAt still null and redirect
+      // the user straight back here, creating a loop.
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
     } catch {
-      /* non-fatal — proceed regardless */
+      setLoading(false);
+      return;
     }
     router.push("/dashboard");
   }

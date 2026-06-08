@@ -106,21 +106,17 @@ export async function POST(
     }
 
     // Create membership for the clicked invite (seenWelcomeAt stays null → triggers welcome).
-    const existing = await prisma.orgMember.findUnique({
-      where: { userId_orgId: { userId: dbUser.id, orgId: invite.orgId } },
-      select: { id: true },
-    });
-    if (!existing) {
-      await prisma.orgMember.create({
-        data: { userId: dbUser.id, orgId: invite.orgId, role: invite.role },
-      });
-    }
+    // Ignore unique-constraint errors: a concurrent request already created the row.
+    await prisma.orgMember.create({
+      data: { userId: dbUser.id, orgId: invite.orgId, role: invite.role },
+    }).catch(() => {});
     await prisma.orgInvite.update({
       where: { id: invite.id },
       data: { acceptedAt: new Date() },
     });
 
     // Activate ALL other pending non-expired invites for this email.
+    // Each is processed independently so one failure doesn't block the rest.
     const others = await prisma.orgInvite.findMany({
       where: {
         email: invite.email,
@@ -131,15 +127,9 @@ export async function POST(
       select: { id: true, orgId: true, role: true },
     });
     for (const other of others) {
-      const alreadyMember = await prisma.orgMember.findUnique({
-        where: { userId_orgId: { userId: dbUser.id, orgId: other.orgId } },
-        select: { id: true },
-      });
-      if (!alreadyMember) {
-        await prisma.orgMember.create({
-          data: { userId: dbUser.id, orgId: other.orgId, role: other.role },
-        });
-      }
+      await prisma.orgMember.create({
+        data: { userId: dbUser.id, orgId: other.orgId, role: other.role },
+      }).catch(() => {});
       await prisma.orgInvite.update({
         where: { id: other.id },
         data: { acceptedAt: new Date() },

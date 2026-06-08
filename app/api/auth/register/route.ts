@@ -55,16 +55,18 @@ export async function POST(request: Request) {
 
     // Activate any pending, non-expired invites for this email so the new user
     // is dropped straight into the org(s) they were invited to.
-    try {
-      const pendingInvites = await prisma.orgInvite.findMany({
-        where: {
-          email: user.email,
-          acceptedAt: null,
-          expiresAt: { gt: new Date() },
-        },
-        select: { id: true, orgId: true, role: true },
-      });
-      for (const invite of pendingInvites) {
+    // Each invite is processed independently — one failure does not block the rest.
+    const pendingInvites = await prisma.orgInvite.findMany({
+      where: {
+        email: user.email,
+        acceptedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true, orgId: true, role: true },
+    }).catch(() => []);
+
+    for (const invite of pendingInvites) {
+      try {
         const existing = await prisma.orgMember.findUnique({
           where: { userId_orgId: { userId: user.id, orgId: invite.orgId } },
           select: { id: true },
@@ -78,9 +80,9 @@ export async function POST(request: Request) {
           `UPDATE org_invites SET accepted_at = NOW() WHERE id = $1`,
           invite.id
         );
+      } catch (inviteErr) {
+        console.error(`[POST /api/auth/register] invite ${invite.id} activation failed`, inviteErr);
       }
-    } catch (inviteErr) {
-      console.error("[POST /api/auth/register] invite activation failed", inviteErr);
     }
 
     return Response.json(
