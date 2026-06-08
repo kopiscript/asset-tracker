@@ -168,6 +168,12 @@ export const t = {
     vehiclesSelected: "vehicles selected",
     noRestriction: "No restriction — sees all vehicles",
     failedSaveAccess: "Failed to save vehicle access.",
+    pendingInvites: "Pending Invites",
+    revokeInvite: "Revoke invite",
+    revokeConfirm: "Revoke invite for {email}?",
+    failedRevoke: "Failed to revoke invite.",
+    failedChangeRole: "Failed to change role.",
+    expires: "Expires",
 
     // Settings
     settingsSubtitle: "Manage your account and preferences.",
@@ -396,6 +402,12 @@ export const t = {
     vehiclesSelected: "kenderaan dipilih",
     noRestriction: "Tiada sekatan — nampak semua kenderaan",
     failedSaveAccess: "Gagal simpan akses kenderaan.",
+    pendingInvites: "Jemputan Tertunda",
+    revokeInvite: "Batalkan jemputan",
+    revokeConfirm: "Batalkan jemputan untuk {email}?",
+    failedRevoke: "Gagal membatalkan jemputan.",
+    failedChangeRole: "Gagal menukar peranan.",
+    expires: "Tamat",
 
     // Settings
     settingsSubtitle: "Urus akaun dan keutamaan anda.",
