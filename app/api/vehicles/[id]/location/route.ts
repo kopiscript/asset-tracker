@@ -68,11 +68,12 @@ export async function PATCH(
   if (!vehicle) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  if (vehicle.apiKey !== null) {
-    const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
-    if (!valid) {
-      return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-    }
+  if (!vehicle.apiKey) {
+    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
+  if (!valid) {
+    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   // Per-plan rate limit

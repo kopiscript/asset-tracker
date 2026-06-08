@@ -17,6 +17,10 @@ export async function POST(request: Request) {
   if (!body.email || typeof body.email !== "string") {
     return Response.json({ error: "Email is required." }, { status: 400 });
   }
+  const email = body.email.toLowerCase().trim();
+  if (!email) {
+    return Response.json({ error: "Email is required." }, { status: 400 });
+  }
   if (!body.password || typeof body.password !== "string") {
     return Response.json({ error: "Password is required." }, { status: 400 });
   }
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
 
   try {
     const existing = await prisma.user.findUnique({
-      where: { email: body.email },
+      where: { email },
     });
     if (existing) {
       return Response.json(
@@ -43,11 +47,11 @@ export async function POST(request: Request) {
     const name =
       body.name && typeof body.name === "string"
         ? body.name
-        : (body.email as string).split("@")[0];
+        : email.split("@")[0];
 
     const user = await prisma.user.create({
       data: {
-        email: body.email as string,
+        email,
         name,
         password: hashedPassword,
       },
