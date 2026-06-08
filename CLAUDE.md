@@ -86,7 +86,14 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
 **Auth flow**: `proxy.ts` (edge-safe) uses `auth.config.ts` to protect `/dashboard/*` — redirects to `/sign-in` when unauthenticated. Sign-up POSTs to `/api/auth/register` (creates user + hashes password), then auto-signs in via NextAuth credentials. The NextAuth JWT stores the database `User.id`, so every API route and server component calls `getOrCreateDbUser()` which looks up the user by `session.user.id`.
 
-**Permission model**: Three roles (`owner`, `editor`, `viewer`) stored in `VehicleAccess`. All access checks go through `lib/permissions.ts` (`canView`, `canEdit`, `canShare`, `canDelete`). Checks must be applied in both API routes (return 403) and UI (hide buttons). The `@@unique([vehicleId, userId])` constraint means one row per user-vehicle pair.
+**Permission model**: Three roles (`owner`, `admin`, `viewer`) stored in `OrgMember`. All access checks go through `lib/permissions.ts` (`canView`, `canEdit`, `canDelete`, `canManageOrg`). `canShare` does not exist. Checks must be applied in both API routes (return 403) and UI (hide buttons). Role resolution goes through `getEffectiveVehicleRole()` — system admins are treated as `owner` on every vehicle; `viewer` members with a `vehicleAccess` allowlist can only see their granted vehicles.
+
+| Permission | `owner` | `admin` | `viewer` |
+|------------|---------|---------|---------|
+| `canView` | ✅ | ✅ | ✅ |
+| `canEdit` | ✅ | ✅ | ❌ |
+| `canDelete` | ✅ | ❌ | ❌ |
+| `canManageOrg` | ✅ | ❌ | ❌ |
 
 **Map**: Leaflet cannot run on the server. `components/map/VehicleMap.tsx` is the real map component (client-only). Always import it through `components/map/DynamicMap.tsx`, which wraps it with `next/dynamic` and `ssr: false`.
 
