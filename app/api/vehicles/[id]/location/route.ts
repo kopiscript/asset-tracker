@@ -3,45 +3,16 @@
  * PATCH — receive a GPS ping from a hardware device and store it.
  *
  * Auth: API key in Authorization header (Bearer <key>).
- * Rate limit: derived from the vehicle's organisation plan via lib/plans.ts.
+ *   - If the vehicle has no apiKey set, any bearer token is accepted (dev/unprovisioned).
+ *   - If apiKey is set, the token must bcrypt-match the stored hash.
  *
  * Body: { latitude, longitude, speed?, recordedAt? }
  */
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-import { getPlan, type PlanKey } from "@/lib/plans";
 
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
-
-// Redis singleton — shared across all requests in the same function instance
-let redis: Redis | null = null;
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
-} else if (process.env.NODE_ENV === "production") {
-  console.warn("[location] Rate limiting disabled — set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN");
-}
-
-// One Ratelimit instance per plan, created lazily and cached for the process lifetime
-const limiterCache = new Map<string, Ratelimit>();
-
-function getLimiter(plan: string): Ratelimit | null {
-  if (!redis) return null;
-  if (limiterCache.has(plan)) return limiterCache.get(plan)!;
-  const { rateMax, rateWindow } = getPlan(plan);
-  const limiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(rateMax, rateWindow as `${number} ${"s" | "m" | "h" | "d"}`),
-    prefix: `rl:location:${plan}`,
-  });
-  limiterCache.set(plan, limiter);
-  return limiter;
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -58,31 +29,15 @@ export async function PATCH(
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: BigInt(id) },
-    select: {
-      id: true,
-      imei: true,
-      apiKey: true,
-      org: { select: { plan: true } },
-    },
+    select: { id: true, imei: true, apiKey: true },
   });
   if (!vehicle) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  if (!vehicle.apiKey) {
-    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-  }
-  const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
-  if (!valid) {
-    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Per-plan rate limit
-  const plan = (vehicle.org?.plan ?? "free") as PlanKey;
-  const limiter = getLimiter(plan);
-  if (limiter) {
-    const { success } = await limiter.limit(`vehicle:${id}`);
-    if (!success) {
-      return Response.json({ data: null, error: "Too many requests" }, { status: 429 });
+  if (vehicle.apiKey !== null) {
+    const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
+    if (!valid) {
+      return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
     }
   }
 
