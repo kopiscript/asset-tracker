@@ -45,7 +45,12 @@ export function ViewerAccessButton({
 
   function handleOpenChange(next: boolean) {
     if (next) {
-      setSelected(new Set(currentVehicleIds));
+      // Unrestricted (empty allowlist) → all checked; restricted → only granted ones checked
+      setSelected(
+        currentVehicleIds.length === 0
+          ? new Set(vehicles.map((v) => v.id))
+          : new Set(currentVehicleIds)
+      );
       setError("");
     }
     setOpen(next);
@@ -63,10 +68,13 @@ export function ViewerAccessButton({
   async function handleSave() {
     setLoading(true);
     setError("");
+    // All checked = full access (send empty array); partial = send only checked IDs
+    const allSelected = selected.size === vehicles.length;
+    const vehicleIds = allSelected ? [] : [...selected];
     const res = await fetch(`/api/orgs/${orgId}/members/${userId}/vehicle-access`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vehicleIds: [...selected] }),
+      body: JSON.stringify({ vehicleIds }),
     });
     setLoading(false);
     if (!res.ok) {
@@ -81,7 +89,10 @@ export function ViewerAccessButton({
   const isRestricted = currentVehicleIds.length > 0;
   const label = isRestricted
     ? `${currentVehicleIds.length}/${vehicles.length}`
-    : `${vehicles.length}`;
+    : tr("accessAll");
+
+  const noneSelected = selected.size === 0;
+  const allSelected = selected.size === vehicles.length;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -130,9 +141,11 @@ export function ViewerAccessButton({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {selected.size === 0
+          {noneSelected
+            ? tr("noVehiclesSelected")
+            : allSelected
             ? tr("noRestriction")
-            : `${selected.size} ${tr("vehiclesSelected")}`}
+            : `${selected.size} ${tr("of")} ${vehicles.length} ${tr("vehiclesSelected")}`}
         </p>
 
         {error && <p className="text-xs text-red-500">{error}</p>}
@@ -141,7 +154,7 @@ export function ViewerAccessButton({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || noneSelected}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tr("save")}
