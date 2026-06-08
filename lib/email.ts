@@ -11,7 +11,7 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM = "Mirae Fleet <noreply@miraefleet.app>";
+const FROM = "Mirae Fleet <noreply@ticki.azmiproductions.com>";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
