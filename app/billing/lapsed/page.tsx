@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { MapPin, AlertTriangle } from "lucide-react";
+import { SignOutButton } from "@/components/SignOutButton";
 
 export const metadata = { title: "Subscription Lapsed — Mirae Fleet" };
 
@@ -47,12 +47,10 @@ export default function LapsedPage() {
             >
               Email support
             </a>
-            <Link
-              href="/sign-in"
+            <SignOutButton
+              label="Sign out"
               className="inline-flex items-center justify-center rounded-xl border border-border text-sm font-medium px-5 py-2.5 hover:bg-muted transition-colors"
-            >
-              Sign in to another account
-            </Link>
+            />
           </div>
         </div>
       </main>

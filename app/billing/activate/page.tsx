@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { MapPin, Zap, ArrowRight, AlertTriangle } from "lucide-react";
+import { SignOutButton } from "@/components/SignOutButton";
 
 export const metadata = { title: "Choose a plan — Mirae Fleet" };
 
@@ -124,12 +124,10 @@ export default async function ActivatePage(props: PageProps<"/billing/activate">
               </a>{" "}
               about Fleet or Enterprise plans.
             </p>
-            <Link
-              href="/sign-in"
-              className="block text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
-            >
-              Sign in to a different account
-            </Link>
+            <SignOutButton
+              label="Sign out"
+              className="block w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
+            />
           </div>
         </div>
       </main>
