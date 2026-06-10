@@ -91,6 +91,7 @@ function MapFocus({
 }) {
   const map = useMap();
   const didFocus = useRef(false);
+  const didFit = useRef(false);
 
   // History path: always refit when the path changes (user picks a new date range)
   useEffect(() => {
@@ -108,6 +109,23 @@ function MapFocus({
       didFocus.current = true;
     }
   }, [focusVehicleId, vehicles, map]);
+
+  // Fleet overview (no single focus target, no history path): frame the cars
+  // once on first load — zoom into the only car, or fit a viewport that shows
+  // them all (tight if they're close, wide if they're far apart). Runs once so
+  // background polls don't yank the map while the user is panning/zooming.
+  useEffect(() => {
+    if (focusVehicleId || (historyPath && historyPath.length > 0)) return;
+    if (didFit.current || vehicles.length === 0) return;
+    if (vehicles.length === 1) {
+      map.setView([vehicles[0].latitude, vehicles[0].longitude], 15, { animate: false });
+    } else {
+      const bounds = vehicles.map((v): [number, number] => [v.latitude, v.longitude]);
+      // maxZoom caps how far it zooms when several cars sit almost on top of each other.
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16, animate: false });
+    }
+    didFit.current = true;
+  }, [vehicles, focusVehicleId, historyPath, map]);
 
   return null;
 }

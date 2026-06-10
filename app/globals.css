@@ -220,6 +220,15 @@
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
 
+/* ─── Leaflet stacking: keep the map below app overlays ──────────────────── */
+/* Leaflet's panes and controls use z-index up to 1000, which otherwise paints */
+/* over the dashboard header dropdown (z-40). Giving the positioned container a */
+/* z-index of 0 confines all those internal z-indexes to a single low stacking */
+/* context, so menus, sheets, and modals render above the map.                 */
+.leaflet-container {
+  z-index: 0;
+}
+
 /* ─── Leaflet popup: allow Tailwind color utilities to win ───────────────── */
 /* Leaflet's .leaflet-container a { color: #0078A8 } has specificity (0,1,1) */
 /* which beats Tailwind's single-class rules (0,1,0). These overrides restore */
