@@ -122,14 +122,7 @@ export async function GET(
       speedKmh:    r.speed_kmh,
     }));
 
-    // "all" mode (default): every recorded position as one unsegmented,
-    // unfiltered path — includes the stationary/parked pings the trip view drops.
-    if (mode === "all") {
-      const data = allPoints.length > 0 ? [buildTrip(1, allPoints)] : [];
-      return Response.json({ data, error: null });
-    }
-
-    // Segment points into trips by a 10-minute silence threshold
+    // Segment points into trips by a 10-minute silence threshold (both modes)
     const trips: TripRecord[] = [];
     let currentPoints: Point[] = [];
 
@@ -151,6 +144,33 @@ export async function GET(
       trips.push(buildTrip(trips.length + 1, currentPoints));
     }
 
+    // "all" mode (default): keep every segment — nothing filtered. Consecutive
+    // stationary segments (the parked pings the trip view drops) are merged into
+    // one "parked" block, so the list reads Trip → Parked → Trip rather than
+    // dozens of one-ping rows. Transparent: no period is hidden.
+    if (mode === "all") {
+      const entries: (TripRecord & { kind: "trip" | "parked" })[] = [];
+      let parked: Point[] = [];
+      const flushParked = () => {
+        if (parked.length === 0) return;
+        entries.push({ ...buildTrip(0, parked), kind: "parked" });
+        parked = [];
+      };
+      for (const seg of trips) {
+        const moving =
+          seg.distanceKm >= MIN_DISTANCE_KM && seg.durationMinutes >= MIN_DURATION_MINUTES;
+        if (moving) {
+          flushParked();
+          entries.push({ ...seg, kind: "trip" });
+        } else {
+          parked.push(...seg.points);
+        }
+      }
+      flushParked();
+      return Response.json({ data: entries.map((e, i) => ({ ...e, id: i + 1 })), error: null });
+    }
+
+    // "trips" mode: drop the stationary/short segments, keep real trips only.
     const filteredTrips = trips
       .filter(t => t.distanceKm >= MIN_DISTANCE_KM && t.durationMinutes >= MIN_DURATION_MINUTES)
       .map((t, i) => ({ ...t, id: i + 1 }));

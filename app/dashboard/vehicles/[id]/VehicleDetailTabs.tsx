@@ -355,6 +355,8 @@ interface TripRecord {
   distanceKm: number;
   pointCount: number;
   points: HistoryPoint[];
+  /** Only set in "all" mode: a moving trip vs a merged stationary block. */
+  kind?: "trip" | "parked";
 }
 
 function formatMyTime(iso: string): string {
@@ -517,11 +519,16 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
                 ${selectedIdx === i ? "bg-primary/5" : "hover:bg-muted/30"}
               `}
             >
-              <div className={`h-2.5 w-2.5 rounded-full shrink-0 transition-colors ${selectedIdx === i ? "bg-primary" : "bg-muted-foreground/25"}`} />
+              <div className={`h-2.5 w-2.5 rounded-full shrink-0 transition-colors ${
+                selectedIdx === i ? "bg-primary"
+                : mode === "all" && trip.kind === "parked" ? "bg-amber-500/40"
+                : "bg-muted-foreground/25"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-semibold text-foreground">
-                    {mode === "all" ? tr("historyAllLabel") : `${tr("tripLabel")} ${trip.id}`}
+                    {mode === "all"
+                      ? (trip.kind === "parked" ? tr("parkedState") : tr("tripLabel"))
+                      : `${tr("tripLabel")} ${trip.id}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatMyTime(trip.startedAt)} → {formatMyTime(trip.endedAt)}
