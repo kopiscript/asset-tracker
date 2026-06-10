@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ export function InvitePageClient({
   email,
   sessionEmail,
 }: Props) {
-  const router = useRouter();
   const roleLabel = ROLE_LABELS[role] ?? role;
 
   const [name, setName] = useState("");
@@ -55,7 +53,7 @@ export function InvitePageClient({
     setLoading(true);
     try {
       await acceptInvite();
-      router.push("/dashboard/welcome");
+      window.location.href = "/dashboard/welcome";
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
       setLoading(false);
@@ -90,7 +88,7 @@ export function InvitePageClient({
       // Registration already activates pending invites, but accept again to be
       // safe (idempotent) and to land on the welcome screen for this org.
       await acceptInvite();
-      router.push("/dashboard/welcome");
+      window.location.href = "/dashboard/welcome";
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
