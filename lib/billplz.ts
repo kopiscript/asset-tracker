@@ -49,3 +49,36 @@ export async function createBill(params: BillParams): Promise<{ id: string; url:
   const data = await res.json();
   return { id: data.id, url: data.url };
 }
+
+/**
+ * Fetches a bill's current state from Billplz. Used by the post-payment return
+ * handler to confirm payment via our own authenticated call — more reliable
+ * than parsing the redirect's X-Signature, and independent of the webhook.
+ */
+export async function getBill(id: string): Promise<{
+  paid: boolean;
+  state: string;
+  reference1: string | null;
+  reference2: string | null;
+}> {
+  const key = process.env.BILLPLZ_API_KEY;
+  if (!key) throw new Error("Billplz env vars not configured");
+
+  const credentials = Buffer.from(`${key}:`).toString("base64");
+  const res = await fetch(`${BASE}/api/v3/bills/${id}`, {
+    headers: { Authorization: `Basic ${credentials}` },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Billplz get-bill error ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  return {
+    paid: data.paid === true,
+    state: data.state,
+    reference1: data.reference_1 ?? null,
+    reference2: data.reference_2 ?? null,
+  };
+}
