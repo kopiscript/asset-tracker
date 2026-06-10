@@ -43,6 +43,8 @@ export async function GET(
   const { searchParams } = req.nextUrl;
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
+  // "all" (default) = every recorded position; "trips" = movement-segmented trips.
+  const mode = searchParams.get("mode") === "trips" ? "trips" : "all";
 
   // Default: today midnight MY → now MY (both as "fake UTC" matching timestamp_my column)
   const now = new Date();
@@ -119,6 +121,13 @@ export async function GET(
       timestampMy: r.timestamp_my,
       speedKmh:    r.speed_kmh,
     }));
+
+    // "all" mode (default): every recorded position as one unsegmented,
+    // unfiltered path — includes the stationary/parked pings the trip view drops.
+    if (mode === "all") {
+      const data = allPoints.length > 0 ? [buildTrip(1, allPoints)] : [];
+      return Response.json({ data, error: null });
+    }
 
     // Segment points into trips by a 10-minute silence threshold
     const trips: TripRecord[] = [];

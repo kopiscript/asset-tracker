@@ -200,6 +200,13 @@ export const t = {
     distanceKm: "km",
     errorMaxWindow: "Maximum history window is 30 days.",
     errorToBeforeFrom: "'To' must be after 'From'.",
+    historyModeAll: "All data",
+    historyModeTrips: "Trips",
+    historyAllLabel: "All activity",
+    historyAllListHeader: "All recorded positions — full path on map",
+    positionsFound: "positions",
+    noHistoryFound: "No data found for this time range.",
+    loadBtn: "Load",
 
     // Live status / telemetry
     liveStatus: "Live Status",
@@ -467,6 +474,13 @@ export const t = {
     distanceKm: "km",
     errorMaxWindow: "Tetingkap sejarah maksimum ialah 30 hari.",
     errorToBeforeFrom: "'Ke' mesti selepas 'Dari'.",
+    historyModeAll: "Semua Data",
+    historyModeTrips: "Perjalanan",
+    historyAllLabel: "Semua aktiviti",
+    historyAllListHeader: "Semua kedudukan direkod — laluan penuh di peta",
+    positionsFound: "kedudukan",
+    noHistoryFound: "Tiada data untuk julat masa ini.",
+    loadBtn: "Muat",
 
     // Live status / telemetry
     liveStatus: "Status Langsung",

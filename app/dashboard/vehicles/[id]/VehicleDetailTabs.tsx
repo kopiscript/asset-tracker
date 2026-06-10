@@ -368,16 +368,19 @@ function formatMyTime(iso: string): string {
 
 // ─── History tab ──────────────────────────────────────────────────────────
 
+type HistoryMode = "all" | "trips";
+
 function HistoryTab({ vehicleId }: { vehicleId: string }) {
   const { tr } = useLang();
   const [from, setFrom] = useState(myMidnight);
   const [to, setTo]     = useState(myNow);
+  const [mode, setMode]               = useState<HistoryMode>("all");
   const [trips, setTrips]             = useState<TripRecord[] | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState("");
 
-  const load = useCallback(async (f: string, t: string) => {
+  const load = useCallback(async (f: string, t: string, m: HistoryMode) => {
     const fromMs = new Date(f).getTime();
     const toMs   = new Date(t).getTime();
     const windowDays = (toMs - fromMs) / (1000 * 60 * 60 * 24);
@@ -386,7 +389,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
     setLoading(true);
     setError("");
     try {
-      const res  = await fetch(`/api/vehicles/${vehicleId}/history?from=${f}Z&to=${t}Z`);
+      const res  = await fetch(`/api/vehicles/${vehicleId}/history?from=${f}Z&to=${t}Z&mode=${m}`);
       const json = await res.json() as { data?: TripRecord[]; error?: string };
       if (!res.ok || json.error) {
         setError(json.error ?? "Failed to load history.");
@@ -402,7 +405,14 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
     }
   }, [vehicleId, tr]);
 
-  useEffect(() => { load(from, to); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Switch mode and reload immediately with the current date range.
+  function changeMode(m: HistoryMode) {
+    if (m === mode) return;
+    setMode(m);
+    load(from, to, m);
+  }
+
+  useEffect(() => { load(from, to, mode); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedTrip = trips && trips.length > 0 && selectedIdx < trips.length
     ? trips[selectedIdx]
@@ -414,6 +424,23 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
     <div className="space-y-4">
       {/* ── Filter bar ───────────────────────────────────────────────── */}
       <div className="bg-card border border-border/50 rounded-xl p-4">
+        {/* Mode toggle: All data (default) vs movement-segmented Trips */}
+        <div className="inline-flex items-center gap-1 mb-3 bg-muted/40 p-1 rounded-lg">
+          {(["all", "trips"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => changeMode(m)}
+              disabled={loading}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                mode === m
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m === "all" ? tr("historyModeAll") : tr("historyModeTrips")}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="flex-1 space-y-1">
             <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
@@ -440,17 +467,19 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
           <Button
             size="sm"
             className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shrink-0"
-            onClick={() => load(from, to)}
+            onClick={() => load(from, to, mode)}
             disabled={loading}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Route className="h-3.5 w-3.5" />}
-            {loading ? tr("loading") : tr("loadTrips")}
+            {loading ? tr("loading") : tr("loadBtn")}
           </Button>
         </div>
         {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
         {trips !== null && !loading && (
           <p className="text-xs text-muted-foreground mt-2">
-            {trips.length} {tr("tripsFound")} · {totalPoints} {tr("pointsFound")}
+            {mode === "all"
+              ? `${totalPoints} ${tr("positionsFound")}`
+              : `${trips.length} ${tr("tripsFound")} · ${totalPoints} ${tr("pointsFound")}`}
           </p>
         )}
       </div>
@@ -464,10 +493,10 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
         />
       </div>
 
-      {/* ── Trip list ────────────────────────────────────────────────── */}
+      {/* ── Trip / activity list ─────────────────────────────────────── */}
       {trips !== null && trips.length === 0 && !loading && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          {tr("noTripsFound")}
+          {mode === "all" ? tr("noHistoryFound") : tr("noTripsFound")}
         </p>
       )}
 
@@ -475,7 +504,7 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
         <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 border-b border-border/30">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {tr("tripListHeader")}
+              {mode === "all" ? tr("historyAllListHeader") : tr("tripListHeader")}
             </h3>
           </div>
           {trips.map((trip, i) => (
@@ -491,7 +520,9 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
               <div className={`h-2.5 w-2.5 rounded-full shrink-0 transition-colors ${selectedIdx === i ? "bg-primary" : "bg-muted-foreground/25"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-foreground">{tr("tripLabel")} {trip.id}</span>
+                  <span className="text-xs font-semibold text-foreground">
+                    {mode === "all" ? tr("historyAllLabel") : `${tr("tripLabel")} ${trip.id}`}
+                  </span>
                   <span className="text-xs text-muted-foreground">
                     {formatMyTime(trip.startedAt)} → {formatMyTime(trip.endedAt)}
                   </span>
