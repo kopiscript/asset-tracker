@@ -73,6 +73,9 @@ export const GET = auth(async function GET(request) {
     return NextResponse.redirect(bill.url);
   } catch (err) {
     console.error("[billing/start] createBill failed:", err);
-    return NextResponse.redirect(`${origin}/dashboard/billing`);
+    // Surface the failure on the plan picker instead of bouncing to
+    // /dashboard/billing, which the dashboard layout redirects straight back
+    // to /billing/activate — an invisible loop that looks like being "stuck".
+    return NextResponse.redirect(`${origin}/billing/activate?error=payment`);
   }
 });
