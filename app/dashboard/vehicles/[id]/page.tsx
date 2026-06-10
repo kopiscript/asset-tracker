@@ -31,7 +31,12 @@ export default async function VehicleDetailPage(
         where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { timestampUtc: "desc" },
         take: 1,
-        select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
+        select: {
+          latitude: true, longitude: true, timestampUtc: true, speedKmh: true,
+          movement: true, satellites: true, gsmSignal: true, gsmOperator: true,
+          altitude: true, angle: true, batteryPercent: true,
+          carBatteryVoltage: true, externalVoltage: true,
+        },
       },
     },
   });
@@ -46,6 +51,18 @@ export default async function VehicleDetailPage(
   const lastSeenAt = latest?.timestampUtc ?? null;
   const speed     = latest?.speedKmh ?? null;
   const status    = deriveStatus(vehicle.isActive, lastSeenAt);
+
+  const telemetry = {
+    movement: latest?.movement ?? null,
+    satellites: latest?.satellites ?? null,
+    gsmSignal: latest?.gsmSignal ?? null,
+    gsmOperator: latest?.gsmOperator ?? null,
+    altitude: latest?.altitude ?? null,
+    angle: latest?.angle ?? null,
+    batteryPercent: latest?.batteryPercent ?? null,
+    carBatteryVoltage: latest?.carBatteryVoltage ?? null,
+    externalVoltage: latest?.externalVoltage ?? null,
+  };
 
   const midnight = todayMidnightMy();
   const todayPings = await prisma.telemetryRecord.findMany({
@@ -115,6 +132,7 @@ export default async function VehicleDetailPage(
         lastSeenAt={lastSeenAt?.toISOString() ?? null}
         speed={speed}
         todayKm={todayKm}
+        telemetry={telemetry}
       />
     </div>
   );

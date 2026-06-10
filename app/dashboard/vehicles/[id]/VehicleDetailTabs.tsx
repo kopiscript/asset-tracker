@@ -1,13 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2, ChevronRight } from "lucide-react";
+import {
+  MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2, ChevronRight,
+  Navigation, Satellite, Signal, Mountain, Activity, BatteryMedium,
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { DynamicMap } from "@/components/map/DynamicMap";
 import type { MapVehicle, HistoryPoint } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
 import { useLang } from "@/components/LanguageProvider";
+import { BatteryBadge } from "@/components/BatteryBadge";
+import {
+  type VehicleTelemetry,
+  deriveBatteryHealth, movementState, gpsQuality, GPS_LABEL_KEY,
+  gsmSignalQuality, SIGNAL_LABEL_KEY, headingToCompass, gsmOperatorName,
+} from "@/lib/telemetry";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -46,6 +55,7 @@ interface VehicleDetailTabsProps {
   lastSeenAt: string | null;
   speed: number | null;
   todayKm: number;
+  telemetry: VehicleTelemetry;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────
@@ -70,6 +80,26 @@ function DetailRow({
   );
 }
 
+function StatTile({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        <span className="shrink-0">{icon}</span>
+        <span className="text-xs">{label}</span>
+      </div>
+      <div className="text-sm font-medium text-foreground">{children}</div>
+    </div>
+  );
+}
+
 // ─── Live single-vehicle hook ─────────────────────────────────────────────
 
 const SINGLE_VEHICLE_POLL_MS = 10_000;
@@ -80,11 +110,13 @@ function useLiveVehicle(
     mapVehicles: MapVehicle[];
     lastSeenAt: string | null;
     speed: number | null;
+    telemetry: VehicleTelemetry;
   }
 ) {
   const [mapVehicles, setMapVehicles] = useState(initial.mapVehicles);
   const [lastSeenAt, setLastSeenAt]   = useState(initial.lastSeenAt);
   const [speed, setSpeed]             = useState(initial.speed);
+  const [telemetry, setTelemetry]     = useState(initial.telemetry);
 
   const refresh = useCallback(async () => {
     try {
@@ -95,6 +127,7 @@ function useLiveVehicle(
 
       setLastSeenAt((v.lastSeenAt as string | null) ?? null);
       setSpeed((v.speed as number | null) ?? null);
+      if (v.telemetry) setTelemetry(v.telemetry as VehicleTelemetry);
 
       if (v.latitude != null && v.longitude != null) {
         setMapVehicles([{
@@ -138,7 +171,7 @@ function useLiveVehicle(
     };
   }, [refresh]);
 
-  return { mapVehicles, lastSeenAt, speed };
+  return { mapVehicles, lastSeenAt, speed, telemetry };
 }
 
 // ─── Overview tab ─────────────────────────────────────────────────────────
@@ -149,21 +182,35 @@ function OverviewTab({
   initialLastSeenAt,
   initialSpeed,
   todayKm,
+  initialTelemetry,
 }: {
   vehicle: VehicleInfo;
   initialMapVehicles: MapVehicle[];
   initialLastSeenAt: string | null;
   initialSpeed: number | null;
   todayKm: number;
+  initialTelemetry: VehicleTelemetry;
 }) {
   const { tr } = useLang();
-  const { mapVehicles, lastSeenAt, speed } = useLiveVehicle(vehicle.id, {
+  const { mapVehicles, lastSeenAt, speed, telemetry } = useLiveVehicle(vehicle.id, {
     mapVehicles: initialMapVehicles,
     lastSeenAt:  initialLastSeenAt,
     speed:       initialSpeed,
+    telemetry:   initialTelemetry,
   });
 
   const hasLocation = mapVehicles.length > 0;
+
+  // Derived, human-readable telemetry
+  const battery = deriveBatteryHealth(telemetry.carBatteryVoltage, telemetry.externalVoltage);
+  const move    = movementState(telemetry.movement);
+  const gps     = gpsQuality(telemetry.satellites);
+  const sig     = gsmSignalQuality(telemetry.gsmSignal);
+  const compass = headingToCompass(telemetry.angle);
+  const carrier = gsmOperatorName(telemetry.gsmOperator);
+  const hasTelemetry =
+    battery.state !== "unknown" || move !== null || gps !== null ||
+    sig !== null || telemetry.altitude != null || telemetry.batteryPercent != null;
 
   return (
     <div className="space-y-4">
@@ -180,6 +227,66 @@ function OverviewTab({
           <MapPin className="h-3 w-3" />
           {tr("noGpsYet")}
         </p>
+      )}
+
+      {/* Live status — derived from the latest telemetry ping */}
+      {hasTelemetry && (
+        <div className="bg-card border border-border/50 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("liveStatus")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Car battery — the headline metric */}
+            <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("carBattery")}>
+              {battery.state === "unknown"
+                ? "—"
+                : <BatteryBadge state={battery.state} voltage={battery.voltage} showVoltage />}
+            </StatTile>
+
+            {move !== null && (
+              <StatTile icon={<Activity className="h-4 w-4" />} label={tr("movementState")}>
+                {move === "moving" ? tr("movingState") : tr("parkedState")}
+              </StatTile>
+            )}
+
+            {gps !== null && (
+              <StatTile icon={<Satellite className="h-4 w-4" />} label={tr("gpsSignal")}>
+                {tr(GPS_LABEL_KEY[gps])}
+                {telemetry.satellites != null && (
+                  <span className="text-muted-foreground">
+                    {" "}· {telemetry.satellites} {tr("satellitesLabel")}
+                  </span>
+                )}
+              </StatTile>
+            )}
+
+            {sig !== null && (
+              <StatTile icon={<Signal className="h-4 w-4" />} label={tr("cellSignal")}>
+                {tr(SIGNAL_LABEL_KEY[sig])}
+                {carrier && <span className="text-muted-foreground"> · {carrier}</span>}
+              </StatTile>
+            )}
+
+            {compass && (
+              <StatTile icon={<Navigation className="h-4 w-4" />} label={tr("headingLabel")}>
+                {compass}
+                {telemetry.angle != null && (
+                  <span className="text-muted-foreground"> · {Math.round(telemetry.angle)}°</span>
+                )}
+              </StatTile>
+            )}
+
+            {telemetry.altitude != null && (
+              <StatTile icon={<Mountain className="h-4 w-4" />} label={tr("altitudeLabel")}>
+                {Math.round(telemetry.altitude)} m
+              </StatTile>
+            )}
+
+            {telemetry.batteryPercent != null && (
+              <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("deviceBattery")}>
+                {telemetry.batteryPercent}%
+              </StatTile>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Detail cards */}
@@ -412,6 +519,7 @@ export function VehicleDetailTabs({
   lastSeenAt,
   speed,
   todayKm,
+  telemetry,
 }: VehicleDetailTabsProps) {
   const { tr } = useLang();
   const [tab, setTab] = useState<"overview" | "history">("overview");
@@ -450,6 +558,7 @@ export function VehicleDetailTabs({
             initialLastSeenAt={lastSeenAt}
             initialSpeed={speed}
             todayKm={todayKm}
+            initialTelemetry={telemetry}
           />
         )}
         {tab === "history" && <HistoryTab vehicleId={vehicle.id} />}

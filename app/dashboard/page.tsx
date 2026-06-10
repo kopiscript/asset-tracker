@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Activity, Clock, WifiOff, Car } from "lucide-react";
+import { Plus, Activity, Clock, WifiOff, Car, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiveMap } from "@/components/dashboard/LiveMap";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -10,6 +10,8 @@ import { getOrCreateDbUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
 import { deriveStatus } from "@/lib/status";
+import { deriveBatteryHealth, isWeakBattery } from "@/lib/telemetry";
+import { BatteryBadge } from "@/components/BatteryBadge";
 
 export default async function DashboardPage() {
   const dbUser = await getOrCreateDbUser();
@@ -35,7 +37,10 @@ export default async function DashboardPage() {
             where: { latitude: { not: null }, longitude: { not: null } },
             orderBy: { timestampUtc: "desc" },
             take: 1,
-            select: { latitude: true, longitude: true, timestampUtc: true },
+            select: {
+              latitude: true, longitude: true, timestampUtc: true,
+              carBatteryVoltage: true, externalVoltage: true,
+            },
           },
         },
       });
@@ -52,6 +57,7 @@ export default async function DashboardPage() {
       longitude: latest?.longitude ?? null,
       lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
       status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+      battery: deriveBatteryHealth(latest?.carBatteryVoltage, latest?.externalVoltage),
       userRole: v.orgId ? (orgRoleMap.get(v.orgId) ?? "viewer") : "viewer",
     };
   });
@@ -59,6 +65,9 @@ export default async function DashboardPage() {
   const activeCount  = vehicles.filter((v) => v.status === "active").length;
   const idleCount    = vehicles.filter((v) => v.status === "idle").length;
   const offlineCount = vehicles.filter((v) => v.status === "offline").length;
+
+  // Fleet battery alert: vehicles whose car battery is low or critical.
+  const weakBatteryVehicles = vehicles.filter((v) => isWeakBattery(v.battery.state));
 
   const mapVehicles = vehicles
     .filter((v) => v.latitude != null && v.longitude != null)
@@ -121,6 +130,33 @@ export default async function DashboardPage() {
             valueClass="text-red-600"
           />
         </div>
+
+        {/* Battery attention banner */}
+        {weakBatteryVehicles.length > 0 && (
+          <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+              <span className="text-sm font-semibold text-amber-300">
+                <PageTitle k="batteryAlertTitle" />
+              </span>
+            </div>
+            <p className="text-xs text-amber-200/80 mb-2.5">
+              <PageTitle k="batteryAlertDesc" />
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {weakBatteryVehicles.map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/dashboard/vehicles/${v.id}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-background/40 border border-amber-500/20 px-2.5 py-1 hover:bg-background/60 transition-colors"
+                >
+                  <span className="text-xs font-medium text-foreground">{v.name ?? v.id}</span>
+                  <BatteryBadge state={v.battery.state} voltage={v.battery.voltage} showVoltage />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Map + side panel ─────────────────────────────────────────────── */}
@@ -176,9 +212,13 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <StatusBadge status={v.status} />
-                  <span className="text-xs text-muted-foreground">
-                    {timeAgo(v.lastSeenAt)}
-                  </span>
+                  {isWeakBattery(v.battery.state) ? (
+                    <BatteryBadge state={v.battery.state} voltage={v.battery.voltage} showVoltage />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {timeAgo(v.lastSeenAt)}
+                    </span>
+                  )}
                 </div>
               </Link>
             ))
