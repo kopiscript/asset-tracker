@@ -115,27 +115,6 @@ export async function POST(
       data: { acceptedAt: new Date() },
     });
 
-    // Activate ALL other pending non-expired invites for this email.
-    // Each is processed independently so one failure doesn't block the rest.
-    const others = await prisma.orgInvite.findMany({
-      where: {
-        email: invite.email,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-        id: { not: invite.id },
-      },
-      select: { id: true, orgId: true, role: true },
-    });
-    for (const other of others) {
-      await prisma.orgMember.create({
-        data: { userId: dbUser.id, orgId: other.orgId, role: other.role },
-      }).catch(() => {});
-      await prisma.orgInvite.update({
-        where: { id: other.id },
-        data: { acceptedAt: new Date() },
-      });
-    }
-
     return Response.json({ data: { orgId: invite.orgId }, error: null }, { status: 200 });
   } catch (e) {
     console.error("[POST /api/invite/[token]]", e);
