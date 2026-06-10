@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { PageTitle } from "@/components/dashboard/PageTitle";
 import { FleetSubtitle } from "@/components/dashboard/FleetSubtitle";
 import { getOrCreateDbUser } from "@/lib/user-sync";
+import { getAccessibleVehicleFilter } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
 import { deriveStatus } from "@/lib/status";
@@ -18,19 +19,14 @@ export default async function DashboardPage() {
   if (!dbUser) return null;
   if (dbUser.usertype === "admin" || dbUser.usertype === "system_admin") redirect("/dashboard/admin");
 
-  // Collect accessible vehicles via org membership (any role)
-  const orgMemberships = await prisma.orgMember.findMany({
-    where: { userId: dbUser.id },
-    select: { orgId: true, role: true },
-  });
+  // Collect accessible vehicles, honouring per-viewer vehicle-access allowlists.
+  const access = await getAccessibleVehicleFilter(dbUser.id);
+  const orgRoleMap = access?.orgRoleMap ?? new Map<string, string>();
 
-  const allOrgIds = orgMemberships.map((m) => m.orgId);
-  const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
-
-  const vehicleRows = allOrgIds.length === 0
+  const vehicleRows = !access
     ? []
     : await prisma.vehicle.findMany({
-        where: { orgId: { in: allOrgIds } },
+        where: { OR: access.orClauses },
         select: {
           id: true, name: true, plateNumber: true, type: true, isActive: true, orgId: true,
           telemetryRecords: {

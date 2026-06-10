@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
+import { getAccessibleVehicleFilter } from "@/lib/permissions";
 import { deriveStatus } from "@/lib/status";
 
 // GET /api/vehicles — list all vehicles the current user can access
@@ -33,25 +34,13 @@ export async function GET() {
         },
       });
     } else {
-      const orgMemberships = await prisma.orgMember.findMany({
-        where: { userId: dbUser.id },
-        select: { orgId: true, role: true, vehicleAccess: { select: { vehicleId: true } } },
-      });
-
-      if (orgMemberships.length === 0) {
+      const access = await getAccessibleVehicleFilter(dbUser.id);
+      if (!access) {
         return Response.json({ data: [], error: null });
       }
 
-      // For restricted viewers (has allowlist rows), only include their granted vehicles
-      const orClauses = orgMemberships.map((m) => {
-        if (m.role === "viewer" && m.vehicleAccess.length > 0) {
-          return { orgId: m.orgId, id: { in: m.vehicleAccess.map((a) => a.vehicleId) } };
-        }
-        return { orgId: m.orgId };
-      });
-
       vehiclesRaw = await prisma.vehicle.findMany({
-        where: { OR: orClauses },
+        where: { OR: access.orClauses },
         include: {
           org: { select: { id: true, name: true } },
           telemetryRecords: {
@@ -63,8 +52,7 @@ export async function GET() {
         },
       });
 
-      // Build role map: orgId -> role
-      const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
+      const orgRoleMap = access.orgRoleMap;
 
       const vehicles = vehiclesRaw.map((v) => {
         const latest = v.telemetryRecords[0] ?? null;

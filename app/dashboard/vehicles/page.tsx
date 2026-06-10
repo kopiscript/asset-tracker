@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/dashboard/PageTitle";
 import { VehiclesClient } from "./VehiclesClient";
 import { getOrCreateDbUser } from "@/lib/user-sync";
+import { getAccessibleVehicleFilter } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { deriveStatus } from "@/lib/status";
 
@@ -51,17 +52,14 @@ export default async function VehiclesPage() {
       };
     });
   } else {
-    const orgMemberships = await prisma.orgMember.findMany({
-      where: { userId: dbUser.id },
-      select: { orgId: true, role: true },
-    });
+    // Honour per-viewer vehicle-access allowlists (restricted viewers see only
+    // their granted vehicles).
+    const access = await getAccessibleVehicleFilter(dbUser.id);
+    const orgRoleMap = access?.orgRoleMap ?? new Map<string, string>();
 
-    const allOrgIds = orgMemberships.map((m) => m.orgId);
-    const orgRoleMap = new Map(orgMemberships.map((m) => [m.orgId, m.role]));
-
-    if (allOrgIds.length > 0) {
+    if (access) {
       const rows = await prisma.vehicle.findMany({
-        where: { orgId: { in: allOrgIds } },
+        where: { OR: access.orClauses },
         include: {
           org: { select: { id: true, name: true } },
           telemetryRecords: {
