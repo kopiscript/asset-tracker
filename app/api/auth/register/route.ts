@@ -5,6 +5,7 @@
  */
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isValidEmail } from "@/lib/validation";
 
 export async function POST(request: Request) {
   let body: { name?: unknown; email?: unknown; password?: unknown };
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
   const email = body.email.toLowerCase().trim();
   if (!email) {
     return Response.json({ error: "Email is required." }, { status: 400 });
+  }
+  if (!isValidEmail(email)) {
+    return Response.json({ error: "Please enter a valid email address." }, { status: 400 });
   }
   if (!body.password || typeof body.password !== "string") {
     return Response.json({ error: "Password is required." }, { status: 400 });

@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createBill } from "@/lib/billplz";
 import { PLANS, type PlanKey } from "@/lib/plans";
+import { isValidEmail } from "@/lib/validation";
 
 const PAYABLE_PLANS = new Set<string>(["personal", "growth"]);
 const PLAN_LABELS: Record<string, string> = {
@@ -49,6 +50,13 @@ export const GET = auth(async function GET(request) {
 
   if (!user || !membership) {
     return NextResponse.redirect(`${origin}/dashboard`);
+  }
+
+  // Billplz rejects bills with an invalid email (HTTP 422). Catch it here with
+  // a clear message instead of a generic payment failure. New accounts can't
+  // hit this — registration validates the email — but older ones might.
+  if (!isValidEmail(user.email)) {
+    return NextResponse.redirect(`${origin}/billing/activate?error=email`);
   }
 
   const planDef = PLANS[plan as PlanKey];

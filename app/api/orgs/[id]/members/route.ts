@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canManageOrg, getOrgRole } from "@/lib/permissions";
 import { sendInviteEmail, sendInviteNotificationEmail } from "@/lib/email";
+import { isValidEmail } from "@/lib/validation";
 
 // GET /api/orgs/[id]/members — list members (any org member can view)
 export async function GET(
@@ -92,6 +93,9 @@ export async function POST(
     targetEmail = body.email.trim().toLowerCase();
     if (!targetEmail) {
       return Response.json({ data: null, error: "Provide email or userId." }, { status: 400 });
+    }
+    if (!isValidEmail(targetEmail)) {
+      return Response.json({ data: null, error: "Please enter a valid email address." }, { status: 400 });
     }
     targetUser = await prisma.user.findUnique({
       where: { email: targetEmail },

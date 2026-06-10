@@ -33,6 +33,7 @@ export default async function ActivatePage(props: PageProps<"/billing/activate">
 
   const { error } = await props.searchParams;
   const showPaymentError = error === "payment";
+  const showEmailError = error === "email";
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -66,6 +67,19 @@ export default async function ActivatePage(props: PageProps<"/billing/activate">
                 We couldn&apos;t start the payment. Please try again in a moment — if it keeps
                 happening, contact{" "}
                 <a href="mailto:support@mirae.azmiproductions.com?subject=Payment issue" className="underline underline-offset-2">
+                  support@mirae.azmiproductions.com
+                </a>.
+              </p>
+            </div>
+          )}
+
+          {showEmailError && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200/90">
+                Your account email isn&apos;t a valid address, so payment can&apos;t be started.
+                Please sign up again with a real email, or contact{" "}
+                <a href="mailto:support@mirae.azmiproductions.com?subject=Invalid account email" className="underline underline-offset-2">
                   support@mirae.azmiproductions.com
                 </a>.
               </p>
