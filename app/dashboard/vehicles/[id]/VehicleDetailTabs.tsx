@@ -14,7 +14,7 @@ import { useLang } from "@/components/LanguageProvider";
 import { BatteryBadge } from "@/components/BatteryBadge";
 import {
   type VehicleTelemetry,
-  deriveBatteryHealth, movementState, gpsQuality, GPS_LABEL_KEY,
+  deriveBatteryHealth, drivingState, gpsQuality, GPS_LABEL_KEY,
   gsmSignalQuality, SIGNAL_LABEL_KEY, headingToCompass, gsmOperatorName,
 } from "@/lib/telemetry";
 
@@ -203,7 +203,7 @@ function OverviewTab({
 
   // Derived, human-readable telemetry
   const battery = deriveBatteryHealth(telemetry.carBatteryVoltage, telemetry.externalVoltage);
-  const move    = movementState(telemetry.movement);
+  const move    = drivingState(speed); // from GPS speed, not the noisy accelerometer flag
   const gps     = gpsQuality(telemetry.satellites);
   const sig     = gsmSignalQuality(telemetry.gsmSignal);
   const compass = headingToCompass(telemetry.angle);

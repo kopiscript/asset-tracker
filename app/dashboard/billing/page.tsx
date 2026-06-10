@@ -157,7 +157,7 @@ export default async function BillingPage() {
         {/* Fleet / Enterprise — contact us */}
         {isOwner && (org.plan === "growth" || org.plan === "fleet") && (
           <a
-            href="mailto:support@miraefleet.app?subject=Fleet Plan Inquiry"
+            href="mailto:support@mirae.azmiproductions.com?subject=Fleet Plan Inquiry"
             className="flex w-full items-center justify-center rounded-xl bg-primary text-white text-sm font-medium px-5 py-3 hover:bg-primary/90 transition-colors"
           >
             Contact us to upgrade
@@ -176,7 +176,7 @@ export default async function BillingPage() {
         )}
 
         <a
-          href="mailto:support@miraefleet.app?subject=Billing Enquiry"
+          href="mailto:support@mirae.azmiproductions.com?subject=Billing Enquiry"
           className="flex w-full items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
         >
           Billing enquiry

@@ -159,7 +159,7 @@ export async function POST(
       create: { email: targetEmail!, orgId: id, role, token: hashedToken, invitedBy: dbUser.id, expiresAt },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://miraefleet.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mirae.azmiproductions.com";
     try {
       await sendInviteEmail({
         to: targetEmail!,

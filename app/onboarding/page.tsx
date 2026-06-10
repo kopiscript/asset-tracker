@@ -130,10 +130,10 @@ export default async function OnboardingPage(props: PageProps<"/onboarding">) {
                 <p className="text-xs text-amber-200/80 leading-relaxed">
                   Each vehicle needs a GPS device (RM 399 one-time). Email{" "}
                   <a
-                    href="mailto:support@miraefleet.app"
+                    href="mailto:support@mirae.azmiproductions.com"
                     className="underline underline-offset-2 hover:text-amber-100 transition-colors"
                   >
-                    support@miraefleet.app
+                    support@mirae.azmiproductions.com
                   </a>{" "}
                   to arrange hardware alongside your subscription.
                 </p>

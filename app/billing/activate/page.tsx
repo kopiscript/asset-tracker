@@ -89,7 +89,7 @@ export default async function ActivatePage() {
           <div className="text-center space-y-2">
             <p className="text-xs text-muted-foreground">
               Need a larger fleet?{" "}
-              <a href="mailto:support@miraefleet.app?subject=Fleet Plan Inquiry" className="text-primary underline underline-offset-2">
+              <a href="mailto:support@mirae.azmiproductions.com?subject=Fleet Plan Inquiry" className="text-primary underline underline-offset-2">
                 Contact us
               </a>{" "}
               about Fleet or Enterprise plans.

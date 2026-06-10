@@ -15,8 +15,8 @@ export default function ContactPage() {
         <ContactRow
           icon={<Mail className="h-4 w-4 text-primary" />}
           label="Email"
-          value="support@miraefleet.app"
-          href="mailto:support@miraefleet.app"
+          value="support@mirae.azmiproductions.com"
+          href="mailto:support@mirae.azmiproductions.com"
         />
         <ContactRow
           icon={<MapPin className="h-4 w-4 text-primary" />}
@@ -31,7 +31,7 @@ export default function ContactPage() {
       <h2>Billing &amp; Payments</h2>
       <p>
         For subscription and payment enquiries, email{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> with your account email
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> with your account email
         and Billplz payment reference number.
       </p>
 

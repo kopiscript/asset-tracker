@@ -84,9 +84,17 @@ export const BATTERY_CHIP_CLASS: Record<BatteryState, string> = {
 
 // ── Movement ───────────────────────────────────────────────────────────────
 
-export function movementState(movement: number | null | undefined): "moving" | "parked" | null {
-  if (movement == null) return null;
-  return movement === 1 ? "moving" : "parked";
+/**
+ * Driving vs parked, derived from GPS speed (km/h).
+ *
+ * Deliberately NOT based on the Teltonika `movement` flag — that's an
+ * accelerometer signal that trips on engine idle / vibration and reads
+ * "moving" for ~70% of pings even on a car that's sitting still. GPS speed
+ * tracks actual travel. A 3 km/h floor absorbs stationary GPS jitter.
+ */
+export function drivingState(speedKmh: number | null | undefined): "moving" | "parked" | null {
+  if (speedKmh == null) return null;
+  return speedKmh > 3 ? "moving" : "parked";
 }
 
 // ── GPS fix quality (satellite count) ──────────────────────────────────────

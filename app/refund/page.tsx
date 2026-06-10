@@ -32,7 +32,7 @@ export default function RefundPage() {
       <p>
         We encourage you to evaluate the Service during any available free or trial period before
         committing to a paid subscription. If no trial is available, please contact us at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> before purchasing to
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> before purchasing to
         arrange a demonstration.
       </p>
 
@@ -48,7 +48,7 @@ export default function RefundPage() {
       <p>
         If you have been charged more than once for the same billing period due to a system error,
         please contact us within 14 days at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> with your payment
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> with your payment
         reference number. We will investigate and refund any confirmed duplicate charge within
         10 business days.
       </p>
@@ -56,7 +56,7 @@ export default function RefundPage() {
       <h2>5. How to Cancel</h2>
       <p>
         You may cancel your subscription at any time by contacting{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a>. Cancellation stops
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a>. Cancellation stops
         future billing but does not entitle you to a refund for the current period. Your access will
         continue until the end of the paid period.
       </p>
@@ -64,7 +64,7 @@ export default function RefundPage() {
       <h2>6. Contact</h2>
       <p>
         For questions about this policy, email us at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> or visit our{" "}
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> or visit our{" "}
         <a href="/contact">Contact page</a>.
       </p>
     </LegalLayout>

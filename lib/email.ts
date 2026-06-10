@@ -106,7 +106,7 @@ export async function sendInviteNotificationEmail(opts: {
   const role = roleLabel(opts.role);
   const orgName = esc(opts.orgName);
   const inviterName = esc(opts.inviterName);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://miraefleet.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mirae.azmiproductions.com";
   const html = shell(`
     <h1 style="font-size:20px;font-weight:600;margin:0 0 12px;color:#f5f5f7;">
       You've been added to ${orgName}

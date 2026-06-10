@@ -60,7 +60,7 @@ export function PricingSection() {
                 <p className="text-[11px] text-muted-foreground">per device, one-time</p>
               </div>
               <a
-                href="mailto:support@miraefleet.app?subject=Hardware Purchase Inquiry"
+                href="mailto:support@mirae.azmiproductions.com?subject=Hardware Purchase Inquiry"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors min-h-[44px]"
               >
                 Order device <ArrowRight className="h-3.5 w-3.5" />
@@ -158,13 +158,13 @@ export function PricingSection() {
                 </span>
               </div>
               <a
-                href="mailto:support@miraefleet.app?subject=Fleet Plan Inquiry"
+                href="mailto:support@mirae.azmiproductions.com?subject=Fleet Plan Inquiry"
                 className="w-full flex items-center justify-center text-sm font-semibold text-foreground border border-border/60 group-hover:border-primary/30 group-hover:text-primary py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px]"
               >
                 Get a quote
               </a>
               <p className="text-center text-[11px] text-muted-foreground mt-2">
-                support@miraefleet.app
+                support@mirae.azmiproductions.com
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function PricingSection() {
             </p>
           </div>
           <a
-            href="mailto:support@miraefleet.app?subject=Enterprise Inquiry"
+            href="mailto:support@mirae.azmiproductions.com?subject=Enterprise Inquiry"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold text-foreground border border-border/60 hover:border-primary/40 hover:text-primary px-6 py-3 rounded-xl transition-colors active:scale-[0.98] min-h-[44px] shrink-0"
           >
             Talk to us <ArrowRight className="h-3.5 w-3.5" />
