@@ -9,6 +9,7 @@ import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 function hashToken(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
@@ -65,9 +66,13 @@ export async function GET(
 
 // POST /api/invite/[token] — accept the invite
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: RouteContext<"/api/invite/[token]">
 ) {
+  if (!(await rateLimit("invite-accept", clientIp(req), 20, "60 s"))) {
+    return Response.json({ data: null, error: "Too many requests" }, { status: 429 });
+  }
+
   const { token } = await ctx.params;
   const hashedToken = hashToken(token);
 

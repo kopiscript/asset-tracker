@@ -3,14 +3,16 @@
  * PATCH — receive a GPS ping from a hardware device and store it.
  *
  * Auth: API key in Authorization header (Bearer <key>).
- *   - If the vehicle has no apiKey set, any bearer token is accepted (dev/unprovisioned).
- *   - If apiKey is set, the token must bcrypt-match the stored hash.
+ *   - The vehicle MUST have an apiKey provisioned; the token must bcrypt-match it.
+ *   - A vehicle with no apiKey rejects all pings (fail closed). Provision a key
+ *     via POST /api/vehicles/[id]/api-key before the device can report.
  *
  * Body: { latitude, longitude, speed?, recordedAt? }
  */
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
 
@@ -19,6 +21,10 @@ export async function PATCH(
   ctx: RouteContext<"/api/vehicles/[id]/location">
 ) {
   const { id } = await ctx.params;
+
+  if (!(await rateLimit("location", `${clientIp(request)}:${id}`, 60, "60 s"))) {
+    return Response.json({ data: null, error: "Too many requests" }, { status: 429 });
+  }
 
   // API key auth
   const authHeader = request.headers.get("Authorization");
@@ -34,11 +40,15 @@ export async function PATCH(
   if (!vehicle) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
-  if (vehicle.apiKey !== null) {
-    const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
-    if (!valid) {
-      return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
-    }
+  // Fail closed: a vehicle with no provisioned API key cannot receive pings.
+  // (Previously a null apiKey accepted ANY bearer token — an auth bypass that let
+  // anyone inject telemetry, since vehicle IDs are sequential and enumerable.)
+  if (vehicle.apiKey === null) {
+    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
+  }
+  const valid = await bcrypt.compare(providedKey, vehicle.apiKey);
+  if (!valid) {
+    return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
 
   let body: { latitude?: unknown; longitude?: unknown; speed?: unknown; recordedAt?: unknown };
@@ -48,9 +58,16 @@ export async function PATCH(
     return Response.json({ data: null, error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (typeof body.latitude !== "number" || typeof body.longitude !== "number") {
+  if (
+    typeof body.latitude !== "number" ||
+    typeof body.longitude !== "number" ||
+    !Number.isFinite(body.latitude) ||
+    !Number.isFinite(body.longitude) ||
+    body.latitude < -90 || body.latitude > 90 ||
+    body.longitude < -180 || body.longitude > 180
+  ) {
     return Response.json(
-      { data: null, error: "latitude and longitude must be numbers" },
+      { data: null, error: "latitude and longitude must be valid coordinates" },
       { status: 400 }
     );
   }

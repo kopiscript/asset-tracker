@@ -6,8 +6,16 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { isValidEmail } from "@/lib/validation";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export async function POST(request: Request) {
+  if (!(await rateLimit("register", clientIp(request), 5, "60 s"))) {
+    return Response.json(
+      { error: "Too many attempts. Please try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   let body: { name?: unknown; email?: unknown; password?: unknown };
   try {
     body = await request.json();
@@ -31,6 +39,14 @@ export async function POST(request: Request) {
   if (body.password.length < 8) {
     return Response.json(
       { error: "Password must be at least 8 characters." },
+      { status: 400 }
+    );
+  }
+  // bcrypt only hashes the first 72 bytes; cap input so two passwords sharing a
+  // 72-char prefix can't be treated as equal (and to avoid wasting CPU on huge input).
+  if (body.password.length > 72) {
+    return Response.json(
+      { error: "Password must be 8–72 characters." },
       { status: 400 }
     );
   }
