@@ -19,69 +19,37 @@ export async function GET() {
   try {
     const isAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
 
-    let vehiclesRaw;
+    type LatestRow = {
+      vehicle_id: bigint;
+      latitude: number | null;
+      longitude: number | null;
+      timestamp_utc: Date | null;
+      speed_kmh: number | null;
+    };
 
-    if (isAdmin) {
-      vehiclesRaw = await prisma.vehicle.findMany({
-        include: {
-          org: { select: { id: true, name: true } },
-          telemetryRecords: {
-            where: { latitude: { not: null }, longitude: { not: null } },
-            orderBy: { timestampUtc: "desc" },
-            take: 1,
-            select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
-          },
-        },
-      });
-    } else {
-      const access = await getAccessibleVehicleFilter(dbUser.id);
-      if (!access) {
-        return Response.json({ data: [], error: null });
-      }
-
-      vehiclesRaw = await prisma.vehicle.findMany({
-        where: { OR: access.orClauses },
-        include: {
-          org: { select: { id: true, name: true } },
-          telemetryRecords: {
-            where: { latitude: { not: null }, longitude: { not: null } },
-            orderBy: { timestampUtc: "desc" },
-            take: 1,
-            select: { latitude: true, longitude: true, timestampUtc: true, speedKmh: true },
-          },
-        },
-      });
-
-      const orgRoleMap = access.orgRoleMap;
-
-      const vehicles = vehiclesRaw.map((v) => {
-        const latest = v.telemetryRecords[0] ?? null;
-        const userRole = v.orgId ? (orgRoleMap.get(v.orgId) ?? "viewer") : "viewer";
-        return {
-          id: v.id.toString(),
-          imei: v.imei,
-          name: v.name,
-          plateNumber: v.plateNumber,
-          type: v.type,
-          driverName: v.driverName,
-          isActive: v.isActive,
-          latitude: latest?.latitude ?? null,
-          longitude: latest?.longitude ?? null,
-          lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
-          speed: latest?.speedKmh ?? null,
-          status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
-          orgId: v.orgId,
-          orgName: v.org?.name ?? null,
-          userRole,
-        };
-      });
-
-      return Response.json({ data: vehicles, error: null });
+    // Fetch latest telemetry per vehicle in one query using DISTINCT ON.
+    // This avoids the nested-include + take/orderBy pattern that requires
+    // Prisma to use transactions, which PrismaNeonHttp does not support.
+    async function latestTelemetry(ids: bigint[]): Promise<Map<string, LatestRow>> {
+      if (ids.length === 0) return new Map();
+      const rows: LatestRow[] = await prisma.$queryRawUnsafe(
+        `SELECT DISTINCT ON (vehicle_id) vehicle_id, latitude, longitude, timestamp_utc, speed_kmh
+         FROM telemetry_records
+         WHERE vehicle_id = ANY($1::bigint[])
+           AND latitude IS NOT NULL
+           AND longitude IS NOT NULL
+         ORDER BY vehicle_id, timestamp_utc DESC`,
+        ids
+      );
+      return new Map(rows.map((r) => [r.vehicle_id.toString(), r]));
     }
 
-    // System admin path
-    const vehicles = vehiclesRaw.map((v) => {
-      const latest = v.telemetryRecords[0] ?? null;
+    function shapeVehicle(
+      v: { id: bigint; imei: string; name: string | null; plateNumber: string | null; type: string | null; driverName: string | null; isActive: boolean | null; orgId: string | null; org: { id: string; name: string } | null },
+      telemetryMap: Map<string, LatestRow>,
+      userRole: string
+    ) {
+      const latest = telemetryMap.get(v.id.toString()) ?? null;
       return {
         id: v.id.toString(),
         imei: v.imei,
@@ -92,15 +60,39 @@ export async function GET() {
         isActive: v.isActive,
         latitude: latest?.latitude ?? null,
         longitude: latest?.longitude ?? null,
-        lastSeenAt: latest?.timestampUtc?.toISOString() ?? null,
-        speed: latest?.speedKmh ?? null,
-        status: deriveStatus(v.isActive, latest?.timestampUtc ?? null),
+        lastSeenAt: latest?.timestamp_utc?.toISOString() ?? null,
+        speed: latest?.speed_kmh ?? null,
+        status: deriveStatus(v.isActive, latest?.timestamp_utc ?? null),
         orgId: v.orgId,
         orgName: v.org?.name ?? null,
-        userRole: "owner",
+        userRole,
       };
-    });
+    }
 
+    type VehicleRow = Parameters<typeof shapeVehicle>[0];
+
+    if (isAdmin) {
+      const rows = await prisma.vehicle.findMany({
+        include: { org: { select: { id: true, name: true } } },
+      }) as VehicleRow[];
+      const tm = await latestTelemetry(rows.map((v) => v.id));
+      const vehicles = rows.map((v) => shapeVehicle(v, tm, "owner"));
+      return Response.json({ data: vehicles, error: null });
+    }
+
+    const access = await getAccessibleVehicleFilter(dbUser.id);
+    if (!access) {
+      return Response.json({ data: [], error: null });
+    }
+    const rows = await prisma.vehicle.findMany({
+      where: { OR: access.orClauses },
+      include: { org: { select: { id: true, name: true } } },
+    }) as VehicleRow[];
+    const tm = await latestTelemetry(rows.map((v) => v.id));
+    const orgRoleMap = access.orgRoleMap as Map<string, string>;
+    const vehicles = rows.map((v) =>
+      shapeVehicle(v, tm, v.orgId ? (orgRoleMap.get(v.orgId) ?? "viewer") : "viewer")
+    );
     return Response.json({ data: vehicles, error: null });
   } catch (e) {
     console.error("[GET /api/vehicles]", e);
