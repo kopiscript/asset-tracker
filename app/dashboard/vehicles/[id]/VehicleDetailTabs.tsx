@@ -102,7 +102,7 @@ function StatTile({
 
 // ─── Live single-vehicle hook ─────────────────────────────────────────────
 
-const SINGLE_VEHICLE_POLL_MS = 10_000;
+const SINGLE_VEHICLE_POLL_MS = 30_000;
 
 function useLiveVehicle(
   vehicleId: string,
@@ -561,6 +561,15 @@ export function VehicleDetailTabs({
 }: VehicleDetailTabsProps) {
   const { tr } = useLang();
   const [tab, setTab] = useState<"overview" | "history">("overview");
+  // Track whether HistoryTab has been mounted at least once.
+  // Once mounted we keep it in the DOM (hidden) so switching back to "overview"
+  // doesn't unmount it and trigger a redundant re-fetch on the next tab switch.
+  const [historyMounted, setHistoryMounted] = useState(false);
+
+  function switchTab(key: "overview" | "history") {
+    setTab(key);
+    if (key === "history") setHistoryMounted(true);
+  }
 
   const tabs = [
     { key: "overview" as const, label: tr("overview") },
@@ -574,7 +583,7 @@ export function VehicleDetailTabs({
         {tabs.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => switchTab(key)}
             className={`
               px-4 py-2.5 text-sm font-medium transition-colors relative
               ${tab === key
@@ -599,7 +608,13 @@ export function VehicleDetailTabs({
             initialTelemetry={telemetry}
           />
         )}
-        {tab === "history" && <HistoryTab vehicleId={vehicle.id} />}
+        {/* Keep HistoryTab mounted after first visit — hiding instead of unmounting
+            prevents a redundant re-fetch every time the user switches back to this tab. */}
+        {historyMounted && (
+          <div className={tab !== "history" ? "hidden" : undefined}>
+            <HistoryTab vehicleId={vehicle.id} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,7 +15,9 @@ export async function GET() {
 
   try {
     const vehicles = await prisma.vehicle.findMany({
-      include: {
+      select: {
+        id: true, imei: true, name: true, plateNumber: true, type: true,
+        driverName: true, isActive: true, orgId: true,
         org: { select: { id: true, name: true } },
         telemetryRecords: {
           where: { latitude: { not: null }, longitude: { not: null } },

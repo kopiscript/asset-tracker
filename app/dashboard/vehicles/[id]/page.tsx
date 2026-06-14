@@ -65,16 +65,24 @@ export default async function VehicleDetailPage(
   };
 
   const midnight = todayMidnightMy();
-  const todayPings = await prisma.telemetryRecord.findMany({
-    where: {
-      vehicleId:   BigInt(id),
-      timestampMy: { gte: midnight },
-      latitude:    { not: null },
-      longitude:   { not: null },
-    },
-    orderBy: { timestampMy: "asc" },
-    select: { latitude: true, longitude: true },
-  });
+  // Deduplicate to 1 point per minute — same logic as the history endpoint.
+  // Without this, high-frequency GPS devices (pings every 5-30s) transfer thousands
+  // of rows from Neon on every page load; 1/min caps it at 1 440 rows per 24 h.
+  const todayPings = await prisma.$queryRawUnsafe<{ latitude: number; longitude: number }[]>(
+    `
+    SELECT DISTINCT ON (date_trunc('minute', timestamp_my))
+      latitude, longitude
+    FROM telemetry_records
+    WHERE vehicle_id = $1
+      AND timestamp_my >= $2
+      AND latitude  IS NOT NULL
+      AND longitude IS NOT NULL
+    ORDER BY date_trunc('minute', timestamp_my), timestamp_my ASC
+    LIMIT 1440
+    `,
+    BigInt(id),
+    midnight,
+  );
   const todayKm = totalDistanceKm(todayPings);
 
   const mapVehicles =

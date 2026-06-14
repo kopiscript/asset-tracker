@@ -73,7 +73,11 @@ export async function GET() {
 
     if (isAdmin) {
       const rows = await prisma.vehicle.findMany({
-        include: { org: { select: { id: true, name: true } } },
+        select: {
+          id: true, imei: true, name: true, plateNumber: true, type: true,
+          driverName: true, isActive: true, orgId: true,
+          org: { select: { id: true, name: true } },
+        },
       }) as VehicleRow[];
       const tm = await latestTelemetry(rows.map((v) => v.id));
       const vehicles = rows.map((v) => shapeVehicle(v, tm, "owner"));
@@ -86,7 +90,11 @@ export async function GET() {
     }
     const rows = await prisma.vehicle.findMany({
       where: { OR: access.orClauses },
-      include: { org: { select: { id: true, name: true } } },
+      select: {
+        id: true, imei: true, name: true, plateNumber: true, type: true,
+        driverName: true, isActive: true, orgId: true,
+        org: { select: { id: true, name: true } },
+      },
     }) as VehicleRow[];
     const tm = await latestTelemetry(rows.map((v) => v.id));
     const orgRoleMap = access.orgRoleMap as Map<string, string>;
