@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Car } from "lucide-react";
+import { ArrowLeft, Users, Car, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/dashboard/PageTitle";
@@ -9,7 +9,9 @@ import { getOrgRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { OrgPageClient } from "./OrgPageClient";
 import { RemoveMemberButton } from "./RemoveMemberButton";
+import { RevokeInviteButton } from "./RevokeInviteButton";
 import { ViewerAccessButton } from "./ViewerAccessButton";
+import { ChangeRoleSelect } from "./ChangeRoleSelect";
 import type { TranslationKey } from "@/lib/translations";
 
 export default async function OrgDetailPage(
@@ -24,26 +26,36 @@ export default async function OrgDetailPage(
   const userRole = isAdmin ? "owner" : await getOrgRole(dbUser.id, id);
   if (!userRole) return notFound();
 
-  const org = await prisma.organization.findUnique({
-    where: { id },
-    include: {
-      members: {
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-          vehicleAccess: { select: { vehicleId: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-      vehicles: {
-        select: { id: true, name: true, plateNumber: true, type: true },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
-  if (!org) return notFound();
-
   const canManage = userRole === "owner";
   const canManageViewerAccess = userRole === "owner" || userRole === "admin";
+
+  const [org, pendingInvites] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+            vehicleAccess: { select: { vehicleId: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        vehicles: {
+          select: { id: true, name: true, plateNumber: true, type: true },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    }),
+    canManage
+      ? prisma.orgInvite.findMany({
+          where: { orgId: id, acceptedAt: null, expiresAt: { gt: new Date() } },
+          include: { inviter: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : Promise.resolve([]),
+  ]);
+  if (!org) return notFound();
+
   const orgVehicles = org.vehicles.map((v) => ({
     id: v.id.toString(),
     name: v.name,
@@ -98,7 +110,11 @@ export default async function OrgDetailPage(
                 </p>
                 <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
               </div>
-              <Badge className={`text-xs border ${roleColor(m.role)}`}><PageTitle k={m.role as TranslationKey} /></Badge>
+              {canManage && m.userId !== dbUser.id ? (
+                <ChangeRoleSelect orgId={id} userId={m.userId} currentRole={m.role} />
+              ) : (
+                <Badge className={`text-xs border ${roleColor(m.role)}`}><PageTitle k={m.role as TranslationKey} /></Badge>
+              )}
               {canManageViewerAccess && m.role === "viewer" && (
                 <ViewerAccessButton
                   orgId={id}
@@ -122,6 +138,39 @@ export default async function OrgDetailPage(
           )}
         </div>
       </div>
+
+      {/* ── Pending Invites ────────────────────────────────────────────── */}
+      {canManage && pendingInvites.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+            <Clock className="h-4 w-4" /> <PageTitle k="pendingInvites" /> ({pendingInvites.length})
+          </h2>
+          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+            {pendingInvites.map((inv, i) => (
+              <div
+                key={inv.id}
+                className={`flex items-center gap-3 px-4 py-4 ${i < pendingInvites.length - 1 ? "border-b border-border/30" : ""}`}
+              >
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {inv.email[0].toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{inv.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <PageTitle k="expires" /> {inv.expiresAt.toLocaleDateString("en-MY", { day: "numeric", month: "short" })}
+                  </p>
+                </div>
+                <Badge className={`text-xs border ${roleColor(inv.role)}`}>
+                  <PageTitle k={inv.role as TranslationKey} />
+                </Badge>
+                <RevokeInviteButton orgId={id} inviteId={inv.id} email={inv.email} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Vehicles ───────────────────────────────────────────────────── */}
       {org.vehicles.length > 0 && (

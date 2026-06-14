@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { MapPin, Zap, ArrowRight } from "lucide-react";
+import { MapPin, Zap, ArrowRight, AlertTriangle } from "lucide-react";
+import { SignOutButton } from "@/components/SignOutButton";
 
 export const metadata = { title: "Choose a plan — Mirae Fleet" };
 
@@ -27,9 +27,13 @@ const PLANS: Array<{
   },
 ] as const;
 
-export default async function ActivatePage() {
+export default async function ActivatePage(props: PageProps<"/billing/activate">) {
   const session = await auth();
   if (!session?.user?.id) redirect("/sign-in");
+
+  const { error } = await props.searchParams;
+  const showPaymentError = error === "payment";
+  const showEmailError = error === "email";
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -55,6 +59,32 @@ export default async function ActivatePage() {
               Choose a plan to unlock your dashboard and start tracking your vehicles.
             </p>
           </div>
+
+          {showPaymentError && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200/90">
+                We couldn&apos;t start the payment. Please try again in a moment — if it keeps
+                happening, contact{" "}
+                <a href="mailto:support@mirae.azmiproductions.com?subject=Payment issue" className="underline underline-offset-2">
+                  support@mirae.azmiproductions.com
+                </a>.
+              </p>
+            </div>
+          )}
+
+          {showEmailError && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200/90">
+                Your account email isn&apos;t a valid address, so payment can&apos;t be started.
+                Please sign up again with a real email, or contact{" "}
+                <a href="mailto:support@mirae.azmiproductions.com?subject=Invalid account email" className="underline underline-offset-2">
+                  support@mirae.azmiproductions.com
+                </a>.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-3">
             {PLANS.map((plan) => (
@@ -89,17 +119,15 @@ export default async function ActivatePage() {
           <div className="text-center space-y-2">
             <p className="text-xs text-muted-foreground">
               Need a larger fleet?{" "}
-              <a href="mailto:support@miraefleet.app?subject=Fleet Plan Inquiry" className="text-primary underline underline-offset-2">
+              <a href="mailto:support@mirae.azmiproductions.com?subject=Fleet Plan Inquiry" className="text-primary underline underline-offset-2">
                 Contact us
               </a>{" "}
               about Fleet or Enterprise plans.
             </p>
-            <Link
-              href="/sign-in"
-              className="block text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
-            >
-              Sign in to a different account
-            </Link>
+            <SignOutButton
+              label="Sign out"
+              className="block w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
+            />
           </div>
         </div>
       </main>

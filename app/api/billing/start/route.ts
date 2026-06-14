@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createBill } from "@/lib/billplz";
 import { PLANS, type PlanKey } from "@/lib/plans";
+import { isValidEmail } from "@/lib/validation";
 
 const PAYABLE_PLANS = new Set<string>(["personal", "growth"]);
 const PLAN_LABELS: Record<string, string> = {
@@ -51,12 +52,24 @@ export const GET = auth(async function GET(request) {
     return NextResponse.redirect(`${origin}/dashboard`);
   }
 
+  // Billplz rejects bills with an invalid email (HTTP 422). Catch it here with
+  // a clear message instead of a generic payment failure. New accounts can't
+  // hit this — registration validates the email — but older ones might.
+  if (!isValidEmail(user.email)) {
+    return NextResponse.redirect(`${origin}/billing/activate?error=email`);
+  }
+
   const planDef = PLANS[plan as PlanKey];
   if (!planDef || planDef.priceRm === null) {
     return NextResponse.redirect(`${origin}/dashboard/billing`);
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? origin;
+  // Use the domain the user is actually on — NOT a hardcoded canonical host.
+  // Billplz returns the browser to redirect_url; if that's a different domain
+  // than the one they paid from, the session cookie doesn't travel and they get
+  // bounced to sign-in. Staying on `origin` keeps them logged in through the
+  // whole round-trip.
+  const appUrl = origin;
 
   try {
     const bill = await createBill({
@@ -65,7 +78,7 @@ export const GET = auth(async function GET(request) {
       amountCents: planDef.priceRm * 100,
       description: `Mirae ${PLAN_LABELS[plan]} Plan — Monthly`,
       callbackUrl: `${appUrl}/api/billing/billplz`,
-      redirectUrl: `${appUrl}/onboarding/setup?plan=${plan}`,
+      redirectUrl: `${appUrl}/api/billing/return?plan=${plan}`,
       reference1: membership.org.id,
       reference2: plan,
     });
@@ -73,6 +86,9 @@ export const GET = auth(async function GET(request) {
     return NextResponse.redirect(bill.url);
   } catch (err) {
     console.error("[billing/start] createBill failed:", err);
-    return NextResponse.redirect(`${origin}/dashboard/billing`);
+    // Surface the failure on the plan picker instead of bouncing to
+    // /dashboard/billing, which the dashboard layout redirects straight back
+    // to /billing/activate — an invisible loop that looks like being "stuck".
+    return NextResponse.redirect(`${origin}/billing/activate?error=payment`);
   }
 });

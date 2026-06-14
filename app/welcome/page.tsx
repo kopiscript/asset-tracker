@@ -22,7 +22,7 @@ const STEPS = [
     icon: Cpu,
     title: "Order your GPS hardware",
     description: "Each vehicle needs a GPS tracking device (RM 399 one-time). Email us to arrange delivery.",
-    href: "mailto:support@miraefleet.app?subject=Hardware Order",
+    href: "mailto:support@mirae.azmiproductions.com?subject=Hardware Order",
     cta: "Order hardware",
   },
   {
@@ -139,7 +139,7 @@ export default async function WelcomePage(props: PageProps<"/welcome">) {
             Go to dashboard <ArrowRight className="h-4 w-4" />
           </Link>
           <a
-            href="mailto:support@miraefleet.app?subject=Getting Started"
+            href="mailto:support@mirae.azmiproductions.com?subject=Getting Started"
             className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors py-3 px-4"
           >
             Need help? Email us

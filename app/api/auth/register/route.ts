@@ -5,8 +5,17 @@
  */
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isValidEmail } from "@/lib/validation";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export async function POST(request: Request) {
+  if (!(await rateLimit("register", clientIp(request), 5, "60 s"))) {
+    return Response.json(
+      { error: "Too many attempts. Please try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   let body: { name?: unknown; email?: unknown; password?: unknown };
   try {
     body = await request.json();
@@ -17,6 +26,13 @@ export async function POST(request: Request) {
   if (!body.email || typeof body.email !== "string") {
     return Response.json({ error: "Email is required." }, { status: 400 });
   }
+  const email = body.email.toLowerCase().trim();
+  if (!email) {
+    return Response.json({ error: "Email is required." }, { status: 400 });
+  }
+  if (!isValidEmail(email)) {
+    return Response.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
   if (!body.password || typeof body.password !== "string") {
     return Response.json({ error: "Password is required." }, { status: 400 });
   }
@@ -26,10 +42,18 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  // bcrypt only hashes the first 72 bytes; cap input so two passwords sharing a
+  // 72-char prefix can't be treated as equal (and to avoid wasting CPU on huge input).
+  if (body.password.length > 72) {
+    return Response.json(
+      { error: "Password must be 8–72 characters." },
+      { status: 400 }
+    );
+  }
 
   try {
     const existing = await prisma.user.findUnique({
-      where: { email: body.email },
+      where: { email },
     });
     if (existing) {
       return Response.json(
@@ -43,45 +67,15 @@ export async function POST(request: Request) {
     const name =
       body.name && typeof body.name === "string"
         ? body.name
-        : (body.email as string).split("@")[0];
+        : email.split("@")[0];
 
     const user = await prisma.user.create({
       data: {
-        email: body.email as string,
+        email,
         name,
         password: hashedPassword,
       },
     });
-
-    // Activate any pending, non-expired invites for this email so the new user
-    // is dropped straight into the org(s) they were invited to.
-    try {
-      const pendingInvites = await prisma.orgInvite.findMany({
-        where: {
-          email: user.email,
-          acceptedAt: null,
-          expiresAt: { gt: new Date() },
-        },
-        select: { id: true, orgId: true, role: true },
-      });
-      for (const invite of pendingInvites) {
-        const existing = await prisma.orgMember.findUnique({
-          where: { userId_orgId: { userId: user.id, orgId: invite.orgId } },
-          select: { id: true },
-        });
-        if (!existing) {
-          await prisma.orgMember.create({
-            data: { userId: user.id, orgId: invite.orgId, role: invite.role },
-          });
-        }
-        await prisma.$executeRawUnsafe(
-          `UPDATE org_invites SET accepted_at = NOW() WHERE id = $1`,
-          invite.id
-        );
-      }
-    } catch (inviteErr) {
-      console.error("[POST /api/auth/register] invite activation failed", inviteErr);
-    }
 
     return Response.json(
       { data: { id: user.id, email: user.email, name: user.name } },

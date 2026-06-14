@@ -644,7 +644,7 @@ export default function GetStartedPage() {
               </div>
 
               <a
-                href={`mailto:support@miraefleet.app?subject=Fleet Plan Enquiry (${range} vehicles)&body=Hi Mirae team,%0A%0AI'm interested in a Fleet plan for ${range} vehicles.%0A%0AName: ${encodeURIComponent(name)}%0AEmail: ${encodeURIComponent(email)}%0A%0APlease get in touch.`}
+                href={`mailto:support@mirae.azmiproductions.com?subject=Fleet Plan Enquiry (${range} vehicles)&body=Hi Mirae team,%0A%0AI'm interested in a Fleet plan for ${range} vehicles.%0A%0AName: ${encodeURIComponent(name)}%0AEmail: ${encodeURIComponent(email)}%0A%0APlease get in touch.`}
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.98] min-h-[48px] mb-3"
               >
                 <Mail className="h-4 w-4" /> Send enquiry

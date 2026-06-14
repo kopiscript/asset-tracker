@@ -83,3 +83,34 @@ export async function canManageOrg(userId: string, orgId: string): Promise<boole
   return (await getOrgRole(userId, orgId)) === "owner";
 }
 
+// ── Vehicle list visibility ─────────────────────────────────────────────────
+
+/**
+ * Builds the vehicle-visibility filter for a NON-admin user, honouring the
+ * per-viewer `vehicleAccess` allowlist: a viewer WITH allowlist rows sees only
+ * those vehicles; owners, admins, and unrestricted viewers see every vehicle in
+ * their orgs.
+ *
+ * Returns Prisma `OR` clauses for a `Vehicle` where-filter plus an orgId→role
+ * map, or `null` when the user belongs to no orgs (treat as an empty list).
+ *
+ * This is the single source of truth for list-level access. Any page or route
+ * that renders a set of vehicles MUST use it — system admins are the only
+ * callers allowed to bypass it (they see all vehicles).
+ */
+export async function getAccessibleVehicleFilter(userId: string) {
+  const memberships = await prisma.orgMember.findMany({
+    where: { userId },
+    select: { orgId: true, role: true, vehicleAccess: { select: { vehicleId: true } } },
+  });
+  if (memberships.length === 0) return null;
+
+  const orClauses = memberships.map((m) =>
+    m.role === "viewer" && m.vehicleAccess.length > 0
+      ? { orgId: m.orgId, id: { in: m.vehicleAccess.map((a) => a.vehicleId) } }
+      : { orgId: m.orgId }
+  );
+  const orgRoleMap = new Map(memberships.map((m) => [m.orgId, m.role]));
+  return { orClauses, orgRoleMap };
+}
+

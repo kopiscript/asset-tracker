@@ -9,6 +9,7 @@ import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 function hashToken(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
@@ -65,9 +66,13 @@ export async function GET(
 
 // POST /api/invite/[token] — accept the invite
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: RouteContext<"/api/invite/[token]">
 ) {
+  if (!(await rateLimit("invite-accept", clientIp(req), 20, "60 s"))) {
+    return Response.json({ data: null, error: "Too many requests" }, { status: 429 });
+  }
+
   const { token } = await ctx.params;
   const hashedToken = hashToken(token);
 
@@ -106,45 +111,14 @@ export async function POST(
     }
 
     // Create membership for the clicked invite (seenWelcomeAt stays null → triggers welcome).
-    const existing = await prisma.orgMember.findUnique({
-      where: { userId_orgId: { userId: dbUser.id, orgId: invite.orgId } },
-      select: { id: true },
-    });
-    if (!existing) {
-      await prisma.orgMember.create({
-        data: { userId: dbUser.id, orgId: invite.orgId, role: invite.role },
-      });
-    }
+    // Ignore unique-constraint errors: a concurrent request already created the row.
+    await prisma.orgMember.create({
+      data: { userId: dbUser.id, orgId: invite.orgId, role: invite.role },
+    }).catch(() => {});
     await prisma.orgInvite.update({
       where: { id: invite.id },
       data: { acceptedAt: new Date() },
     });
-
-    // Activate ALL other pending non-expired invites for this email.
-    const others = await prisma.orgInvite.findMany({
-      where: {
-        email: invite.email,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-        id: { not: invite.id },
-      },
-      select: { id: true, orgId: true, role: true },
-    });
-    for (const other of others) {
-      const alreadyMember = await prisma.orgMember.findUnique({
-        where: { userId_orgId: { userId: dbUser.id, orgId: other.orgId } },
-        select: { id: true },
-      });
-      if (!alreadyMember) {
-        await prisma.orgMember.create({
-          data: { userId: dbUser.id, orgId: other.orgId, role: other.role },
-        });
-      }
-      await prisma.orgInvite.update({
-        where: { id: other.id },
-        data: { acceptedAt: new Date() },
-      });
-    }
 
     return Response.json({ data: { orgId: invite.orgId }, error: null }, { status: 200 });
   } catch (e) {

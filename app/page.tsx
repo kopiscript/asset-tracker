@@ -60,6 +60,10 @@ export default function LandingPage() {
                 {PRODUCT_NAME}
               </span>
             </div>
+            <div className="hidden sm:flex items-center gap-1">
+              <Link href="#features" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-muted/30">Features</Link>
+              <Link href="#pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-muted/30">Pricing</Link>
+            </div>
             <LandingAuthButtons variant="nav" size="sm" />
           </div>
         </div>
@@ -242,8 +246,8 @@ export default function LandingPage() {
               </div>
               <p className="text-xs text-muted-foreground">AZP Group Sdn Bhd (1654709-U)</p>
               <p className="text-xs text-muted-foreground">E2 Ground Floor, Kulliyyah Of Engineering, IIUM, 53100 Kuala Lumpur, Malaysia</p>
-              <a href="mailto:support@miraefleet.app" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                support@miraefleet.app
+              <a href="mailto:support@mirae.azmiproductions.com" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                support@mirae.azmiproductions.com
               </a>
             </div>
             <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">

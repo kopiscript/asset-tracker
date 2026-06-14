@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canManageOrg, getOrgRole } from "@/lib/permissions";
 import { sendInviteEmail, sendInviteNotificationEmail } from "@/lib/email";
+import { isValidEmail } from "@/lib/validation";
 
 // GET /api/orgs/[id]/members — list members (any org member can view)
 export async function GET(
@@ -93,6 +94,9 @@ export async function POST(
     if (!targetEmail) {
       return Response.json({ data: null, error: "Provide email or userId." }, { status: 400 });
     }
+    if (!isValidEmail(targetEmail)) {
+      return Response.json({ data: null, error: "Please enter a valid email address." }, { status: 400 });
+    }
     targetUser = await prisma.user.findUnique({
       where: { email: targetEmail },
       select: { id: true, email: true },
@@ -150,13 +154,16 @@ export async function POST(
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    // Preserve acceptedAt if the invite was previously accepted (e.g. user
+    // registered then their account was deleted). For a genuinely pending
+    // invite, acceptedAt is already null so omitting it is safe.
     const invite = await prisma.orgInvite.upsert({
       where: { email_orgId: { email: targetEmail!, orgId: id } },
-      update: { role, token: hashedToken, invitedBy: dbUser.id, expiresAt, acceptedAt: null },
+      update: { role, token: hashedToken, invitedBy: dbUser.id, expiresAt },
       create: { email: targetEmail!, orgId: id, role, token: hashedToken, invitedBy: dbUser.id, expiresAt },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://miraefleet.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mirae.azmiproductions.com";
     try {
       await sendInviteEmail({
         to: targetEmail!,

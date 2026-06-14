@@ -11,7 +11,7 @@
  * Billplz retries on any non-200 response, so always return 200 once auth passes.
  */
 import type { NextRequest } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 const GRACE_DAYS = 7;
@@ -24,7 +24,11 @@ function verifySignature(params: URLSearchParams, secret: string, signature: str
     .sort();
   const payload = keys.map((k) => `${k}|${params.get(k)}`).join("|");
   const expected = createHmac("sha256", secret).update(payload).digest("hex");
-  return expected === signature;
+  // Constant-time compare to avoid leaking the signature via timing.
+  const expectedBuf = Buffer.from(expected);
+  const signatureBuf = Buffer.from(signature);
+  if (expectedBuf.length !== signatureBuf.length) return false;
+  return timingSafeEqual(expectedBuf, signatureBuf);
 }
 
 export async function POST(request: NextRequest) {

@@ -99,7 +99,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         To exercise these rights, contact us at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a>.
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a>.
       </p>
 
       <h2>8. Cookies</h2>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
       <h2>10. Contact</h2>
       <p>
         For privacy-related enquiries, contact our data protection contact at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> or visit our{" "}
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> or visit our{" "}
         <a href="/contact">Contact page</a>.
       </p>
     </LegalLayout>

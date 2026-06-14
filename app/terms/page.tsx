@@ -15,7 +15,7 @@ export default function TermsPage() {
       <p>
         Mirae Fleet is a Software-as-a-Service (SaaS) platform that provides real-time GPS vehicle
         tracking, fleet management, and access control for Malaysian businesses. The Service is
-        accessed via the web application at miraefleet.app and its associated APIs.
+        accessed via the web application at mirae.azmiproductions.com and its associated APIs.
       </p>
 
       <h2>2. Eligibility</h2>
@@ -48,7 +48,7 @@ export default function TermsPage() {
       <p>
         You are responsible for maintaining the confidentiality of your account credentials. You agree
         to notify us immediately at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> if you suspect any
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> if you suspect any
         unauthorised access to your account. We are not liable for any loss arising from unauthorised
         use of your account where you have failed to take reasonable steps to protect your credentials.
       </p>
@@ -96,7 +96,7 @@ export default function TermsPage() {
       <h2>10. Termination</h2>
       <p>
         You may cancel your subscription at any time by contacting us at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a>. We reserve the right
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a>. We reserve the right
         to suspend or terminate accounts that violate these Terms. Upon termination, your data will
         be retained for 30 days before deletion.
       </p>
@@ -117,7 +117,7 @@ export default function TermsPage() {
       <h2>13. Contact</h2>
       <p>
         For questions about these Terms, contact us at{" "}
-        <a href="mailto:support@miraefleet.app">support@miraefleet.app</a> or visit our{" "}
+        <a href="mailto:support@mirae.azmiproductions.com">support@mirae.azmiproductions.com</a> or visit our{" "}
         <a href="/contact">Contact page</a>.
       </p>
     </LegalLayout>

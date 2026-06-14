@@ -7,7 +7,7 @@ export const metadata = { title: "Welcome — Mirae Fleet" };
 
 export default async function DashboardWelcomePage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/sign-in");
+  if (!session?.user?.id) redirect("/sign-in?callbackUrl=/dashboard/welcome");
 
   const member = await prisma.orgMember.findFirst({
     where: { userId: session.user.id, seenWelcomeAt: null },
