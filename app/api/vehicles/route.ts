@@ -22,7 +22,9 @@ export async function GET() {
 
     if (isAdmin) {
       vehiclesRaw = await prisma.vehicle.findMany({
-        include: {
+        select: {
+          id: true, imei: true, name: true, plateNumber: true, type: true,
+          driverName: true, isActive: true, orgId: true,
           org: { select: { id: true, name: true } },
           telemetryRecords: {
             where: { latitude: { not: null }, longitude: { not: null } },
@@ -52,7 +54,9 @@ export async function GET() {
 
       vehiclesRaw = await prisma.vehicle.findMany({
         where: { OR: orClauses },
-        include: {
+        select: {
+          id: true, imei: true, name: true, plateNumber: true, type: true,
+          driverName: true, isActive: true, orgId: true,
           org: { select: { id: true, name: true } },
           telemetryRecords: {
             where: { latitude: { not: null }, longitude: { not: null } },

@@ -72,7 +72,7 @@ function DetailRow({
 
 // ─── Live single-vehicle hook ─────────────────────────────────────────────
 
-const SINGLE_VEHICLE_POLL_MS = 10_000;
+const SINGLE_VEHICLE_POLL_MS = 30_000;
 
 function useLiveVehicle(
   vehicleId: string,
