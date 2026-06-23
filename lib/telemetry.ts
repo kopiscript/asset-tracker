@@ -22,6 +22,20 @@ export interface VehicleTelemetry {
   batteryPercent: number | null;
   carBatteryVoltage: number | null;
   externalVoltage: number | null;
+  // ── OBD-II engine block (FMC003 plugged into the vehicle's OBD port) ──
+  // Values are carried RAW as the device stores them — unit conversion happens
+  // at display time (see EngineTab). Notably: controlModuleVoltage is in
+  // millivolts (÷1000 → V) and maf is in 0.01 g/s units (÷100 → g/s).
+  fuelLevelObd: number | null;        // percent, 0–100 (device may report up to ~103)
+  engineCoolantTemp: number | null;   // °C
+  engineRpm: number | null;           // rev/min
+  engineLoad: number | null;          // percent
+  throttlePosition: number | null;    // percent
+  absoluteLoad: number | null;        // percent
+  controlModuleVoltage: number | null;// millivolts
+  intakeAirTemp: number | null;       // °C
+  maf: number | null;                 // 0.01 g/s
+  barometricPressure: number | null;  // kPa
 }
 
 // ── Car battery ────────────────────────────────────────────────────────────
@@ -168,3 +182,100 @@ export function gsmOperatorName(code: string | number | null | undefined): strin
   const mnc = s.slice(3);
   return MY_CARRIERS[mnc] ? `${MY_CARRIERS[mnc]} (MY)` : "Malaysia";
 }
+
+// ── Fuel level (OBD PID 0x2F) ───────────────────────────────────────────────
+
+export type FuelState = "ok" | "low" | "critical" | "unknown";
+
+export interface FuelLevel {
+  state: FuelState;
+  /** Clamped 0–100 percent, or null if no reading. */
+  percent: number | null;
+}
+
+/**
+ * Derives fuel level + a low-fuel warning state from the OBD fuel percentage.
+ * The device occasionally reports slightly above 100 (seen up to ~103), so the
+ * percentage is clamped for display. Thresholds tuned for a fleet refuel cue:
+ *   < 8%   critical  (refuel now)
+ *   8–15%  low       (refuel soon)
+ *   ≥ 15%  ok
+ */
+export function deriveFuelLevel(fuelLevelObd: number | null | undefined): FuelLevel {
+  if (fuelLevelObd == null) return { state: "unknown", percent: null };
+  const percent = Math.min(100, Math.max(0, fuelLevelObd));
+  let state: FuelState;
+  if (percent < 8) state = "critical";
+  else if (percent < 15) state = "low";
+  else state = "ok";
+  return { state, percent };
+}
+
+/** True for fuel states a fleet manager should act on. */
+export function isLowFuel(state: FuelState): boolean {
+  return state === "low" || state === "critical";
+}
+
+export const FUEL_LABEL_KEY: Record<FuelState, TranslationKey> = {
+  ok: "fuelOk",
+  low: "fuelLow",
+  critical: "fuelCritical",
+  unknown: "batteryUnknown",
+};
+
+export const FUEL_CHIP_CLASS: Record<FuelState, string> = {
+  ok: "bg-green-500/10 text-green-300 border-green-500/20",
+  low: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+  critical: "bg-red-500/10 text-red-300 border-red-500/20",
+  unknown: "bg-muted text-muted-foreground border-border",
+};
+
+// ── Engine coolant temperature (OBD PID 0x05) ───────────────────────────────
+
+export type CoolantState = "warming" | "normal" | "hot" | "critical" | "unknown";
+
+export interface CoolantTemp {
+  state: CoolantState;
+  /** Temperature in °C, or null if no reading. */
+  celsius: number | null;
+}
+
+/**
+ * Derives coolant temperature + an overheat state. A petrol engine's normal
+ * operating band sits ~80–105°C; below that it is still warming up, above it
+ * is running hot. Thresholds:
+ *   < 70    warming   (not yet at temperature)
+ *   70–104  normal
+ *   105–110 hot       (watch it)
+ *   > 110   critical  (overheating)
+ */
+export function deriveCoolantTemp(coolant: number | null | undefined): CoolantTemp {
+  if (coolant == null) return { state: "unknown", celsius: null };
+  let state: CoolantState;
+  if (coolant < 70) state = "warming";
+  else if (coolant <= 104) state = "normal";
+  else if (coolant <= 110) state = "hot";
+  else state = "critical";
+  return { state, celsius: coolant };
+}
+
+/** True for coolant states a fleet manager should act on. */
+export function isOverheating(state: CoolantState): boolean {
+  return state === "hot" || state === "critical";
+}
+
+export const COOLANT_LABEL_KEY: Record<CoolantState, TranslationKey> = {
+  warming: "coolantWarming",
+  normal: "coolantNormal",
+  hot: "coolantHot",
+  critical: "coolantCritical",
+  unknown: "batteryUnknown",
+};
+
+export const COOLANT_CHIP_CLASS: Record<CoolantState, string> = {
+  warming: "bg-sky-500/10 text-sky-300 border-sky-500/20",
+  normal: "bg-green-500/10 text-green-300 border-green-500/20",
+  hot: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+  critical: "bg-red-500/10 text-red-300 border-red-500/20",
+  unknown: "bg-muted text-muted-foreground border-border",
+};

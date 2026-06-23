@@ -4,18 +4,23 @@ import { useState, useEffect, useCallback } from "react";
 import {
   MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2, ChevronRight,
   Navigation, Satellite, Signal, Mountain, Activity, BatteryMedium,
+  Fuel, Thermometer, Wind, Zap, ChevronDown,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { DynamicMap } from "@/components/map/DynamicMap";
+import { Gauge as ArcGauge } from "@/components/Gauge";
 import type { MapVehicle, HistoryPoint } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useLang } from "@/components/LanguageProvider";
 import { BatteryBadge } from "@/components/BatteryBadge";
 import {
-  type VehicleTelemetry,
+  type VehicleTelemetry, type FuelState, type CoolantState,
   deriveBatteryHealth, drivingState, gpsQuality, GPS_LABEL_KEY,
   gsmSignalQuality, SIGNAL_LABEL_KEY, headingToCompass, gsmOperatorName,
+  deriveFuelLevel, FUEL_LABEL_KEY, FUEL_CHIP_CLASS, isLowFuel,
+  deriveCoolantTemp, COOLANT_LABEL_KEY, COOLANT_CHIP_CLASS, isOverheating,
 } from "@/lib/telemetry";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -178,26 +183,20 @@ function useLiveVehicle(
 
 function OverviewTab({
   vehicle,
-  initialMapVehicles,
-  initialLastSeenAt,
-  initialSpeed,
+  mapVehicles,
+  lastSeenAt,
+  speed,
   todayKm,
-  initialTelemetry,
+  telemetry,
 }: {
   vehicle: VehicleInfo;
-  initialMapVehicles: MapVehicle[];
-  initialLastSeenAt: string | null;
-  initialSpeed: number | null;
+  mapVehicles: MapVehicle[];
+  lastSeenAt: string | null;
+  speed: number | null;
   todayKm: number;
-  initialTelemetry: VehicleTelemetry;
+  telemetry: VehicleTelemetry;
 }) {
   const { tr } = useLang();
-  const { mapVehicles, lastSeenAt, speed, telemetry } = useLiveVehicle(vehicle.id, {
-    mapVehicles: initialMapVehicles,
-    lastSeenAt:  initialLastSeenAt,
-    speed:       initialSpeed,
-    telemetry:   initialTelemetry,
-  });
 
   const hasLocation = mapVehicles.length > 0;
 
@@ -289,6 +288,9 @@ function OverviewTab({
         </div>
       )}
 
+      {/* Engine & fuel (OBD) — renders only when the tracker is wired to the OBD port */}
+      <EngineSection telemetry={telemetry} />
+
       {/* Detail cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vehicle info */}
@@ -342,6 +344,145 @@ function OverviewTab({
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Engine section (Overview) ──────────────────────────────────────────────
+
+// Arc colour per state — text-* classes consumed by Gauge via currentColor.
+const FUEL_ARC_CLASS: Record<FuelState, string> = {
+  ok: "text-green-400",
+  low: "text-amber-400",
+  critical: "text-red-400",
+  unknown: "text-muted-foreground",
+};
+const COOLANT_ARC_CLASS: Record<CoolantState, string> = {
+  warming: "text-sky-400",
+  normal: "text-green-400",
+  hot: "text-amber-400",
+  critical: "text-red-400",
+  unknown: "text-muted-foreground",
+};
+
+function EngineChip({ className, children }: { className: string; children: React.ReactNode }) {
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", className)}>
+      {children}
+    </span>
+  );
+}
+
+function EngineSection({ telemetry }: { telemetry: VehicleTelemetry }) {
+  const { tr } = useLang();
+  const [showMore, setShowMore] = useState(false);
+
+  const fuel = deriveFuelLevel(telemetry.fuelLevelObd);
+  const coolant = deriveCoolantTemp(telemetry.engineCoolantTemp);
+
+  // The ~9% of trackers not wired to the OBD port send none of these — when
+  // that's the case we render nothing, matching how Overview hides the Live
+  // Status card when there's no telemetry.
+  const hasEngineData =
+    telemetry.fuelLevelObd != null ||
+    telemetry.engineCoolantTemp != null ||
+    telemetry.engineRpm != null ||
+    telemetry.engineLoad != null;
+
+  if (!hasEngineData) return null;
+
+  const rpmHot = (telemetry.engineRpm ?? 0) > 6000;
+
+  return (
+    <div className="bg-card border border-border/50 rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-foreground mb-5">{tr("engineAndFuel")}</h2>
+
+        {/* Headline gauge cluster */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
+          <ArcGauge
+            value={fuel.percent}
+            min={0}
+            max={100}
+            valueText={fuel.percent != null ? String(Math.round(fuel.percent)) : "—"}
+            unit="%"
+            label={tr("fuelLevelLabel")}
+            icon={<Fuel className="h-4 w-4" />}
+            colorClass={FUEL_ARC_CLASS[fuel.state]}
+            chip={
+              isLowFuel(fuel.state) ? (
+                <EngineChip className={FUEL_CHIP_CLASS[fuel.state]}>{tr(FUEL_LABEL_KEY[fuel.state])}</EngineChip>
+              ) : undefined
+            }
+          />
+          <ArcGauge
+            value={coolant.celsius}
+            min={40}
+            max={120}
+            valueText={coolant.celsius != null ? String(Math.round(coolant.celsius)) : "—"}
+            unit="°C"
+            label={tr("coolantTempLabel")}
+            icon={<Thermometer className="h-4 w-4" />}
+            colorClass={COOLANT_ARC_CLASS[coolant.state]}
+            chip={
+              isOverheating(coolant.state) ? (
+                <EngineChip className={COOLANT_CHIP_CLASS[coolant.state]}>{tr(COOLANT_LABEL_KEY[coolant.state])}</EngineChip>
+              ) : undefined
+            }
+          />
+          <ArcGauge
+            value={telemetry.engineRpm}
+            min={0}
+            max={7000}
+            valueText={telemetry.engineRpm != null ? String(telemetry.engineRpm) : "—"}
+            label={tr("engineRpmLabel")}
+            icon={<Gauge className="h-4 w-4" />}
+            colorClass={rpmHot ? "text-red-400" : "text-primary"}
+          />
+          <ArcGauge
+            value={telemetry.engineLoad}
+            min={0}
+            max={100}
+            valueText={telemetry.engineLoad != null ? String(Math.round(telemetry.engineLoad)) : "—"}
+            unit="%"
+            label={tr("engineLoadLabel")}
+            icon={<Activity className="h-4 w-4" />}
+            colorClass="text-primary"
+          />
+        </div>
+
+        {/* Expandable secondary metrics */}
+        <button
+          onClick={() => setShowMore((v) => !v)}
+          className="mt-5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {tr("moreEngineDetails")}
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showMore && "rotate-180")} />
+        </button>
+
+        {showMore && (
+          <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <StatTile icon={<Gauge className="h-4 w-4" />} label={tr("throttleLabel")}>
+              {telemetry.throttlePosition != null ? `${Math.round(telemetry.throttlePosition)}%` : "—"}
+            </StatTile>
+            <StatTile icon={<Activity className="h-4 w-4" />} label={tr("absoluteLoadLabel")}>
+              {telemetry.absoluteLoad != null ? `${Math.round(telemetry.absoluteLoad)}%` : "—"}
+            </StatTile>
+            <StatTile icon={<Zap className="h-4 w-4" />} label={tr("moduleVoltageLabel")}>
+              {telemetry.controlModuleVoltage != null
+                ? `${(telemetry.controlModuleVoltage / 1000).toFixed(1)} V`
+                : "—"}
+            </StatTile>
+            <StatTile icon={<Thermometer className="h-4 w-4" />} label={tr("intakeAirLabel")}>
+              {telemetry.intakeAirTemp != null ? `${Math.round(telemetry.intakeAirTemp)} °C` : "—"}
+            </StatTile>
+            <StatTile icon={<Wind className="h-4 w-4" />} label={tr("mafLabel")}>
+              {telemetry.maf != null ? `${(telemetry.maf / 100).toFixed(1)} g/s` : "—"}
+            </StatTile>
+            <StatTile icon={<Mountain className="h-4 w-4" />} label={tr("barometricLabel")}>
+              {telemetry.barometricPressure != null ? `${Math.round(telemetry.barometricPressure)} kPa` : "—"}
+            </StatTile>
+          </div>
+        )}
+      </div>
   );
 }
 
@@ -566,6 +707,10 @@ export function VehicleDetailTabs({
   // doesn't unmount it and trigger a redundant re-fetch on the next tab switch.
   const [historyMounted, setHistoryMounted] = useState(false);
 
+  // Single live poll for the page — the Overview tab (map, live status, and the
+  // engine/fuel section) all read from it.
+  const live = useLiveVehicle(vehicle.id, { mapVehicles, lastSeenAt, speed, telemetry });
+
   function switchTab(key: "overview" | "history") {
     setTab(key);
     if (key === "history") setHistoryMounted(true);
@@ -601,11 +746,11 @@ export function VehicleDetailTabs({
         {tab === "overview" && (
           <OverviewTab
             vehicle={vehicle}
-            initialMapVehicles={mapVehicles}
-            initialLastSeenAt={lastSeenAt}
-            initialSpeed={speed}
+            mapVehicles={live.mapVehicles}
+            lastSeenAt={live.lastSeenAt}
+            speed={live.speed}
             todayKm={todayKm}
-            initialTelemetry={telemetry}
+            telemetry={live.telemetry}
           />
         )}
         {/* Keep HistoryTab mounted after first visit — hiding instead of unmounting

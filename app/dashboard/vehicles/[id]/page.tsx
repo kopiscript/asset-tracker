@@ -36,6 +36,11 @@ export default async function VehicleDetailPage(
           movement: true, satellites: true, gsmSignal: true, gsmOperator: true,
           altitude: true, angle: true, batteryPercent: true,
           carBatteryVoltage: true, externalVoltage: true,
+          // OBD-II engine block
+          fuel_level_obd: true, engine_coolant_temp: true, engine_rpm: true,
+          engine_load: true, throttle_position: true, absolute_load: true,
+          control_module_voltage: true, intake_air_temp: true, maf: true,
+          barometric_pressure: true,
         },
       },
     },
@@ -62,6 +67,18 @@ export default async function VehicleDetailPage(
     batteryPercent: latest?.batteryPercent ?? null,
     carBatteryVoltage: latest?.carBatteryVoltage ?? null,
     externalVoltage: latest?.externalVoltage ?? null,
+    // OBD-II engine block — controlModuleVoltage is a Prisma Decimal; coerce to number.
+    fuelLevelObd: latest?.fuel_level_obd ?? null,
+    engineCoolantTemp: latest?.engine_coolant_temp ?? null,
+    engineRpm: latest?.engine_rpm ?? null,
+    engineLoad: latest?.engine_load ?? null,
+    throttlePosition: latest?.throttle_position ?? null,
+    absoluteLoad: latest?.absolute_load ?? null,
+    controlModuleVoltage:
+      latest?.control_module_voltage != null ? Number(latest.control_module_voltage) : null,
+    intakeAirTemp: latest?.intake_air_temp ?? null,
+    maf: latest?.maf ?? null,
+    barometricPressure: latest?.barometric_pressure ?? null,
   };
 
   const midnight = todayMidnightMy();

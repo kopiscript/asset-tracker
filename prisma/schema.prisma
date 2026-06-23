@@ -7,149 +7,160 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Models ────────────────────────────────────────────────────────────────
-
 model User {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  email     String    @unique
-  phone     String?
-  password  String
-  usertype  String    @default("user")
-  createdAt DateTime? @default(now()) @db.Timestamp(6) @map("created_at")
-
-  orgMemberships OrgMember[]
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  email          String      @unique
+  phone          String?
+  password       String
+  usertype       String      @default("user")
+  createdAt      DateTime?   @default(now()) @map("created_at") @db.Timestamp(6)
   sentInvites    OrgInvite[]
+  orgMemberships OrgMember[]
 
   @@map("users")
 }
 
 model Organization {
-  id                String    @id @default(cuid())
-  name              String
-  createdAt         DateTime  @default(now()) @map("created_at")
-  plan              String    @default("free")          // "free"|"personal"|"growth"|"fleet"|"enterprise"
-  planExpiresAt     DateTime? @map("plan_expires_at")   // null = never expires
-  billplzSubId      String?   @map("billplz_sub_id")   // Billplz Subscription/Collection ID
-  gracePeriodEndsAt DateTime? @map("grace_period_ends_at") // set on lapsed payment; locks dashboard after
-  nameSetAt           DateTime? @map("name_set_at")            // set when owner renames org in onboarding (Step 1)
-  onboardingSkippedAt DateTime? @map("onboarding_skipped_at")  // set when owner skips the setup checklist
-
-  members  OrgMember[]
-  vehicles Vehicle[]
-  invites  OrgInvite[]
+  id                  String      @id @default(cuid())
+  name                String
+  createdAt           DateTime    @default(now()) @map("created_at")
+  plan                String      @default("free")
+  planExpiresAt       DateTime?   @map("plan_expires_at")
+  billplzSubId        String?     @map("billplz_sub_id")
+  gracePeriodEndsAt   DateTime?   @map("grace_period_ends_at")
+  nameSetAt           DateTime?   @map("name_set_at")
+  onboardingSkippedAt DateTime?   @map("onboarding_skipped_at")
+  invites             OrgInvite[]
+  members             OrgMember[]
+  vehicles            Vehicle[]
 
   @@map("organizations")
 }
 
-// Junction: User <-> Organization with role
 model OrgMember {
-  id        String   @id @default(cuid())
-  userId    String   @db.Uuid @map("user_id")
-  orgId     String   @map("org_id")
-  role      String   // "owner" | "admin" | "viewer"
-  createdAt DateTime @default(now()) @map("created_at")
-  seenWelcomeAt DateTime? @map("seen_welcome_at") // null = invited member has not yet seen the welcome screen
-
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  org           Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id            String                @id @default(cuid())
+  userId        String                @map("user_id") @db.Uuid
+  orgId         String                @map("org_id")
+  role          String
+  createdAt     DateTime              @default(now()) @map("created_at")
+  seenWelcomeAt DateTime?             @map("seen_welcome_at")
+  org           Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   vehicleAccess ViewerVehicleAccess[]
 
-  @@unique([userId, orgId])
+  @@unique([userId, orgId], map: "org_members_userId_orgId_key")
   @@map("org_members")
 }
 
-// Per-viewer vehicle allowlist. No rows = viewer sees all org vehicles (unrestricted).
-// One or more rows = viewer sees only those vehicles.
 model ViewerVehicleAccess {
-  id        String @id @default(cuid())
-  memberId  String @map("member_id")
-  vehicleId BigInt @map("vehicle_id")
-
-  member  OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  vehicle Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  memberId  String    @map("member_id")
+  vehicleId BigInt    @map("vehicle_id")
+  member    OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, vehicleId])
   @@map("viewer_vehicle_access")
 }
 
 model Vehicle {
-  id          BigInt    @id @default(autoincrement())
-  imei        String    @unique
-  name        String?   @map("vehicle_name")
-  plateNumber String?   @map("plate_number")
-  type        String?   @map("model")
-  isActive    Boolean?  @default(true) @map("is_active")
-  createdAt   DateTime? @default(now()) @db.Timestamp(6) @map("created_at")
-  driverName  String?   @map("driver_name")
-  orgId       String?   @map("org_id")
-  apiKey      String?   @map("api_key")
-
-  org              Organization?        @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  id               BigInt                @id @default(autoincrement())
+  imei             String                @unique
+  name             String?               @map("vehicle_name")
+  plateNumber      String?               @map("plate_number")
+  type             String?               @map("model")
+  isActive         Boolean?              @default(true) @map("is_active")
+  createdAt        DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
+  driverName       String?               @map("driver_name")
+  orgId            String?               @map("org_id")
+  apiKey           String?               @map("api_key")
   telemetryRecords TelemetryRecord[]
+  org              Organization?         @relation(fields: [orgId], references: [id])
   viewerAccess     ViewerVehicleAccess[]
 
   @@map("vehicles")
 }
 
-// Append-only GPS + telemetry log. Never update or delete rows.
 model TelemetryRecord {
-  id                BigInt    @id @default(autoincrement())
-  vehicleId         BigInt    @map("vehicle_id")
-  imei              String
-  timestampUtc      DateTime  @db.Timestamp(6) @map("timestamp_utc")
-  timestampMy       DateTime  @db.Timestamp(6) @map("timestamp_my")
-  latitude          Float?
-  longitude         Float?
-  altitude          Float?
-  angle             Float?
-  speedKmh          Float?    @map("speed_kmh")
-  satellites        Int?
-  priority          Int?
-  ignition          Int?
-  movement          Int?
-  gnssFixType       Int?      @map("gnss_fix_type")
-  gnssStatus        Int?      @map("gnss_status")
-  gsmSignal         Int?      @map("gsm_signal")
-  gsmOperator       String?   @map("gsm_operator")
-  networkType       Int?      @map("network_type")
-  externalVoltage   Float?    @map("external_voltage")
-  batteryVoltage    Float?    @map("battery_voltage")
-  batteryCurrent    Float?    @map("battery_current")
-  batteryPercent    Int?      @map("battery_percent")
-  sleepMode         Int?      @map("sleep_mode")
-  dataMode          Int?      @map("data_mode")
-  crashEvent        Int?      @map("crash_event")
-  bleData           Int?      @map("ble_data")
-  speedAlt          Float?    @map("speed_alt")
-  carState          Int?      @map("car_state")
-  carBatteryVoltage Float?    @map("car_battery_voltage")
-  gnssRaw           String?   @map("gnss_raw")
-  payload           Json      @default("{}")
-  createdAt         DateTime? @default(now()) @db.Timestamp(6) @map("created_at")
-
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                     BigInt    @id @default(autoincrement())
+  vehicleId              BigInt    @map("vehicle_id")
+  imei                   String
+  timestampUtc           DateTime  @map("timestamp_utc") @db.Timestamp(6)
+  timestampMy            DateTime  @map("timestamp_my") @db.Timestamp(6)
+  latitude               Float?
+  longitude              Float?
+  altitude               Float?
+  angle                  Float?
+  speedKmh               Float?    @map("speed_kmh")
+  satellites             Int?
+  priority               Int?
+  ignition               Int?
+  movement               Int?
+  gnssFixType            Int?      @map("gnss_fix_type")
+  gnssStatus             Int?      @map("gnss_status")
+  gsmSignal              Int?      @map("gsm_signal")
+  gsmOperator            String?   @map("gsm_operator")
+  networkType            Int?      @map("network_type")
+  externalVoltage        Float?    @map("external_voltage")
+  batteryVoltage         Float?    @map("battery_voltage")
+  batteryCurrent         Float?    @map("battery_current")
+  batteryPercent         Int?      @map("battery_percent")
+  sleepMode              Int?      @map("sleep_mode")
+  dataMode               Int?      @map("data_mode")
+  crashEvent             Int?      @map("crash_event")
+  bleData                Int?      @map("ble_data")
+  speedAlt               Float?    @map("speed_alt")
+  carState               Int?      @map("car_state")
+  carBatteryVoltage      Float?    @map("car_battery_voltage")
+  gnssRaw                String?   @map("gnss_raw")
+  payload                Json      @default("{}")
+  createdAt              DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  event_io_id            Int?
+  axis_x                 Int?
+  axis_y                 Int?
+  axis_z                 Int?
+  fuel_used_gps          Decimal?  @db.Decimal
+  dtc_count              Int?
+  engine_load            Int?
+  engine_coolant_temp    Int?
+  short_fuel_trim        Int?
+  engine_rpm             Int?
+  obd_speed              Int?
+  timing_advance         Int?
+  intake_air_temp        Int?
+  maf                    Int?
+  throttle_position      Int?
+  engine_runtime         Int?
+  distance_mil_on        Int?
+  distance_since_clear   Int?
+  barometric_pressure    Int?
+  control_module_voltage Decimal?  @db.Decimal
+  absolute_load          Int?
+  time_mil_on            Int?
+  time_since_clear       Int?
+  fuel_level_obd         Int?
+  fault_codes            String?
+  vehicle                Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([imei, timestampUtc(sort: Desc)], map: "idx_imei_time")
   @@index([vehicleId, timestampMy(sort: Desc)], map: "idx_vehicle_time_my")
   @@map("telemetry_records")
 }
 
-// Pending invitation to join an organization. One active invite per email per org.
 model OrgInvite {
-  id         String    @id @default(cuid())
+  id         String       @id @default(cuid())
   email      String
-  orgId      String    @map("org_id")
-  role       String                          // "owner" | "admin" | "viewer"
-  token      String    @unique               // SHA-256 hash of the raw token (raw token lives only in the URL)
-  invitedBy  String    @db.Uuid @map("invited_by")
-  expiresAt  DateTime  @map("expires_at")
-  acceptedAt DateTime? @map("accepted_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  orgId      String       @map("org_id")
+  role       String
+  token      String       @unique
+  invitedBy  String       @map("invited_by") @db.Uuid
+  expiresAt  DateTime     @map("expires_at")
+  acceptedAt DateTime?    @map("accepted_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  inviter    User         @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  inviter User         @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
-
-  @@unique([email, orgId])
+  @@unique([email, orgId], map: "org_invites_email_orgId_key")
   @@map("org_invites")
 }
