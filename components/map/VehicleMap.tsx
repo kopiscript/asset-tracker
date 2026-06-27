@@ -184,6 +184,7 @@ export function VehicleMap({
           url={TILE_URLS[tileTheme]}
           subdomains="abcd"
           maxZoom={20}
+          className={tileTheme === "dark" ? "map-tiles-dark" : undefined}
         />
 
         <MapFocus
