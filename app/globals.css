@@ -254,3 +254,10 @@
 .dark .leaflet-container {
   background: #1c1c1e;
 }
+
+/* CartoDB Dark Matter tiles are very low-contrast by default (near-black */
+/* background, dim gray roads). Brighten + boost contrast so the basemap */
+/* stays dark-mode but roads/labels are actually legible. */
+.map-tiles-dark {
+  filter: brightness(1.35) contrast(0.92) saturate(1.15);
+}
