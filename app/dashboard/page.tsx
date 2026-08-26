@@ -140,9 +140,38 @@ export default async function DashboardPage() {
       ? movingVehicles.reduce((sum, v) => sum + v.speedKmh, 0) / movingVehicles.length
       : null;
 
-  // ── 24-hour activity trend: distinct moving vehicles per hour bucket ────
+  // ── MIROS TrackScore: recent overspeed/harsh/emergency events (24h) ─────
   const vehicleIds = vehicleRows.map((v) => v.id);
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const nameById = new Map(vehicles.map((v) => [v.id, v.name ?? v.plateNumber ?? v.id]));
+  const SAFETY_REASON_KEY: Partial<Record<string, "eventOverspeed" | "eventHarshBrake" | "eventHarshAccel" | "eventEmergency">> = {
+    overspeed: "eventOverspeed",
+    harsh_brake: "eventHarshBrake",
+    harsh_accel: "eventHarshAccel",
+    emergency: "eventEmergency",
+  };
+  if (vehicleIds.length > 0) {
+    const safetyEvents = await prisma.trackingEvent.findMany({
+      where: { vehicleId: { in: vehicleIds }, type: { in: Object.keys(SAFETY_REASON_KEY) }, occurredAt: { gte: since24h } },
+      orderBy: { occurredAt: "desc" },
+      take: 20,
+      select: { vehicleId: true, type: true, detail: true },
+    });
+    for (const e of safetyEvents) {
+      const reasonKey = SAFETY_REASON_KEY[e.type];
+      if (!reasonKey) continue;
+      attentionItems.push({
+        vehicleId: e.vehicleId.toString(),
+        vehicleName: nameById.get(e.vehicleId.toString()) ?? e.vehicleId.toString(),
+        severity: e.type === "emergency" ? "critical" : "warning",
+        reasonKey,
+        detail: e.detail ?? "",
+      });
+    }
+  }
+
+  // ── 24-hour activity trend: distinct moving vehicles per hour bucket ────
+  const since = since24h;
   const recentTelemetry =
     vehicleIds.length === 0
       ? []

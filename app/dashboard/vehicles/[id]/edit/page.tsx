@@ -48,6 +48,7 @@ export default async function EditVehiclePage(
           type: vehicle.type ?? "",
           driverName: vehicle.driverName ?? "",
           isActive: vehicle.isActive ?? true,
+          speedLimitKmh: vehicle.speedLimitKmh ?? 90,
         }}
       />
     </div>

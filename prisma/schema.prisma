@@ -75,11 +75,55 @@ model Vehicle {
   driverName       String?               @map("driver_name")
   orgId            String?               @map("org_id")
   apiKey           String?               @map("api_key")
+  // MIROS TrackScore: overspeed detection threshold (km/h). Defaults to 90,
+  // the common Malaysian heavy-vehicle open-road limit (JPJ).
+  speedLimitKmh    Int?                  @default(90) @map("speed_limit_kmh")
   telemetryRecords TelemetryRecord[]
+  geofences        Geofence[]
+  trackingEvents   TrackingEvent[]
   org              Organization?         @relation(fields: [orgId], references: [id])
   viewerAccess     ViewerVehicleAccess[]
 
   @@map("vehicles")
+}
+
+/// MIROS TrackScore item 4/5: circular geofence + breach alerting.
+model Geofence {
+  id        String          @id @default(cuid())
+  vehicleId BigInt          @map("vehicle_id")
+  name      String
+  centerLat Float           @map("center_lat")
+  centerLng Float           @map("center_lng")
+  radiusM   Int             @map("radius_m")
+  isActive  Boolean         @default(true) @map("is_active")
+  createdAt DateTime        @default(now()) @map("created_at")
+  vehicle   Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  events    TrackingEvent[]
+
+  @@index([vehicleId])
+  @@map("geofences")
+}
+
+/// MIROS TrackScore items 8/9/21-24: overspeed, harsh braking/acceleration,
+/// geofence enter/exit, and the manual panic/emergency button — one
+/// append-only log, surfaced as in-app "system alerts" per the guideline.
+model TrackingEvent {
+  id           BigInt    @id @default(autoincrement())
+  vehicleId    BigInt    @map("vehicle_id")
+  type         String    // overspeed | harsh_brake | harsh_accel | geofence_enter | geofence_exit | emergency
+  occurredAt   DateTime  @map("occurred_at")
+  speedKmh     Float?    @map("speed_kmh")
+  latitude     Float?
+  longitude    Float?
+  detail       String?
+  geofenceId   String?   @map("geofence_id")
+  acknowledged Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  vehicle      Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  geofence     Geofence? @relation(fields: [geofenceId], references: [id], onDelete: SetNull)
+
+  @@index([vehicleId, occurredAt(sort: Desc)])
+  @@map("tracking_events")
 }
 
 model TelemetryRecord {

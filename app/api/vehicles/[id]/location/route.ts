@@ -13,6 +13,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
+import { isOverspeeding, detectHarshEvent, detectGeofenceTransitions } from "@/lib/trackscore";
 
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
 
@@ -35,7 +36,10 @@ export async function PATCH(
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: BigInt(id) },
-    select: { id: true, imei: true, apiKey: true },
+    select: {
+      id: true, imei: true, apiKey: true, speedLimitKmh: true,
+      geofences: { where: { isActive: true }, select: { id: true, centerLat: true, centerLng: true, radiusM: true } },
+    },
   });
   if (!vehicle) {
     return Response.json({ data: null, error: "Unauthorized" }, { status: 401 });
@@ -76,19 +80,83 @@ export async function PATCH(
     typeof body.recordedAt === "string" ? new Date(body.recordedAt) : new Date();
   const timestampMy = new Date(timestampUtc.getTime() + MY_OFFSET_MS);
   const speedKmh = typeof body.speed === "number" ? body.speed : null;
+  const latitude = body.latitude as number;
+  const longitude = body.longitude as number;
 
   try {
+    // Previous ping, read BEFORE the insert — the baseline for harsh-event
+    // and geofence-transition detection (MIROS TrackScore items 4/5/21-24).
+    const prev = await prisma.telemetryRecord.findFirst({
+      where: { vehicleId: vehicle.id, latitude: { not: null }, longitude: { not: null } },
+      orderBy: { timestampUtc: "desc" },
+      select: { latitude: true, longitude: true, speedKmh: true, timestampUtc: true },
+    });
+
     await prisma.telemetryRecord.create({
       data: {
         vehicleId: vehicle.id,
         imei: vehicle.imei,
         timestampUtc,
         timestampMy,
-        latitude: body.latitude as number,
-        longitude: body.longitude as number,
+        latitude,
+        longitude,
         speedKmh,
       },
     });
+
+    // ── TrackScore detection: overspeed, harsh accel/brake, geofence ──────
+    const events: {
+      type: string; speedKmh: number | null; detail: string; geofenceId?: string;
+    }[] = [];
+
+    if (isOverspeeding(speedKmh, vehicle.speedLimitKmh)) {
+      events.push({
+        type: "overspeed",
+        speedKmh,
+        detail: `${speedKmh!.toFixed(0)} km/h in a ${vehicle.speedLimitKmh} km/h zone`,
+      });
+    }
+
+    const harsh = detectHarshEvent(prev, { speedKmh, timestampUtc });
+    if (harsh) {
+      events.push({
+        type: harsh.type,
+        speedKmh,
+        detail: `${Math.abs(harsh.rateKmhPerS).toFixed(1)} km/h per second`,
+      });
+    }
+
+    const geofenceTransitions = detectGeofenceTransitions(
+      vehicle.geofences,
+      prev && prev.latitude != null && prev.longitude != null
+        ? { latitude: prev.latitude, longitude: prev.longitude }
+        : null,
+      { latitude, longitude }
+    );
+    for (const t of geofenceTransitions) {
+      events.push({
+        type: t.type,
+        speedKmh,
+        detail: t.type === "geofence_enter" ? "Entered geofence" : "Exited geofence",
+        geofenceId: t.geofenceId,
+      });
+    }
+
+    // Sequential creates — PrismaNeonHttp doesn't support createMany/$transaction.
+    for (const e of events) {
+      await prisma.trackingEvent.create({
+        data: {
+          vehicleId: vehicle.id,
+          type: e.type,
+          occurredAt: timestampUtc,
+          speedKmh: e.speedKmh,
+          latitude,
+          longitude,
+          detail: e.detail,
+          geofenceId: e.geofenceId,
+        },
+      });
+    }
 
     return Response.json({ data: { ok: true }, error: null });
   } catch (e) {

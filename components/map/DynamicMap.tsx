@@ -13,7 +13,7 @@
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { MapVehicle, HistoryPoint } from "./VehicleMap";
+import type { MapVehicle, HistoryPoint, MapGeofence } from "./VehicleMap";
 
 const VehicleMapNoSSR = dynamic(
   () => import("./VehicleMap").then((m) => ({ default: m.VehicleMap })),
@@ -29,6 +29,7 @@ interface DynamicMapProps {
   vehicles: MapVehicle[];
   focusVehicleId?: string;
   historyPath?: HistoryPoint[];
+  geofences?: MapGeofence[];
   className?: string;
   tileTheme?: "light" | "dark";
   routeColor?: string;

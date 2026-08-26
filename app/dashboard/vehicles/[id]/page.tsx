@@ -48,6 +48,22 @@ export default async function VehicleDetailPage(
   });
   if (!vehicle) return notFound();
 
+  const [geofenceRows, eventRows] = await Promise.all([
+    prisma.geofence.findMany({ where: { vehicleId: BigInt(id) }, orderBy: { createdAt: "asc" } }),
+    prisma.trackingEvent.findMany({
+      where: { vehicleId: BigInt(id) },
+      orderBy: { occurredAt: "desc" },
+      take: 30,
+    }),
+  ]);
+  const geofences = geofenceRows.map((g) => ({ ...g, id: g.id, vehicleId: g.vehicleId.toString() }));
+  const events = eventRows.map((e) => ({
+    ...e,
+    id: e.id.toString(),
+    vehicleId: e.vehicleId.toString(),
+    occurredAt: e.occurredAt.toISOString(),
+  }));
+
   const userCanEdit   = userRole === "owner" || userRole === "admin";
   const userCanDelete = userRole === "owner";
 
@@ -159,6 +175,10 @@ export default async function VehicleDetailPage(
         speed={speed}
         todayKm={todayKm}
         telemetry={telemetry}
+        speedLimitKmh={vehicle.speedLimitKmh}
+        initialGeofences={geofences}
+        initialEvents={events}
+        userCanEdit={userCanEdit}
       />
     </div>
   );

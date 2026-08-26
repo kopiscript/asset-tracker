@@ -10,11 +10,12 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { DynamicMap } from "@/components/map/DynamicMap";
 import { Gauge as ArcGauge } from "@/components/Gauge";
-import type { MapVehicle, HistoryPoint } from "@/components/map/VehicleMap";
+import type { MapVehicle, HistoryPoint, MapGeofence } from "@/components/map/VehicleMap";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/components/LanguageProvider";
 import { BatteryBadge } from "@/components/BatteryBadge";
+import { SafetyTab, type TrackingEventData } from "./SafetyTab";
 import {
   type VehicleTelemetry, type FuelState, type CoolantState,
   deriveBatteryHealth, drivingState, gpsQuality, GPS_LABEL_KEY,
@@ -61,6 +62,10 @@ interface VehicleDetailTabsProps {
   speed: number | null;
   todayKm: number;
   telemetry: VehicleTelemetry;
+  speedLimitKmh: number | null;
+  initialGeofences: MapGeofence[];
+  initialEvents: TrackingEventData[];
+  userCanEdit: boolean;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────
@@ -699,9 +704,13 @@ export function VehicleDetailTabs({
   speed,
   todayKm,
   telemetry,
+  speedLimitKmh,
+  initialGeofences,
+  initialEvents,
+  userCanEdit,
 }: VehicleDetailTabsProps) {
   const { tr } = useLang();
-  const [tab, setTab] = useState<"overview" | "history">("overview");
+  const [tab, setTab] = useState<"overview" | "history" | "safety">("overview");
   // Track whether HistoryTab has been mounted at least once.
   // Once mounted we keep it in the DOM (hidden) so switching back to "overview"
   // doesn't unmount it and trigger a redundant re-fetch on the next tab switch.
@@ -711,7 +720,7 @@ export function VehicleDetailTabs({
   // engine/fuel section) all read from it.
   const live = useLiveVehicle(vehicle.id, { mapVehicles, lastSeenAt, speed, telemetry });
 
-  function switchTab(key: "overview" | "history") {
+  function switchTab(key: "overview" | "history" | "safety") {
     setTab(key);
     if (key === "history") setHistoryMounted(true);
   }
@@ -719,6 +728,7 @@ export function VehicleDetailTabs({
   const tabs = [
     { key: "overview" as const, label: tr("overview") },
     { key: "history"  as const, label: tr("tripHistory") },
+    { key: "safety"   as const, label: tr("safetyTab") },
   ];
 
   return (
@@ -759,6 +769,16 @@ export function VehicleDetailTabs({
           <div className={tab !== "history" ? "hidden" : undefined}>
             <HistoryTab vehicleId={vehicle.id} />
           </div>
+        )}
+        {tab === "safety" && (
+          <SafetyTab
+            vehicleId={vehicle.id}
+            mapVehicles={live.mapVehicles}
+            speedLimitKmh={speedLimitKmh}
+            initialGeofences={initialGeofences}
+            initialEvents={initialEvents}
+            userCanEdit={userCanEdit}
+          />
         )}
       </div>
     </div>

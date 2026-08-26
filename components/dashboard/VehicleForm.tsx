@@ -27,6 +27,7 @@ export type VehicleFormData = {
   type: string;
   driverName: string;
   isActive: boolean;
+  speedLimitKmh: number;
 };
 
 interface VehicleFormProps {
@@ -49,6 +50,7 @@ export function VehicleForm({
     type: defaultValues.type ?? "Car",
     driverName: defaultValues.driverName ?? "",
     isActive: defaultValues.isActive ?? true,
+    speedLimitKmh: defaultValues.speedLimitKmh ?? 90,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof VehicleFormData, string>>>({});
   const [serverError, setServerError] = useState("");
@@ -141,6 +143,17 @@ export function VehicleForm({
           />
         </FormField>
       </div>
+
+      <FormField label={tr("fieldSpeedLimit")} hint={tr("speedLimitHint")}>
+        <Input
+          type="number"
+          min={10}
+          max={200}
+          value={form.speedLimitKmh}
+          onChange={(e) => set("speedLimitKmh", Number(e.target.value))}
+          className="bg-card border-border/50"
+        />
+      </FormField>
 
       <div className="flex gap-3 pt-2">
         <Button

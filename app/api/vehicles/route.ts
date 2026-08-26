@@ -174,6 +174,9 @@ export async function POST(request: Request) {
         driverName: body.driverName && typeof body.driverName === "string" ? body.driverName : null,
         isActive: true,
         orgId,
+        ...(typeof body.speedLimitKmh === "number" && Number.isFinite(body.speedLimitKmh)
+          ? { speedLimitKmh: Math.round(body.speedLimitKmh) }
+          : {}),
       },
     });
 

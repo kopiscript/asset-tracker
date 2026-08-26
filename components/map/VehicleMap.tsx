@@ -8,6 +8,7 @@ import {
   Popup,
   Polyline,
   CircleMarker,
+  Circle,
   Tooltip,
   useMap,
 } from "react-leaflet";
@@ -55,6 +56,14 @@ export type MapVehicle = {
   lastSeenAt: string | null;
 };
 
+export type MapGeofence = {
+  id: string;
+  name: string;
+  centerLat: number;
+  centerLng: number;
+  radiusM: number;
+};
+
 export type HistoryPoint = {
   latitude: number;
   longitude: number;
@@ -68,6 +77,8 @@ interface VehicleMapProps {
   focusVehicleId?: string;
   /** When provided, renders a history polyline instead of live markers */
   historyPath?: HistoryPoint[];
+  /** Circular geofences to draw on the map (live marker mode only) */
+  geofences?: MapGeofence[];
   className?: string;
   /** "light" = CartoDB Voyager (default); "dark" = CartoDB Dark Matter */
   tileTheme?: "light" | "dark";
@@ -148,6 +159,7 @@ export function VehicleMap({
   vehicles,
   focusVehicleId,
   historyPath,
+  geofences,
   className = "h-full w-full",
   tileTheme = "dark",
   routeColor = "#ff453a",
@@ -240,6 +252,21 @@ export function VehicleMap({
             ))}
           </>
         )}
+
+        {/* ── Geofences (MIROS TrackScore) ────────────────────────────── */}
+        {!historyPath &&
+          geofences?.map((g) => (
+            <Circle
+              key={g.id}
+              center={[g.centerLat, g.centerLng]}
+              radius={g.radiusM}
+              pathOptions={{ color: "#ff453a", fillColor: "#ff453a", fillOpacity: 0.08, weight: 1.5, dashArray: "4 4" }}
+            >
+              <Tooltip direction="top" sticky>
+                <span className="text-xs font-medium">{g.name} · {g.radiusM}m</span>
+              </Tooltip>
+            </Circle>
+          ))}
 
         {/* ── Live marker mode ────────────────────────────────────────── */}
         {!historyPath &&

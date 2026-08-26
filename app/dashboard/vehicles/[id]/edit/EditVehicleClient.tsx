@@ -31,6 +31,7 @@ export function EditVehicleClient({
         type: data.type,
         driverName: data.driverName || null,
         isActive: data.isActive,
+        speedLimitKmh: data.speedLimitKmh,
       }),
     });
 

@@ -134,6 +134,9 @@ export async function PATCH(
     if (typeof body.type === "string") data.type = body.type;
     if (body.driverName !== undefined) data.driverName = body.driverName as string | null;
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
+    if (typeof body.speedLimitKmh === "number" && Number.isFinite(body.speedLimitKmh)) {
+      data.speedLimitKmh = Math.round(body.speedLimitKmh);
+    }
     const isSystemAdmin = dbUser.usertype === "admin" || dbUser.usertype === "system_admin";
     if ("orgId" in body && isSystemAdmin) data.orgId = (body.orgId as string | null) || null;
 

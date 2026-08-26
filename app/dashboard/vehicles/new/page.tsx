@@ -26,6 +26,7 @@ export default function NewVehiclePage() {
         plateNumber: data.plateNumber,
         type: data.type,
         driverName: data.driverName || null,
+        speedLimitKmh: data.speedLimitKmh,
       }),
     });
 
