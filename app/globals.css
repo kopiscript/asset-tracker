@@ -51,9 +51,9 @@
   /* Brand shorthand — use bg-brand, text-brand, border-brand in components */
   --color-brand: var(--primary);
 
-  /* Font stacks — to swap fonts, only change these three lines */
-  --font-sans: var(--font-space-grotesk);
-  --font-display: var(--font-dm-serif);
+  /* Font stacks — to swap fonts, only change these lines */
+  --font-sans: var(--font-roboto);
+  --font-display: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
 
   /* Radius scale */

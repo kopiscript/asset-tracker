@@ -12,7 +12,7 @@ export default async function OrgsPage() {
   if (!dbUser) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Please sign in.</p>
+        <p className="text-muted-foreground"><PageTitle k="pleaseSignIn" /></p>
       </div>
     );
   }
@@ -65,15 +65,15 @@ export default async function OrgsPage() {
             <div className="h-14 w-14 rounded-2xl bg-muted/60 border border-border/40 flex items-center justify-center mb-5">
               <Building2 className="h-6 w-6 text-muted-foreground/40" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">No organisations yet</p>
+            <p className="text-sm font-medium text-foreground mb-1"><PageTitle k="noOrgsYet" /></p>
             <p className="text-sm text-muted-foreground mb-6 max-w-[36ch]">
-              Create an organisation to group your fleet and invite your team.
+              <PageTitle k="noOrgsDesc" />
             </p>
             <Button
               className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-transform"
               render={<Link href="/dashboard/orgs/new" />}
             >
-              Create your first org
+              <PageTitle k="createFirstOrg" />
             </Button>
           </div>
         </div>

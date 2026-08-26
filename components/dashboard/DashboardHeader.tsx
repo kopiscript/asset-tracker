@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Bell, CreditCard, Home, LogOut } from "lucide-react";
+import { CreditCard, Home, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MobileSidebarSheet } from "@/components/dashboard/DashboardSidebar";
-import { Button } from "@/components/ui/button";
 import { useLang } from "@/components/LanguageProvider";
 import { usePlan } from "@/components/PlanProvider";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Lang } from "@/lib/translations";
 
 function UserMenu() {
@@ -121,24 +119,6 @@ export function DashboardHeader() {
             </button>
           ))}
         </div>
-
-        {/* Notifications */}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5"
-                aria-label="Notifications"
-              />
-            }
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
-          </TooltipTrigger>
-          <TooltipContent>Notifications — coming soon</TooltipContent>
-        </Tooltip>
 
         {/* User menu (replaces tooltip-only avatar) */}
         <UserMenu />

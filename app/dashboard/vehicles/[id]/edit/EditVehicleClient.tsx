@@ -7,6 +7,7 @@
 
 import { useRouter } from "next/navigation";
 import { VehicleForm, type VehicleFormData } from "@/components/dashboard/VehicleForm";
+import { useLang } from "@/components/LanguageProvider";
 
 interface EditVehicleClientProps {
   vehicleId: string;
@@ -18,6 +19,7 @@ export function EditVehicleClient({
   defaultValues,
 }: EditVehicleClientProps) {
   const router = useRouter();
+  const { tr } = useLang();
 
   async function handleSubmit(data: VehicleFormData) {
     const res = await fetch(`/api/vehicles/${vehicleId}`, {
@@ -33,7 +35,7 @@ export function EditVehicleClient({
     });
 
     const json = await res.json().catch(() => null) as { error?: string } | null;
-    if (!res.ok) return { error: json?.error ?? "Failed to update vehicle." };
+    if (!res.ok) return { error: json?.error ?? tr("errUpdateVehicle") };
 
     router.push(`/dashboard/vehicles/${vehicleId}`);
     router.refresh();
@@ -44,7 +46,7 @@ export function EditVehicleClient({
     <VehicleForm
       defaultValues={defaultValues}
       onSubmit={handleSubmit}
-      submitLabel="Save Changes"
+      submitLabel={tr("saveChanges")}
     />
   );
 }

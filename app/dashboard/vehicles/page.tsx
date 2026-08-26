@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/dashboard/PageTitle";
+import { VehiclesCountSubtitle } from "@/components/dashboard/VehiclesCountSubtitle";
 import { VehiclesClient } from "./VehiclesClient";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { getAccessibleVehicleFilter } from "@/lib/permissions";
@@ -13,7 +14,7 @@ export default async function VehiclesPage() {
   if (!dbUser) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Please sign in to view vehicles.</p>
+        <p className="text-muted-foreground"><PageTitle k="pleaseSignIn" /></p>
       </div>
     );
   }
@@ -93,7 +94,7 @@ export default async function VehiclesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight"><PageTitle k="vehicles" /></h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} total
+            <VehiclesCountSubtitle count={vehicles.length} />
           </p>
         </div>
         <Button

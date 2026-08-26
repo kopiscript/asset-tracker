@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Car, Edit, Share2, MapPin, Clock, User } from "lucide-react";
+import { Car, Edit, Share2, Eye, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useLang } from "@/components/LanguageProvider";
@@ -84,8 +84,8 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             className="flex-1 min-w-0 gap-1.5 h-10 text-xs active:scale-[0.98] transition-transform"
             render={<Link href={`/dashboard/vehicles/${vehicle.id}`} />}
           >
-            <MapPin className="h-3.5 w-3.5" />
-            {tr("viewOnMap")}
+            <Eye className="h-3.5 w-3.5" />
+            {tr("viewDetails")}
           </Button>
 
           {canEdit && (

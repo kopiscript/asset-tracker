@@ -302,7 +302,7 @@ function OverviewTab({
             </DetailRow>
             <Separator className="bg-border/50" />
             <DetailRow icon={<Clock className="h-4 w-4" />} label={tr("lastSeen")}>
-              {lastSeenAt ? timeAgo(lastSeenAt) : "Never"}
+              {lastSeenAt ? timeAgo(lastSeenAt) : tr("never")}
             </DetailRow>
             <Separator className="bg-border/50" />
             <DetailRow icon={<FileText className="h-4 w-4" />} label={tr("imei")}>
@@ -535,14 +535,14 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
       const res  = await fetch(`/api/vehicles/${vehicleId}/history?from=${f}Z&to=${t}Z&mode=${m}`);
       const json = await res.json() as { data?: TripRecord[]; error?: string };
       if (!res.ok || json.error) {
-        setError(json.error ?? "Failed to load history.");
+        setError(json.error ?? tr("errLoadHistory"));
       } else {
         const loaded = json.data ?? [];
         setTrips(loaded);
         setSelectedIdx(0);
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError(tr("errNetwork"));
     } finally {
       setLoading(false);
     }

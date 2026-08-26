@@ -7,7 +7,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Check, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight } from "lucide-react";
+import { AuthBrandPanel } from "@/components/auth/AuthBrandPanel";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -49,42 +50,16 @@ function SignInForm() {
   return (
     <div className="min-h-[100dvh] grid grid-cols-1 md:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────────────────── */}
-      <div className="hidden md:flex flex-col justify-between bg-primary p-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 -translate-y-1/3 translate-x-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-black/10 translate-y-1/3 -translate-x-1/3 pointer-events-none" />
-
-        <div className="relative flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
-            <MapPin className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-white font-bold text-xl tracking-[0.15em] uppercase">Mirae</span>
-        </div>
-
-        <div className="relative">
-          <p className="text-white/50 text-xs font-semibold uppercase tracking-[0.2em] mb-4">Fleet management</p>
-          <h2 className="font-display text-4xl text-white leading-tight mb-4">
-            Your entire fleet,<br />visible at a glance.
-          </h2>
-          <p className="text-white/70 text-sm leading-relaxed max-w-[38ch]">
-            Real-time GPS tracking, trip history, and team access control — built for Malaysian logistics.
-          </p>
-        </div>
-
-        <div className="relative space-y-3">
-          {[
-            "Live GPS updates from your hardware",
-            "Role-based access for your team",
-            "Free OpenStreetMap tiles",
-          ].map((text) => (
-            <div key={text} className="flex items-center gap-3">
-              <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <Check className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-white/80 text-sm">{text}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <AuthBrandPanel
+        eyebrow="Fleet management"
+        heading={"Your entire fleet,\nvisible at a glance."}
+        subtext="Real-time GPS tracking, trip history, and team access control, built for Malaysian logistics."
+        features={[
+          "Live GPS updates from your hardware",
+          "Role-based access for your team",
+          "Free OpenStreetMap tiles",
+        ]}
+      />
 
       {/* ── Form panel ───────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center justify-center px-6 py-12 bg-background">

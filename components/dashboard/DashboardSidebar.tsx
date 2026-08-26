@@ -98,7 +98,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
     { icon: LayoutDashboard, label: tr("dashboard"),     href: "/dashboard" },
     { icon: Car,             label: tr("vehicles"),      href: "/dashboard/vehicles" },
     { icon: Building2,       label: tr("organisations"), href: "/dashboard/orgs" },
-    { icon: CreditCard,      label: "Billing",           href: "/dashboard/billing" },
+    { icon: CreditCard,      label: tr("billing"),       href: "/dashboard/billing" },
     { icon: Settings,        label: tr("settings"),      href: "/dashboard/settings" },
   ];
 

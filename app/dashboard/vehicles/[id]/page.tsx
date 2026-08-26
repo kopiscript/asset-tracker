@@ -4,6 +4,7 @@ import { ArrowLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { DeleteVehicleButton } from "./DeleteVehicleButton";
 import { VehicleDetailTabs } from "./VehicleDetailTabs";
 import { getOrCreateDbUser } from "@/lib/user-sync";
@@ -133,7 +134,7 @@ export default async function VehicleDetailPage(
           {userCanEdit && (
             <Button variant="outline" size="sm" className="gap-1.5 active:scale-[0.98] transition-transform" render={<Link href={`/dashboard/vehicles/${id}/edit`} />}>
               <Edit className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Edit</span>
+              <span className="hidden sm:inline"><PageTitle k="edit" /></span>
             </Button>
           )}
           {userCanDelete && (

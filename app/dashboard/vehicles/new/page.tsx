@@ -10,9 +10,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VehicleForm, type VehicleFormData } from "@/components/dashboard/VehicleForm";
+import { useLang } from "@/components/LanguageProvider";
 
 export default function NewVehiclePage() {
   const router = useRouter();
+  const { tr } = useLang();
 
   async function handleSubmit(data: VehicleFormData) {
     const res = await fetch("/api/vehicles", {
@@ -28,7 +30,7 @@ export default function NewVehiclePage() {
     });
 
     const json = await res.json().catch(() => null) as { error?: string; data?: { id: string } } | null;
-    if (!res.ok) return { error: json?.error ?? "Failed to create vehicle." };
+    if (!res.ok) return { error: json?.error ?? tr("errCreateVehicle") };
 
     router.push(`/dashboard/vehicles/${json?.data?.id}`);
     router.refresh();
@@ -43,15 +45,15 @@ export default function NewVehiclePage() {
         </Button>
         <div>
           <h1 className="text-xl font-semibold text-foreground tracking-tight leading-none">
-            Add Vehicle
+            {tr("addVehicle")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Register a new GPS device to your fleet.
+            {tr("addVehicleSubtitle")}
           </p>
         </div>
       </div>
 
-      <VehicleForm onSubmit={handleSubmit} submitLabel="Add Vehicle" />
+      <VehicleForm onSubmit={handleSubmit} submitLabel={tr("addVehicle")} />
     </div>
   );
 }

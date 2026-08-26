@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, Trash2, RefreshCw } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useLang } from "@/components/LanguageProvider";
 
 type AccessEntry = {
   id: string;
@@ -42,6 +43,7 @@ export function SharePageClient({
   initialAccesses,
 }: SharePageClientProps) {
   const router = useRouter();
+  const { tr } = useLang();
   const [accesses, setAccesses] = useState(initialAccesses);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
@@ -65,11 +67,13 @@ export function SharePageClient({
     setInviteLoading(false);
 
     if (!res.ok) {
-      setInviteError(json?.error ?? "Failed to invite user.");
+      setInviteError(json?.error ?? tr("errInviteUser"));
       return;
     }
 
-    setInviteSuccess(`${inviteEmail} has been granted ${inviteRole} access.`);
+    setInviteSuccess(
+      tr("inviteGrantedMsg").replace("{email}", inviteEmail).replace("{role}", inviteRole)
+    );
     setInviteEmail("");
     router.refresh();
     // Re-fetch access list
@@ -107,14 +111,14 @@ export function SharePageClient({
       <div className="bg-card border border-border/50 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-primary" />
-          Invite Someone
+          {tr("inviteSomeone")}
         </h2>
 
         <form onSubmit={handleInvite} className="space-y-3">
           <div className="flex gap-2">
             <Input
               type="email"
-              placeholder="Enter email address…"
+              placeholder={tr("enterEmailPlaceholder")}
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               className="flex-1 bg-background border-border/50"
@@ -125,8 +129,8 @@ export function SharePageClient({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="viewer">Viewer</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="viewer">{tr("viewer")}</SelectItem>
+                <SelectItem value="editor">{tr("editor")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -147,23 +151,23 @@ export function SharePageClient({
             disabled={inviteLoading}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
-            {inviteLoading ? "Inviting…" : "Invite"}
+            {inviteLoading ? tr("inviting") : tr("invite")}
           </Button>
         </form>
 
         {/* Role legend */}
         <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
           <div>
-            <p className="font-semibold text-foreground">Viewer</p>
-            <p>Can view only</p>
+            <p className="font-semibold text-foreground">{tr("viewer")}</p>
+            <p>{tr("roleViewerDesc")}</p>
           </div>
           <div>
-            <p className="font-semibold text-foreground">Editor</p>
-            <p>Can view + edit details</p>
+            <p className="font-semibold text-foreground">{tr("editor")}</p>
+            <p>{tr("roleEditorDesc")}</p>
           </div>
           <div>
-            <p className="font-semibold text-foreground">Owner</p>
-            <p>Full control</p>
+            <p className="font-semibold text-foreground">{tr("owner")}</p>
+            <p>{tr("roleOwnerDesc")}</p>
           </div>
         </div>
       </div>
@@ -171,7 +175,7 @@ export function SharePageClient({
       {/* ── Current access list ─────────────────────────────────────── */}
       <div className="bg-card border border-border/50 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4">
-          Current Access ({accesses.length})
+          {tr("currentAccess")} ({accesses.length})
         </h2>
 
         <div className="space-y-2">
@@ -192,7 +196,7 @@ export function SharePageClient({
                     {entry.userName ?? entry.userEmail}
                     {entry.isCurrentUser && (
                       <span className="ml-1.5 text-xs text-muted-foreground">
-                        (you)
+                        {tr("you")}
                       </span>
                     )}
                   </p>
@@ -215,8 +219,8 @@ export function SharePageClient({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="viewer">{tr("viewer")}</SelectItem>
+                      <SelectItem value="editor">{tr("editor")}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

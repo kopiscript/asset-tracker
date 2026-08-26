@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLang } from "@/components/LanguageProvider";
 
 const VEHICLE_TYPES = ["Car", "Van", "Truck", "Motorcycle", "Bus"] as const;
 
@@ -37,9 +38,10 @@ interface VehicleFormProps {
 export function VehicleForm({
   defaultValues = {},
   onSubmit,
-  submitLabel = "Save Vehicle",
+  submitLabel,
 }: VehicleFormProps) {
   const router = useRouter();
+  const { tr } = useLang();
   const [form, setForm] = useState<VehicleFormData>({
     imei: defaultValues.imei ?? "",
     name: defaultValues.name ?? "",
@@ -59,10 +61,10 @@ export function VehicleForm({
 
   function validate(): boolean {
     const newErrors: Partial<Record<keyof VehicleFormData, string>> = {};
-    if (!form.imei.trim()) newErrors.imei = "IMEI is required.";
-    if (!form.name.trim()) newErrors.name = "Vehicle name is required.";
-    if (!form.plateNumber.trim()) newErrors.plateNumber = "Plate number is required.";
-    if (!form.type) newErrors.type = "Vehicle type is required.";
+    if (!form.imei.trim()) newErrors.imei = tr("errImeiRequired");
+    if (!form.name.trim()) newErrors.name = tr("errNameRequired");
+    if (!form.plateNumber.trim()) newErrors.plateNumber = tr("errPlateRequired");
+    if (!form.type) newErrors.type = tr("errTypeRequired");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -87,7 +89,7 @@ export function VehicleForm({
         </div>
       )}
 
-      <FormField label="IMEI *" error={errors.imei} hint="Unique device identifier from the GPS hardware">
+      <FormField label={tr("fieldImei")} error={errors.imei} hint={tr("imeiHint")}>
         <Input
           value={form.imei}
           onChange={(e) => set("imei", e.target.value.trim())}
@@ -97,7 +99,7 @@ export function VehicleForm({
       </FormField>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label="Vehicle Name *" error={errors.name}>
+        <FormField label={tr("fieldVehicleName")} error={errors.name}>
           <Input
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
@@ -106,7 +108,7 @@ export function VehicleForm({
           />
         </FormField>
 
-        <FormField label="Plate Number *" error={errors.plateNumber}>
+        <FormField label={tr("fieldPlateNumber")} error={errors.plateNumber}>
           <Input
             value={form.plateNumber}
             onChange={(e) => set("plateNumber", e.target.value.toUpperCase())}
@@ -117,10 +119,10 @@ export function VehicleForm({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField label="Vehicle Type *" error={errors.type}>
+        <FormField label={tr("fieldVehicleType")} error={errors.type}>
           <Select value={form.type} onValueChange={(v) => v && set("type", v)}>
             <SelectTrigger className="bg-card border-border/50">
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder={tr("selectTypePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {VEHICLE_TYPES.map((t) => (
@@ -130,7 +132,7 @@ export function VehicleForm({
           </Select>
         </FormField>
 
-        <FormField label="Driver Name" error={errors.driverName}>
+        <FormField label={tr("fieldDriverName")} error={errors.driverName}>
           <Input
             value={form.driverName}
             onChange={(e) => set("driverName", e.target.value)}
@@ -146,7 +148,7 @@ export function VehicleForm({
           disabled={loading}
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold active:scale-[0.98] transition-transform"
         >
-          {loading ? "Saving…" : submitLabel}
+          {loading ? tr("saving") : (submitLabel ?? tr("save"))}
         </Button>
         <Button
           type="button"
@@ -155,7 +157,7 @@ export function VehicleForm({
           disabled={loading}
           className="active:scale-[0.98] transition-transform"
         >
-          Cancel
+          {tr("cancel")}
         </Button>
       </div>
     </form>

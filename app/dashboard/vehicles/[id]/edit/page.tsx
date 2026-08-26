@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/dashboard/PageTitle";
 import { EditVehicleClient } from "./EditVehicleClient";
 import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canEdit } from "@/lib/permissions";
@@ -33,7 +34,7 @@ export default async function EditVehiclePage(
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Vehicle</h1>
+          <h1 className="text-2xl font-bold text-foreground"><PageTitle k="editVehicle" /></h1>
           <p className="text-sm text-muted-foreground">{vehicle.name ?? vehicle.imei}</p>
         </div>
       </div>

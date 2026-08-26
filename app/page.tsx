@@ -114,7 +114,7 @@ export default function LandingPage() {
 
             {/* Right: Dashboard preview */}
             <div className="hidden lg:block animate-fade-in delay-400">
-              <DashboardPreview />
+              <HeroShowcase />
             </div>
           </div>
         </div>
@@ -266,6 +266,39 @@ export default function LandingPage() {
   );
 }
 
+// ─── Hero showcase: two 3D-tilted app mockups ──────────────────────────────
+function HeroShowcase() {
+  return (
+    <div className="relative [perspective:2000px]" style={{ paddingTop: 28, paddingRight: 22 }}>
+      {/* Ambient glow */}
+      <div className="absolute inset-8 bg-primary/20 blur-[90px] rounded-full pointer-events-none" />
+      <div className="absolute -inset-4 bg-primary/5 blur-[60px] rounded-full pointer-events-none" />
+
+      {/* Back card: vehicle detail / telemetry */}
+      <div
+        className="absolute -top-2 right-0 w-[78%] z-0"
+        style={{
+          transform: "rotateY(-14deg) rotateX(6deg) rotateZ(2deg) translateZ(-40px)",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        <VehicleDetailMock />
+      </div>
+
+      {/* Front card: fleet dashboard overview */}
+      <div
+        className="relative z-10"
+        style={{
+          transform: "rotateY(8deg) rotateX(-3deg) rotateZ(-1.5deg)",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        <DashboardPreview />
+      </div>
+    </div>
+  );
+}
+
 // ─── Dashboard preview mockup ─────────────────────────────────────────────
 function DashboardPreview() {
   const navItems = ["Dashboard", "Vehicles", "Orgs", "Settings"];
@@ -282,9 +315,7 @@ function DashboardPreview() {
   ];
 
   return (
-    <div className="relative">
-      <div className="absolute inset-8 bg-primary/15 blur-3xl rounded-full pointer-events-none" />
-      <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_28px_80px_-16px_rgba(0,0,0,0.6)]">
+    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.75)] ring-1 ring-black/40">
         {/* Browser chrome */}
         <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#2c2c2e] border-b border-white/8">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
@@ -399,6 +430,77 @@ function DashboardPreview() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+  );
+}
+
+// ─── Vehicle detail / telemetry mockup ─────────────────────────────────────
+function VehicleDetailMock() {
+  const gauges = [
+    { label: "Fuel", value: 72, unit: "%", color: "#22c55e" },
+    { label: "Coolant", value: 84, unit: "°C", color: "#f59e0b" },
+  ];
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_30px_70px_-18px_rgba(0,0,0,0.7)] ring-1 ring-black/40 bg-[#161618]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
+        <div>
+          <p className="text-[11px] font-semibold text-[#f5f5f7] leading-none">WKE 8812</p>
+          <p className="text-[8px] text-[#86868b] mt-1 font-mono">Company Van 01</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/30 px-2 py-0.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+          <span className="text-[8px] font-medium text-green-400">Active</span>
+        </span>
+      </div>
+
+      {/* Body */}
+      <div className="p-4 flex flex-col gap-3.5">
+        {/* Speed headline */}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-bold tabular-nums text-[#f5f5f7] leading-none">62</span>
+          <span className="text-[10px] text-[#86868b]">km/h · heading NE</span>
+        </div>
+
+        {/* Gauges */}
+        <div className="grid grid-cols-2 gap-3">
+          {gauges.map((g) => (
+            <div key={g.label} className="flex items-center gap-2.5 bg-white/[0.03] border border-white/8 rounded-lg p-2">
+              <div
+                className="h-9 w-9 rounded-full shrink-0 flex items-center justify-center"
+                style={{
+                  background: `conic-gradient(${g.color} ${g.value}%, rgba(255,255,255,0.08) 0)`,
+                }}
+              >
+                <div className="h-6 w-6 rounded-full bg-[#161618] flex items-center justify-center">
+                  <span className="text-[7px] font-bold text-[#f5f5f7]">{g.value}</span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[8.5px] font-medium text-[#f5f5f7] leading-none mb-1">{g.label}</p>
+                <p className="text-[7.5px] text-[#86868b] leading-none">{g.value}{g.unit}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Mini route */}
+        <div className="rounded-lg overflow-hidden border border-white/8 h-16 relative">
+          <svg width="100%" height="100%" viewBox="0 0 220 64" preserveAspectRatio="xMidYMid slice" className="absolute inset-0">
+            <rect width="220" height="64" fill="#101012" />
+            <path d="M10,50 C50,20 90,55 130,28 S190,10 210,15" stroke="#ff453a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="10" cy="50" r="3" fill="#f5f5f7" />
+            <circle cx="210" cy="15" r="3.5" fill="#ff453a" />
+            <circle cx="210" cy="15" r="5.5" fill="none" stroke="#ff453a" strokeWidth="1" opacity="0.5" />
+          </svg>
+        </div>
+
+        {/* Signal row */}
+        <div className="flex items-center justify-between text-[8px] text-[#86868b] font-mono">
+          <span>12 sats · GPS strong</span>
+          <span>Maxis · 4G</span>
         </div>
       </div>
     </div>
