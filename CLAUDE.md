@@ -107,7 +107,7 @@ DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
 
 **IoT location endpoint**: `PATCH /api/vehicles/[id]/location` is for GPS hardware only. It authenticates via API key (`Authorization: Bearer <key>`) — not session auth. The key is stored as `apiKey` on the `Vehicle` model and set manually via Prisma Studio for v1. The endpoint writes atomically to both `Vehicle` (last position) and `LocationHistory` (append-only) using `prisma.$transaction()`. See `docs/TODO.md` Phase 2 for the full implementation.
 
-**Trip history endpoint**: `GET /api/vehicles/[id]/history?from=ISO&to=ISO` returns GPS pings grouped into trips by a 10-minute gap threshold. Max query window is 30 days. Uses cursor-based batching (500 rows at a time) to avoid loading all pings into memory. See `docs/TODO.md` Phase 3 for the full implementation.
+**Trip history endpoint**: `GET /api/vehicles/[id]/history?from=ISO&to=ISO` returns GPS pings grouped into trips by a 10-minute gap threshold. Max query window is 365 days. Dedup bucket size adapts to the window (1 minute for a single day, coarser for longer ranges) so the row count stays bounded near `MAX_POINTS` regardless of range length. See `docs/TODO.md` Phase 3 for the full implementation.
 
 **LocationHistory**: Append-only table storing every GPS ping. Indexed on `[vehicleId, recordedAt]`. Never update or delete rows — only insert. Cascade-deleted when a Vehicle is deleted.
 

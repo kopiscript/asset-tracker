@@ -4,6 +4,10 @@
  * harsh-braking / harsh-acceleration / geofence event log (item 8/9/21-24,
  * shown as "system alerts" per the guideline), and the manager-facing
  * panic/emergency button (additional item 2).
+ *
+ * Same big-map + floating-panel layout as the Overview tab: the map fills
+ * the whole card, every control (emergency, geofences, event log) lives in
+ * one collapsible panel docked over it.
  */
 "use client";
 
@@ -11,10 +15,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   MapPinned, Plus, Trash2, Siren, Gauge, TrendingUp, TrendingDown,
-  LogIn, LogOut, Loader2, ShieldAlert,
+  LogIn, LogOut, Loader2, ShieldAlert, PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { DynamicMap } from "@/components/map/DynamicMap";
 import type { MapVehicle, MapGeofence } from "@/components/map/VehicleMap";
 import { useLang } from "@/components/LanguageProvider";
@@ -33,6 +38,7 @@ export interface TrackingEventData {
 
 interface SafetyTabProps {
   vehicleId: string;
+  vehicleName: string;
   mapVehicles: MapVehicle[];
   speedLimitKmh: number | null;
   initialGeofences: MapGeofence[];
@@ -51,6 +57,7 @@ const EVENT_META: Record<string, { icon: typeof Gauge; color: string; labelKey: 
 
 export function SafetyTab({
   vehicleId,
+  vehicleName,
   mapVehicles,
   speedLimitKmh,
   initialGeofences,
@@ -61,6 +68,7 @@ export function SafetyTab({
   const { tr } = useLang();
   const [geofences, setGeofences] = useState(initialGeofences);
   const [events] = useState(initialEvents);
+  const [showPanel, setShowPanel] = useState(true);
 
   const [showAddGeofence, setShowAddGeofence] = useState(false);
   const [gfName, setGfName] = useState("");
@@ -128,150 +136,180 @@ export function SafetyTab({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Panic / emergency button */}
-      {userCanEdit && (
-        <div className="bg-card border border-red-500/20 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
-              <Siren className="h-4 w-4 text-red-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground leading-none mb-1">{tr("panicButtonTitle")}</p>
-              <p className="text-xs text-muted-foreground">{tr("panicButtonDesc")}</p>
-            </div>
+    <div className="relative h-full rounded-xl overflow-hidden border border-border/50">
+      <DynamicMap vehicles={mapVehicles} geofences={geofences} focusVehicleId={vehicleId} className="h-full w-full" />
+
+      {showPanel ? (
+        <div className="absolute top-3 right-3 z-[500] w-[320px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-border/60 bg-card/95 backdrop-blur-md shadow-xl">
+          <div className="flex items-center justify-between px-4 pt-3.5 pb-2 sticky top-0 bg-card/95 backdrop-blur-md border-b border-border/40 z-10">
+            <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider truncate">{vehicleName}</h2>
+            <button
+              onClick={() => setShowPanel(false)}
+              aria-label={tr("hidePanel")}
+              className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+            >
+              <PanelRightClose className="h-3.5 w-3.5" />
+            </button>
           </div>
-          {emergencySent ? (
-            <span className="text-xs font-medium text-red-400">{tr("emergencyReported")}</span>
-          ) : confirmEmergency ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{tr("confirmEmergency")}</span>
-              <Button size="sm" variant="destructive" onClick={handleEmergency} disabled={emergencyLoading}>
-                {emergencyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tr("yesReport")}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setConfirmEmergency(false)}>{tr("cancel")}</Button>
-            </div>
-          ) : (
-            <Button size="sm" variant="destructive" className="gap-1.5" onClick={() => setConfirmEmergency(true)}>
-              <Siren className="h-3.5 w-3.5" />
-              {tr("reportEmergency")}
-            </Button>
-          )}
-        </div>
-      )}
 
-      {/* Map with geofences */}
-      <div className="h-56 sm:h-64 rounded-xl overflow-hidden border border-border/50">
-        <DynamicMap vehicles={mapVehicles} geofences={geofences} focusVehicleId={vehicleId} className="h-full w-full" />
-      </div>
-
-      {/* Geofences */}
-      <div className="bg-card border border-border/50 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <MapPinned className="h-4 w-4 text-muted-foreground" />
-            {tr("geofencesTitle")}
-          </h2>
-          {userCanEdit && !showAddGeofence && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAddGeofence(true)}>
-              <Plus className="h-3.5 w-3.5" />
-              {tr("addGeofence")}
-            </Button>
-          )}
-        </div>
-
-        {showAddGeofence && (
-          <form onSubmit={handleAddGeofence} className="mb-4 p-3 rounded-lg bg-secondary/30 border border-border/40 space-y-3">
-            <p className="text-xs text-muted-foreground">{tr("geofenceCenteredHint")}</p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                autoFocus
-                placeholder={tr("geofenceNamePlaceholder")}
-                value={gfName}
-                onChange={(e) => setGfName(e.target.value)}
-                className="flex-1"
-                required
-              />
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={50}
-                  max={50000}
-                  value={gfRadius}
-                  onChange={(e) => setGfRadius(Number(e.target.value))}
-                  className="w-28"
-                />
-                <span className="text-xs text-muted-foreground shrink-0">{tr("meters")}</span>
-              </div>
-            </div>
-            {gfError && <p className="text-xs text-red-400">{gfError}</p>}
-            <div className="flex gap-2">
-              <Button size="sm" type="submit" disabled={gfLoading} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                {gfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tr("save")}
-              </Button>
-              <Button size="sm" type="button" variant="ghost" onClick={() => setShowAddGeofence(false)}>
-                {tr("cancel")}
-              </Button>
-            </div>
-          </form>
-        )}
-
-        {geofences.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-2">{tr("noGeofences")}</p>
-        ) : (
-          <div className="space-y-2">
-            {geofences.map((g) => (
-              <div key={g.id} className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5">
-                <MapPinned className="h-3.5 w-3.5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{g.name}</p>
-                  <p className="text-xs text-muted-foreground">{g.radiusM} {tr("meters")} · {g.centerLat.toFixed(4)}, {g.centerLng.toFixed(4)}</p>
+          <div className="p-4 space-y-4">
+            {/* Panic / emergency button */}
+            {userCanEdit && (
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="h-7 w-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                    <Siren className="h-3.5 w-3.5 text-red-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground leading-none mb-1">{tr("panicButtonTitle")}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight">{tr("panicButtonDesc")}</p>
+                  </div>
                 </div>
-                {userCanEdit && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-red-400 shrink-0" onClick={() => handleDeleteGeofence(g.id)}>
-                    <Trash2 className="h-3.5 w-3.5" />
+                {emergencySent ? (
+                  <span className="text-xs font-medium text-red-400">{tr("emergencyReported")}</span>
+                ) : confirmEmergency ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground">{tr("confirmEmergency")}</span>
+                    <Button size="sm" variant="destructive" onClick={handleEmergency} disabled={emergencyLoading}>
+                      {emergencyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tr("yesReport")}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmEmergency(false)}>{tr("cancel")}</Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="destructive" className="gap-1.5 w-full" onClick={() => setConfirmEmergency(true)}>
+                    <Siren className="h-3.5 w-3.5" />
+                    {tr("reportEmergency")}
                   </Button>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            )}
 
-      {/* Event log */}
-      <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-            {tr("eventsTitle")}
-          </h2>
-          {speedLimitKmh != null && (
-            <span className="text-xs text-muted-foreground">{tr("speedLimitBadge")} {speedLimitKmh} km/h</span>
-          )}
-        </div>
-        {events.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-5 pb-5">{tr("noEvents")}</p>
-        ) : (
-          <div className="divide-y divide-border/30">
-            {events.map((e) => {
-              const meta = EVENT_META[e.type] ?? EVENT_META.overspeed;
-              const Icon = meta.icon;
-              return (
-                <div key={e.id} className="flex items-center gap-3 px-5 py-3">
-                  <span className={`h-7 w-7 rounded-full border flex items-center justify-center shrink-0 ${meta.color}`}>
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground leading-none mb-1">{tr(meta.labelKey)}</p>
-                    <p className="text-xs text-muted-foreground truncate">{e.detail}</p>
+            <Separator className="bg-border/50" />
+
+            {/* Geofences */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPinned className="h-3.5 w-3.5" />
+                  {tr("geofencesTitle")}
+                </h3>
+                {userCanEdit && !showAddGeofence && (
+                  <button
+                    onClick={() => setShowAddGeofence(true)}
+                    className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+                    aria-label={tr("addGeofence")}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {showAddGeofence && (
+                <form onSubmit={handleAddGeofence} className="mb-3 p-2.5 rounded-lg bg-secondary/30 border border-border/40 space-y-2.5">
+                  <p className="text-[11px] text-muted-foreground">{tr("geofenceCenteredHint")}</p>
+                  <Input
+                    autoFocus
+                    placeholder={tr("geofenceNamePlaceholder")}
+                    value={gfName}
+                    onChange={(e) => setGfName(e.target.value)}
+                    className="h-8 text-sm"
+                    required
+                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={50}
+                      max={50000}
+                      value={gfRadius}
+                      onChange={(e) => setGfRadius(Number(e.target.value))}
+                      className="h-8 text-sm flex-1"
+                    />
+                    <span className="text-xs text-muted-foreground shrink-0">{tr("meters")}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">{timeAgo(e.occurredAt)}</span>
+                  {gfError && <p className="text-xs text-red-400">{gfError}</p>}
+                  <div className="flex gap-2">
+                    <Button size="sm" type="submit" disabled={gfLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1">
+                      {gfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tr("save")}
+                    </Button>
+                    <Button size="sm" type="button" variant="ghost" onClick={() => setShowAddGeofence(false)}>
+                      {tr("cancel")}
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {geofences.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{tr("noGeofences")}</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {geofences.map((g) => (
+                    <div key={g.id} className="flex items-center gap-2 rounded-lg border border-border/40 px-2.5 py-2">
+                      <MapPinned className="h-3 w-3 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{g.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{g.radiusM} {tr("meters")}</p>
+                      </div>
+                      {userCanEdit && (
+                        <button
+                          onClick={() => handleDeleteGeofence(g.id)}
+                          className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-400 hover:bg-muted/60 transition-colors shrink-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
+              )}
+            </div>
+
+            <Separator className="bg-border/50" />
+
+            {/* Event log */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {tr("eventsTitle")}
+                </h3>
+                {speedLimitKmh != null && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">{tr("speedLimitBadge")} {speedLimitKmh} km/h</span>
+                )}
+              </div>
+              {events.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{tr("noEvents")}</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {events.map((e) => {
+                    const meta = EVENT_META[e.type] ?? EVENT_META.overspeed;
+                    const Icon = meta.icon;
+                    return (
+                      <div key={e.id} className="flex items-center gap-2">
+                        <span className={`h-6 w-6 rounded-full border flex items-center justify-center shrink-0 ${meta.color}`}>
+                          <Icon className="h-3 w-3" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground leading-none mb-0.5">{tr(meta.labelKey)}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{e.detail}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(e.occurredAt)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowPanel(true)}
+          className="absolute top-3 right-3 z-[500] flex items-center gap-1.5 rounded-full border border-border/60 bg-card/95 backdrop-blur-md shadow-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-card transition-colors"
+        >
+          <PanelRightOpen className="h-3.5 w-3.5" />
+          {tr("showPanel")}
+        </button>
+      )}
     </div>
   );
 }

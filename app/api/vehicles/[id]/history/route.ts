@@ -6,10 +6,13 @@
  *   from=YYYY-MM-DDTHH:mmZ   e.g. 2026-05-18T00:00Z
  *   to=YYYY-MM-DDTHH:mmZ     e.g. 2026-05-18T23:59Z
  *
- * Deduplication: one record per minute bucket (DISTINCT ON). The GPS hardware
- * occasionally sends duplicate payloads within the same minute; we keep the first.
+ * Deduplication: one record per time bucket (DISTINCT ON). The GPS hardware
+ * occasionally sends duplicate payloads within the same bucket; we keep the
+ * first. Bucket size adapts to the requested window (1 minute for a single
+ * day, coarser for longer ranges) so the point count stays bounded — a
+ * 365-day query doesn't need per-minute resolution to show a useful route.
  *
- * Max window: 30 days. Returns up to 5 000 points.
+ * Max window: 365 days. Returns up to MAX_POINTS points.
  */
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -17,8 +20,9 @@ import { getOrCreateDbUser } from "@/lib/user-sync";
 import { canView } from "@/lib/permissions";
 import { todayMidnightMy, totalDistanceKm } from "@/lib/geo";
 
-const MAX_DAYS = 30;
-const MAX_POINTS = 5000;
+const MAX_DAYS = 365;
+const MAX_POINTS = 10_000;
+const TARGET_POINTS = 10_000; // adaptive bucket sizing aims for roughly this many rows
 const MY_OFFSET_MS = 8 * 60 * 60 * 1000;
 const TRIP_GAP_MS          = 10 * 60 * 1000; // 10-minute silence = new trip
 const MIN_DISTANCE_KM      = 0.1;            // trips under 100 m are stationary noise
@@ -57,7 +61,7 @@ export async function GET(
     return Response.json({ data: null, error: "Invalid date range" }, { status: 400 });
   }
 
-  // Enforce 30-day max window
+  // Enforce max window
   const windowDays = (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
   if (windowDays > MAX_DAYS) {
     return Response.json(
@@ -67,7 +71,13 @@ export async function GET(
   }
 
   try {
-    // DISTINCT ON deduplicates same-minute duplicates from the hardware.
+    // Adaptive bucket size: 1 minute for short ranges, coarser for long ones,
+    // so the row count stays roughly bounded regardless of window length.
+    const windowMinutes = Math.max(1, windowDays * 24 * 60);
+    const bucketMinutes = Math.max(1, Math.ceil(windowMinutes / TARGET_POINTS));
+    const bucketSeconds = bucketMinutes * 60;
+
+    // DISTINCT ON deduplicates same-bucket duplicates from the hardware.
     // We filter and order on timestamp_my (MY local time, stored as fake-UTC).
     //
     // timestamp_my is TIMESTAMP WITHOUT TIME ZONE. Returning it as a raw Date
@@ -84,23 +94,29 @@ export async function GET(
 
     const rows = await prisma.$queryRawUnsafe<Row[]>(
       `
-      SELECT DISTINCT ON (date_trunc('minute', timestamp_my))
+      SELECT DISTINCT ON (bucket)
         latitude,
         longitude,
         to_char(timestamp_my, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS timestamp_my,
         speed_kmh
-      FROM telemetry_records
-      WHERE vehicle_id = $1
-        AND timestamp_my >= $2
-        AND timestamp_my <= $3
-        AND latitude  IS NOT NULL
-        AND longitude IS NOT NULL
-      ORDER BY date_trunc('minute', timestamp_my), timestamp_my ASC
-      LIMIT $4
+      FROM (
+        SELECT
+          latitude, longitude, timestamp_my, speed_kmh,
+          to_timestamp(floor(extract(epoch FROM timestamp_my) / $4) * $4) AS bucket
+        FROM telemetry_records
+        WHERE vehicle_id = $1
+          AND timestamp_my >= $2
+          AND timestamp_my <= $3
+          AND latitude  IS NOT NULL
+          AND longitude IS NOT NULL
+      ) bucketed
+      ORDER BY bucket, timestamp_my ASC
+      LIMIT $5
       `,
       BigInt(id),
       from,
       to,
+      bucketSeconds,
       MAX_POINTS
     );
 

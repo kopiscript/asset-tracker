@@ -127,8 +127,8 @@ GET /api/vehicles/[id]/history?from=ISO8601&to=ISO8601
 Auth: Session (canView permission required)
 ```
 
-- `from` and `to` are required; max window is 30 days
-- Returns GPS pings from `TelemetryRecord`, deduplicated per-minute (`DISTINCT ON`), then segmented into trips by a 10-minute silence threshold
+- `from` and `to` are required; max window is 365 days
+- Returns GPS pings from `TelemetryRecord`, deduplicated per adaptive time bucket (`DISTINCT ON` — 1 minute for short ranges, coarser for long ones so row count stays bounded), then segmented into trips by a 10-minute silence threshold
 - Response:
 
 ```json
@@ -204,7 +204,7 @@ Two tabs:
 
 **History tab:**
 - From / To datetime pickers (MY time); defaults to today midnight → now
-- Client validates: range must be ≤ 30 days, `to` must be after `from`
+- Client validates: range must be ≤ 365 days, `to` must be after `from`
 - Loads trips from `GET /api/vehicles/[id]/history`
 - Shows trip count and total point count
 - Trip list: Trip N · time range · duration · distance · point count
@@ -229,10 +229,10 @@ Two tabs:
 
 | Concern | Requirement |
 |---|---|
-| Performance | History queries bounded to 30 days; index on `[imei, timestampUtc DESC]` |
+| Performance | History queries bounded to 365 days; index on `[imei, timestampUtc DESC]` |
 | Scale | ~1,440 pings/vehicle/day; 100 vehicles = ~144k rows/day — handled by PostgreSQL with indexing |
 | Security | IoT endpoint uses per-vehicle API key; all user-facing endpoints use session + permission checks |
-| Memory | History segmentation processes rows in the query result set; `DISTINCT ON` + `LIMIT 5000` caps response size |
+| Memory | History segmentation processes rows in the query result set; `DISTINCT ON` on an adaptive time bucket + `LIMIT 10000` caps response size regardless of window length |
 | Atomicity | Single `TelemetryRecord` write per ping (no transaction needed — position derived at read time) |
 | Retention | No automated retention policy yet — implement before production once fleet size is known |
 
@@ -248,7 +248,7 @@ Two tabs:
 | 4 | **Position derived from latest TelemetryRecord** | Store lat/lng on Vehicle | Single source of truth; no dual-write; position is always consistent with history |
 | 5 | **Server-side trip segmentation** (10 min gap) | Client-side | Single source of truth; threshold tunable in one place |
 | 6 | **`DISTINCT ON` deduplication** before segmentation | Load raw pings | Hardware occasionally sends duplicate payloads within the same minute |
-| 7 | **30-day max query window** | Unbounded | Prevents expensive full-table scans |
+| 7 | **365-day max query window, adaptive dedup bucket** | Unbounded | Prevents expensive full-table scans; bucket size scales with window so row count stays bounded even at the full year |
 | 8 | **Per-vehicle API key** on Vehicle model | Global env var, separate ApiKey table | Per-device revocation without a management UI; simple for v1 |
 | 9 | **API key management UI deferred** | Build in v1 | Keys issued manually via Prisma Studio; management UI is post-v1 scope |
 | 10 | **Org membership = vehicle access** | Fleet sub-grouping | Fleet concept adds complexity without confirmed need; removed (Phase 0b) |

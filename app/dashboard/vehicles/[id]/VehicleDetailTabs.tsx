@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   MapPin, Clock, FileText, User, Gauge, Route, Calendar, Loader2, ChevronRight,
   Navigation, Satellite, Signal, Mountain, Activity, BatteryMedium,
-  Fuel, Thermometer, Wind, Zap, ChevronDown,
+  Fuel, Thermometer, Wind, Zap, ChevronDown, PanelRightClose, PanelRightOpen,
+  Maximize2, Minimize2,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -216,138 +217,150 @@ function OverviewTab({
     battery.state !== "unknown" || move !== null || gps !== null ||
     sig !== null || telemetry.altitude != null || telemetry.batteryPercent != null;
 
+  const [showPanel, setShowPanel] = useState(true);
+
   return (
-    <div className="space-y-4">
-      {/* Current position map */}
-      <div className="h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden border border-border/50">
-        <DynamicMap
+    <div className="relative h-full rounded-xl overflow-hidden border border-border/50">
+      <DynamicMap
           vehicles={mapVehicles}
           focusVehicleId={vehicle.id}
           className="h-full w-full"
         />
-      </div>
-      {!hasLocation && (
-        <p className="text-xs text-muted-foreground flex items-center gap-1">
-          <MapPin className="h-3 w-3" />
-          {tr("noGpsYet")}
-        </p>
-      )}
 
-      {/* Live status — derived from the latest telemetry ping */}
-      {hasTelemetry && (
-        <div className="bg-card border border-border/50 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("liveStatus")}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {/* Car battery — the headline metric */}
-            <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("carBattery")}>
-              {battery.state === "unknown"
-                ? "—"
-                : <BatteryBadge state={battery.state} voltage={battery.voltage} showVoltage />}
-            </StatTile>
+        {!hasLocation && (
+          <p className="absolute top-3 left-3 z-[500] flex items-center gap-1.5 text-xs text-foreground bg-background/85 backdrop-blur-sm border border-border/60 rounded-full px-3 py-1.5">
+            <MapPin className="h-3 w-3" />
+            {tr("noGpsYet")}
+          </p>
+        )}
 
-            {move !== null && (
-              <StatTile icon={<Activity className="h-4 w-4" />} label={tr("movementState")}>
-                {move === "moving" ? tr("movingState") : tr("parkedState")}
-              </StatTile>
-            )}
+        {showPanel ? (
+          <div className="absolute top-3 right-3 z-[500] w-[300px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-border/60 bg-card/95 backdrop-blur-md shadow-xl">
+            <div className="flex items-center justify-between px-4 pt-3.5 pb-2 sticky top-0 bg-card/95 backdrop-blur-md border-b border-border/40">
+              <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">{vehicle.name ?? vehicle.id}</h2>
+              <button
+                onClick={() => setShowPanel(false)}
+                aria-label={tr("hidePanel")}
+                className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+              >
+                <PanelRightClose className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
-            {gps !== null && (
-              <StatTile icon={<Satellite className="h-4 w-4" />} label={tr("gpsSignal")}>
-                {tr(GPS_LABEL_KEY[gps])}
-                {telemetry.satellites != null && (
-                  <span className="text-muted-foreground">
-                    {" "}· {telemetry.satellites} {tr("satellitesLabel")}
-                  </span>
-                )}
-              </StatTile>
-            )}
+            <div className="p-4 space-y-4">
+              {/* Live status */}
+              {hasTelemetry && (
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{tr("liveStatus")}</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("carBattery")}>
+                      {battery.state === "unknown"
+                        ? "—"
+                        : <BatteryBadge state={battery.state} voltage={battery.voltage} showVoltage />}
+                    </StatTile>
 
-            {sig !== null && (
-              <StatTile icon={<Signal className="h-4 w-4" />} label={tr("cellSignal")}>
-                {tr(SIGNAL_LABEL_KEY[sig])}
-                {carrier && <span className="text-muted-foreground"> · {carrier}</span>}
-              </StatTile>
-            )}
+                    {move !== null && (
+                      <StatTile icon={<Activity className="h-4 w-4" />} label={tr("movementState")}>
+                        {move === "moving" ? tr("movingState") : tr("parkedState")}
+                      </StatTile>
+                    )}
 
-            {compass && (
-              <StatTile icon={<Navigation className="h-4 w-4" />} label={tr("headingLabel")}>
-                {compass}
-                {telemetry.angle != null && (
-                  <span className="text-muted-foreground"> · {Math.round(telemetry.angle)}°</span>
-                )}
-              </StatTile>
-            )}
+                    {gps !== null && (
+                      <StatTile icon={<Satellite className="h-4 w-4" />} label={tr("gpsSignal")}>
+                        {tr(GPS_LABEL_KEY[gps])}
+                        {telemetry.satellites != null && (
+                          <span className="text-muted-foreground"> · {telemetry.satellites}</span>
+                        )}
+                      </StatTile>
+                    )}
 
-            {telemetry.altitude != null && (
-              <StatTile icon={<Mountain className="h-4 w-4" />} label={tr("altitudeLabel")}>
-                {Math.round(telemetry.altitude)} m
-              </StatTile>
-            )}
+                    {sig !== null && (
+                      <StatTile icon={<Signal className="h-4 w-4" />} label={tr("cellSignal")}>
+                        {tr(SIGNAL_LABEL_KEY[sig])}
+                        {carrier && <span className="text-muted-foreground"> · {carrier}</span>}
+                      </StatTile>
+                    )}
 
-            {telemetry.batteryPercent != null && (
-              <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("deviceBattery")}>
-                {telemetry.batteryPercent}%
-              </StatTile>
-            )}
+                    {compass && (
+                      <StatTile icon={<Navigation className="h-4 w-4" />} label={tr("headingLabel")}>
+                        {compass}
+                      </StatTile>
+                    )}
+
+                    {telemetry.altitude != null && (
+                      <StatTile icon={<Mountain className="h-4 w-4" />} label={tr("altitudeLabel")}>
+                        {Math.round(telemetry.altitude)} m
+                      </StatTile>
+                    )}
+
+                    {telemetry.batteryPercent != null && (
+                      <StatTile icon={<BatteryMedium className="h-4 w-4" />} label={tr("deviceBattery")}>
+                        {telemetry.batteryPercent}%
+                      </StatTile>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <Separator className="bg-border/50" />
+
+              {/* Vehicle info */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{tr("vehicleInfo")}</h3>
+                <div className="space-y-2.5">
+                  <DetailRow icon={<User className="h-4 w-4" />} label={tr("driverName")}>
+                    {vehicle.driverName ?? tr("noDriver")}
+                  </DetailRow>
+                  <DetailRow icon={<Clock className="h-4 w-4" />} label={tr("lastSeen")}>
+                    {lastSeenAt ? timeAgo(lastSeenAt) : tr("never")}
+                  </DetailRow>
+                  <DetailRow icon={<FileText className="h-4 w-4" />} label={tr("imei")}>
+                    <span className="font-mono text-xs">{vehicle.imei}</span>
+                  </DetailRow>
+                  <DetailRow icon={<Gauge className="h-4 w-4" />} label={tr("currentSpeed")}>
+                    {speed != null ? `${speed.toFixed(1)} km/h` : "—"}
+                  </DetailRow>
+                  <DetailRow icon={<Route className="h-4 w-4" />} label={tr("todayMileage")}>
+                    {todayKm > 0 ? `${todayKm.toFixed(1)} km` : "—"}
+                  </DetailRow>
+                </div>
+              </div>
+
+              <Separator className="bg-border/50" />
+
+              {/* Additional info */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{tr("additionalInfo")}</h3>
+                <div className="space-y-2.5">
+                  <DetailRow icon={<User className="h-4 w-4" />} label={tr("organisation")}>
+                    {vehicle.orgName ?? "—"}
+                  </DetailRow>
+                  <DetailRow icon={<User className="h-4 w-4" />} label={tr("yourRole")}>
+                    <span className="capitalize">{vehicle.userRole}</span>
+                  </DetailRow>
+                  {hasLocation && (
+                    <DetailRow icon={<MapPin className="h-4 w-4" />} label={tr("coordinates")}>
+                      <span className="font-mono text-xs">
+                        {mapVehicles[0].latitude.toFixed(5)}, {mapVehicles[0].longitude.toFixed(5)}
+                      </span>
+                    </DetailRow>
+                  )}
+                </div>
+              </div>
+
+              {/* Engine & fuel (OBD) — renders only when the tracker is wired to the OBD port */}
+              <EngineSection telemetry={telemetry} />
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Engine & fuel (OBD) — renders only when the tracker is wired to the OBD port */}
-      <EngineSection telemetry={telemetry} />
-
-      {/* Detail cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Vehicle info */}
-        <div className="bg-card border border-border/50 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("vehicleInfo")}</h2>
-          <div className="space-y-3">
-            <DetailRow icon={<User className="h-4 w-4" />} label={tr("driverName")}>
-              {vehicle.driverName ?? tr("noDriver")}
-            </DetailRow>
-            <Separator className="bg-border/50" />
-            <DetailRow icon={<Clock className="h-4 w-4" />} label={tr("lastSeen")}>
-              {lastSeenAt ? timeAgo(lastSeenAt) : tr("never")}
-            </DetailRow>
-            <Separator className="bg-border/50" />
-            <DetailRow icon={<FileText className="h-4 w-4" />} label={tr("imei")}>
-              <span className="font-mono text-xs">{vehicle.imei}</span>
-            </DetailRow>
-            <Separator className="bg-border/50" />
-            <DetailRow icon={<Gauge className="h-4 w-4" />} label={tr("currentSpeed")}>
-              {speed != null ? `${speed.toFixed(1)} km/h` : "—"}
-            </DetailRow>
-            <Separator className="bg-border/50" />
-            <DetailRow icon={<Route className="h-4 w-4" />} label={tr("todayMileage")}>
-              {todayKm > 0 ? `${todayKm.toFixed(1)} km` : "—"}
-            </DetailRow>
-          </div>
-        </div>
-
-        {/* Additional info */}
-        <div className="bg-card border border-border/50 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">{tr("additionalInfo")}</h2>
-          <div className="space-y-3">
-            <DetailRow icon={<User className="h-4 w-4" />} label={tr("organisation")}>
-              {vehicle.orgName ?? "—"}
-            </DetailRow>
-            <Separator className="bg-border/50" />
-            <DetailRow icon={<User className="h-4 w-4" />} label={tr("yourRole")}>
-              <span className="capitalize">{vehicle.userRole}</span>
-            </DetailRow>
-            {hasLocation && (
-              <>
-                <Separator className="bg-border/50" />
-                <DetailRow icon={<MapPin className="h-4 w-4" />} label={tr("coordinates")}>
-                  <span className="font-mono text-xs">
-                    {mapVehicles[0].latitude.toFixed(5)}, {mapVehicles[0].longitude.toFixed(5)}
-                  </span>
-                </DetailRow>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+        ) : (
+          <button
+            onClick={() => setShowPanel(true)}
+            className="absolute top-3 right-3 z-[500] flex items-center gap-1.5 rounded-full border border-border/60 bg-card/95 backdrop-blur-md shadow-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-card transition-colors"
+          >
+            <PanelRightOpen className="h-3.5 w-3.5" />
+            {tr("showPanel")}
+          </button>
+        )}
     </div>
   );
 }
@@ -398,11 +411,13 @@ function EngineSection({ telemetry }: { telemetry: VehicleTelemetry }) {
   const rpmHot = (telemetry.engineRpm ?? 0) > 6000;
 
   return (
-    <div className="bg-card border border-border/50 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-5">{tr("engineAndFuel")}</h2>
+    <>
+      <Separator className="bg-border/50" />
+      <div>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{tr("engineAndFuel")}</h3>
 
         {/* Headline gauge cluster */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
           <ArcGauge
             value={fuel.percent}
             min={0}
@@ -464,7 +479,7 @@ function EngineSection({ telemetry }: { telemetry: VehicleTelemetry }) {
         </button>
 
         {showMore && (
-          <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-3">
             <StatTile icon={<Gauge className="h-4 w-4" />} label={tr("throttleLabel")}>
               {telemetry.throttlePosition != null ? `${Math.round(telemetry.throttlePosition)}%` : "—"}
             </StatTile>
@@ -488,6 +503,7 @@ function EngineSection({ telemetry }: { telemetry: VehicleTelemetry }) {
           </div>
         )}
       </div>
+    </>
   );
 }
 
@@ -518,7 +534,7 @@ function formatMyTime(iso: string): string {
 
 type HistoryMode = "all" | "trips";
 
-function HistoryTab({ vehicleId }: { vehicleId: string }) {
+function HistoryTab({ vehicleId, vehicleName }: { vehicleId: string; vehicleName: string }) {
   const { tr } = useLang();
   const [from, setFrom] = useState(myMidnight);
   const [to, setTo]     = useState(myNow);
@@ -527,12 +543,13 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState("");
+  const [showPanel, setShowPanel]     = useState(true);
 
   const load = useCallback(async (f: string, t: string, m: HistoryMode) => {
     const fromMs = new Date(f).getTime();
     const toMs   = new Date(t).getTime();
     const windowDays = (toMs - fromMs) / (1000 * 60 * 60 * 24);
-    if (windowDays > 30) { setError(tr("errorMaxWindow")); return; }
+    if (windowDays > 365) { setError(tr("errorMaxWindow")); return; }
     if (toMs <= fromMs)  { setError(tr("errorToBeforeFrom")); return; }
     setLoading(true);
     setError("");
@@ -569,127 +586,148 @@ function HistoryTab({ vehicleId }: { vehicleId: string }) {
   const totalPoints = trips ? trips.reduce((n, t) => n + t.pointCount, 0) : 0;
 
   return (
-    <div className="space-y-4">
-      {/* ── Filter bar ───────────────────────────────────────────────── */}
-      <div className="bg-card border border-border/50 rounded-xl p-4">
-        {/* Mode toggle: All data (default) vs movement-segmented Trips */}
-        <div className="inline-flex items-center gap-1 mb-3 bg-muted/40 p-1 rounded-lg">
-          {(["all", "trips"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => changeMode(m)}
-              disabled={loading}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                mode === m
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {m === "all" ? tr("historyModeAll") : tr("historyModeTrips")}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {tr("fromLabel")}
-            </label>
-            <input
-              type="datetime-local"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="w-full text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {tr("toLabel")}
-            </label>
-            <input
-              type="datetime-local"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="w-full text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <Button
-            size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 shrink-0"
-            onClick={() => load(from, to, mode)}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Route className="h-3.5 w-3.5" />}
-            {loading ? tr("loading") : tr("loadBtn")}
-          </Button>
-        </div>
-        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
-        {trips !== null && !loading && (
-          <p className="text-xs text-muted-foreground mt-2">
-            {mode === "all"
-              ? `${totalPoints} ${tr("positionsFound")}`
-              : `${trips.length} ${tr("tripsFound")} · ${totalPoints} ${tr("pointsFound")}`}
-          </p>
-        )}
-      </div>
-
+    <div className="relative h-full rounded-xl overflow-hidden border border-border/50">
       {/* ── Map showing selected trip ─────────────────────────────────── */}
-      <div className="h-64 sm:h-80 rounded-xl overflow-hidden border border-border/50">
-        <DynamicMap
-          vehicles={[]}
-          historyPath={selectedTrip?.points ?? undefined}
-          className="h-full w-full"
-        />
-      </div>
+      <DynamicMap
+        vehicles={[]}
+        historyPath={selectedTrip?.points ?? undefined}
+        className="h-full w-full"
+      />
 
-      {/* ── Trip / activity list ─────────────────────────────────────── */}
-      {trips !== null && trips.length === 0 && !loading && (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          {mode === "all" ? tr("noHistoryFound") : tr("noTripsFound")}
-        </p>
-      )}
-
-      {trips && trips.length > 0 && (
-        <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-border/30">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {mode === "all" ? tr("historyAllListHeader") : tr("tripListHeader")}
-            </h3>
-          </div>
-          {trips.map((trip, i) => (
+      {showPanel ? (
+        <div className="absolute top-3 right-3 z-[500] w-[320px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-border/60 bg-card/95 backdrop-blur-md shadow-xl">
+          <div className="flex items-center justify-between px-4 pt-3.5 pb-2 sticky top-0 bg-card/95 backdrop-blur-md border-b border-border/40 z-10">
+            <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider truncate">{vehicleName}</h2>
             <button
-              key={trip.id}
-              onClick={() => setSelectedIdx(i)}
-              className={`
-                w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
-                ${i < trips.length - 1 ? "border-b border-border/30" : ""}
-                ${selectedIdx === i ? "bg-primary/5" : "hover:bg-muted/30"}
-              `}
+              onClick={() => setShowPanel(false)}
+              aria-label={tr("hidePanel")}
+              className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
             >
-              <div className={`h-2.5 w-2.5 rounded-full shrink-0 transition-colors ${
-                selectedIdx === i ? "bg-primary"
-                : mode === "all" && trip.kind === "parked" ? "bg-amber-500/40"
-                : "bg-muted-foreground/25"}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-foreground">
-                    {mode === "all"
-                      ? (trip.kind === "parked" ? tr("parkedState") : tr("tripLabel"))
-                      : `${tr("tripLabel")} ${trip.id}`}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatMyTime(trip.startedAt)} → {formatMyTime(trip.endedAt)}
-                  </span>
-                </div>
-                <div className="flex gap-3 mt-0.5">
-                  <span className="text-xs text-muted-foreground">{trip.durationMinutes} {tr("durationMin")}</span>
-                  <span className="text-xs text-muted-foreground">{trip.distanceKm} {tr("distanceKm")}</span>
-                  <span className="text-xs text-muted-foreground">{trip.pointCount} pts</span>
-                </div>
-              </div>
-              <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-colors ${selectedIdx === i ? "text-primary" : "text-muted-foreground/30"}`} />
+              <PanelRightClose className="h-3.5 w-3.5" />
             </button>
-          ))}
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* ── Filter bar ─────────────────────────────────────────── */}
+            <div>
+              {/* Mode toggle: All data (default) vs movement-segmented Trips */}
+              <div className="inline-flex items-center gap-1 mb-3 bg-muted/40 p-1 rounded-lg">
+                {(["all", "trips"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => changeMode(m)}
+                    disabled={loading}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                      mode === m
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m === "all" ? tr("historyModeAll") : tr("historyModeTrips")}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2.5">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> {tr("fromLabel")}
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                    className="w-full text-xs bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> {tr("toLabel")}
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    className="w-full text-xs bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 w-full"
+                  onClick={() => load(from, to, mode)}
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Route className="h-3.5 w-3.5" />}
+                  {loading ? tr("loading") : tr("loadBtn")}
+                </Button>
+              </div>
+              {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+              {trips !== null && !loading && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {mode === "all"
+                    ? `${totalPoints} ${tr("positionsFound")}`
+                    : `${trips.length} ${tr("tripsFound")} · ${totalPoints} ${tr("pointsFound")}`}
+                </p>
+              )}
+            </div>
+
+            <Separator className="bg-border/50" />
+
+            {/* ── Trip / activity list ───────────────────────────────── */}
+            <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+                {mode === "all" ? tr("historyAllListHeader") : tr("tripListHeader")}
+              </h3>
+
+              {trips !== null && trips.length === 0 && !loading && (
+                <p className="text-xs text-muted-foreground">
+                  {mode === "all" ? tr("noHistoryFound") : tr("noTripsFound")}
+                </p>
+              )}
+
+              {trips && trips.length > 0 && (
+                <div className="space-y-1.5">
+                  {trips.map((trip, i) => (
+                    <button
+                      key={trip.id}
+                      onClick={() => setSelectedIdx(i)}
+                      className={`w-full flex items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
+                        selectedIdx === i ? "bg-primary/10" : "hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className={`h-2 w-2 rounded-full shrink-0 transition-colors ${
+                        selectedIdx === i ? "bg-primary"
+                        : mode === "all" && trip.kind === "parked" ? "bg-amber-500/40"
+                        : "bg-muted-foreground/25"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-foreground">
+                            {mode === "all"
+                              ? (trip.kind === "parked" ? tr("parkedState") : tr("tripLabel"))
+                              : `${tr("tripLabel")} ${trip.id}`}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">{formatMyTime(trip.startedAt)}</p>
+                        <div className="flex gap-2 mt-0.5">
+                          <span className="text-[10px] text-muted-foreground">{trip.durationMinutes} {tr("durationMin")}</span>
+                          <span className="text-[10px] text-muted-foreground">{trip.distanceKm} {tr("distanceKm")}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-colors ${selectedIdx === i ? "text-primary" : "text-muted-foreground/30"}`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+      ) : (
+        <button
+          onClick={() => setShowPanel(true)}
+          className="absolute top-3 right-3 z-[500] flex items-center gap-1.5 rounded-full border border-border/60 bg-card/95 backdrop-blur-md shadow-lg px-3 py-2 text-xs font-medium text-foreground hover:bg-card transition-colors"
+        >
+          <PanelRightOpen className="h-3.5 w-3.5" />
+          {tr("showPanel")}
+        </button>
       )}
     </div>
   );
@@ -716,6 +754,44 @@ export function VehicleDetailTabs({
   // doesn't unmount it and trigger a redundant re-fetch on the next tab switch.
   const [historyMounted, setHistoryMounted] = useState(false);
 
+  // Fullscreen: CSS overlay drives the layout so it always works, even where
+  // the native Fullscreen API is blocked (sandboxed iframes, some browser
+  // policies); requestFullscreen is attempted best-effort on top of it for
+  // the real hide-the-browser-chrome experience where it's available.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFsChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      setIsFullscreen(false);
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFullscreen]);
+
+  async function toggleFullscreen() {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      try { await containerRef.current?.requestFullscreen(); } catch { /* CSS overlay still applies */ }
+    } else {
+      setIsFullscreen(false);
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch { /* already out */ }
+      }
+    }
+  }
+
   // Single live poll for the page — the Overview tab (map, live status, and the
   // engine/fuel section) all read from it.
   const live = useLiveVehicle(vehicle.id, { mapVehicles, lastSeenAt, speed, telemetry });
@@ -731,10 +807,16 @@ export function VehicleDetailTabs({
     { key: "safety"   as const, label: tr("safetyTab") },
   ];
 
+  const vehicleName = vehicle.name ?? vehicle.id;
+  const mapHeightClass = isFullscreen ? "flex-1 min-h-0" : "h-[70vh] min-h-[420px]";
+
   return (
-    <div>
+    <div
+      ref={containerRef}
+      className={cn(isFullscreen && "fixed inset-0 z-[9999] flex flex-col bg-background overflow-y-auto")}
+    >
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
-      <div className="flex gap-1 px-4 sm:px-6 mb-4 border-b border-border">
+      <div className="flex items-center gap-1 px-4 sm:px-6 mb-4 border-b border-border shrink-0">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
@@ -750,35 +832,48 @@ export function VehicleDetailTabs({
             {label}
           </button>
         ))}
+        <button
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? tr("exitFullscreen") : tr("enterFullscreen")}
+          className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">{isFullscreen ? tr("exitFullscreen") : tr("fullscreen")}</span>
+        </button>
       </div>
 
-      <div className="px-4 sm:px-6 pb-8">
+      <div className={cn("px-4 sm:px-6 pb-8", isFullscreen && "flex-1 min-h-0 flex flex-col")}>
         {tab === "overview" && (
-          <OverviewTab
-            vehicle={vehicle}
-            mapVehicles={live.mapVehicles}
-            lastSeenAt={live.lastSeenAt}
-            speed={live.speed}
-            todayKm={todayKm}
-            telemetry={live.telemetry}
-          />
+          <div className={mapHeightClass}>
+            <OverviewTab
+              vehicle={vehicle}
+              mapVehicles={live.mapVehicles}
+              lastSeenAt={live.lastSeenAt}
+              speed={live.speed}
+              todayKm={todayKm}
+              telemetry={live.telemetry}
+            />
+          </div>
         )}
         {/* Keep HistoryTab mounted after first visit — hiding instead of unmounting
             prevents a redundant re-fetch every time the user switches back to this tab. */}
         {historyMounted && (
-          <div className={tab !== "history" ? "hidden" : undefined}>
-            <HistoryTab vehicleId={vehicle.id} />
+          <div className={cn(tab !== "history" && "hidden", mapHeightClass)}>
+            <HistoryTab vehicleId={vehicle.id} vehicleName={vehicleName} />
           </div>
         )}
         {tab === "safety" && (
-          <SafetyTab
-            vehicleId={vehicle.id}
-            mapVehicles={live.mapVehicles}
-            speedLimitKmh={speedLimitKmh}
-            initialGeofences={initialGeofences}
-            initialEvents={initialEvents}
-            userCanEdit={userCanEdit}
-          />
+          <div className={mapHeightClass}>
+            <SafetyTab
+              vehicleId={vehicle.id}
+              vehicleName={vehicleName}
+              mapVehicles={live.mapVehicles}
+              speedLimitKmh={speedLimitKmh}
+              initialGeofences={initialGeofences}
+              initialEvents={initialEvents}
+              userCanEdit={userCanEdit}
+            />
+          </div>
         )}
       </div>
     </div>

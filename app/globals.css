@@ -257,7 +257,9 @@
 
 /* OpenStreetMap only ships one (light) raster style. Fake a dark basemap by
    inverting the tile image, then rotating hue back so roads/water/parks
-   land close to their natural colours instead of looking inverted. */
+   land close to their natural colours instead of looking inverted. Tuned
+   darker and slightly warm (sepia) so the basemap reads as part of the
+   site's near-black/red brand instead of a neutral blue-gray dark map. */
 .map-tiles-dark {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.85) saturate(0.7);
+  filter: invert(1) hue-rotate(190deg) brightness(0.8) contrast(1.05) saturate(0.55) sepia(0.15);
 }
