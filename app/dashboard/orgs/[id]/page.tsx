@@ -77,7 +77,7 @@ export default async function OrgDetailPage(
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold text-foreground leading-none tracking-tight">{org.name}</h1>
+          <h1 className="text-xl font-bold text-foreground leading-none tracking-tight">{org.name}</h1>
           <p className="text-sm text-muted-foreground mt-1"><PageTitle k="yourRole" />: <PageTitle k={userRole as TranslationKey} /></p>
         </div>
       </div>

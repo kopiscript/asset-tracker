@@ -92,7 +92,7 @@ export default async function VehiclesPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight"><PageTitle k="vehicles" /></h1>
+          <h1 className="text-2xl font-bold text-foreground leading-none tracking-tight"><PageTitle k="vehicles" /></h1>
           <p className="text-sm text-muted-foreground mt-1">
             <VehiclesCountSubtitle count={vehicles.length} />
           </p>

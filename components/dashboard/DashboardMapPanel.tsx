@@ -205,8 +205,10 @@ function StatChip({
 }) {
   return (
     <div className="rounded-lg bg-secondary/40 border border-border/40 p-2 flex flex-col items-center text-center">
-      <span className={colorClass}>{icon}</span>
-      <span className={`text-sm font-semibold tabular-nums mt-1 ${colorClass}`}>{value}</span>
+      <span className={`h-7 w-7 rounded-full bg-current/10 flex items-center justify-center ${colorClass}`}>
+        {icon}
+      </span>
+      <span className={`text-sm font-bold tabular-nums mt-1.5 ${colorClass}`}>{value}</span>
       <span className="text-[9px] text-muted-foreground uppercase tracking-wide leading-tight">{label}</span>
     </div>
   );

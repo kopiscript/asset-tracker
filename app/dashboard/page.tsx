@@ -149,7 +149,7 @@ export default async function DashboardPage() {
       {/* ── Header bar ──────────────────────────────────────────────────── */}
       <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 pt-5 pb-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground leading-none tracking-tight">
             <PageTitle k="dashboard" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

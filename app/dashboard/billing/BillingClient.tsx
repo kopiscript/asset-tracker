@@ -58,7 +58,7 @@ export function BillingClient({
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">{tr("billing")}</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">{tr("billing")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {tr("billingSubtitle").replace("{name}", orgName)}
         </p>

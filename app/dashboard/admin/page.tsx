@@ -31,10 +31,12 @@ function StatCard({
   return (
     <div className="bg-card border border-border/60 rounded-xl px-4 py-4">
       <div className="flex items-center gap-2 mb-3">
-        {icon}
+        <span className="h-7 w-7 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
+          {icon}
+        </span>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
       </div>
-      <p className={`text-3xl font-semibold tabular-nums leading-none tracking-tight ${valueClass}`}>
+      <p className={`text-3xl font-bold tabular-nums leading-none tracking-tight ${valueClass}`}>
         {value}
       </p>
     </div>
@@ -124,7 +126,7 @@ export default async function AdminPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-semibold text-foreground leading-none tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground leading-none tracking-tight">
           <PageTitle k="adminPanel" />
         </h1>
         <p className="text-sm text-muted-foreground mt-1">

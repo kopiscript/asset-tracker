@@ -45,7 +45,7 @@ export default function NewVehiclePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold text-foreground tracking-tight leading-none">
+          <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">
             {tr("addVehicle")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
