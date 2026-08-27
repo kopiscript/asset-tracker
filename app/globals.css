@@ -255,9 +255,9 @@
   background: #1c1c1e;
 }
 
-/* CartoDB Dark Matter tiles are very low-contrast by default (near-black */
-/* background, dim gray roads). Brighten + boost contrast so the basemap */
-/* stays dark-mode but roads/labels are actually legible. */
+/* OpenStreetMap only ships one (light) raster style. Fake a dark basemap by
+   inverting the tile image, then rotating hue back so roads/water/parks
+   land close to their natural colours instead of looking inverted. */
 .map-tiles-dark {
-  filter: brightness(1.35) contrast(0.92) saturate(1.15);
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.85) saturate(0.7);
 }

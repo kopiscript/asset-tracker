@@ -40,7 +40,7 @@ const primaryFeatures = [
 const secondaryFeatures = [
   { icon: <Gauge className="h-4 w-4" />, title: "Vehicle Details", desc: "Speed, today's distance, and driver assignments in one view." },
   { icon: <Globe className="h-4 w-4" />, title: "Malaysian-First", desc: "Full Bahasa Malaysia support and local plate formats." },
-  { icon: <MapPin className="h-4 w-4" />, title: "No Google Maps", desc: "CartoDB tiles built on OpenStreetMap data — no Google billing, no API key." },
+  { icon: <MapPin className="h-4 w-4" />, title: "No Google Maps", desc: "OpenStreetMap tiles, no Google billing, no API key." },
   { icon: <Users className="h-4 w-4" />, title: "Team-Friendly", desc: "Invite your whole ops team with role-based permissions." },
   { icon: <Zap className="h-4 w-4" />, title: "Fast & Light", desc: "Built on Next.js 16 — loads instantly on mobile networks." },
 ];

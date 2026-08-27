@@ -80,15 +80,21 @@ interface VehicleMapProps {
   /** Circular geofences to draw on the map (live marker mode only) */
   geofences?: MapGeofence[];
   className?: string;
-  /** "light" = CartoDB Voyager (default); "dark" = CartoDB Dark Matter */
+  /** "light" = OSM tiles as-is; "dark" = same tiles with a CSS invert filter */
   tileTheme?: "light" | "dark";
   /** Polyline / intermediate-node colour. Defaults to the teal accent. */
   routeColor?: string;
 }
 
+// OpenStreetMap's own tile server — free, no API key, no account. CartoDB's
+// raster basemaps (formerly used here) now require a paid API key and are
+// being retired; see https://carto.com/basemaps/apikey. Dark mode is faked
+// with a CSS filter (`.map-tiles-dark` in globals.css) since OSM only serves
+// one (light) style.
+const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const TILE_URLS = {
-  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  dark:  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  light: OSM_TILE_URL,
+  dark: OSM_TILE_URL,
 } as const;
 
 function MapFocus({
@@ -191,11 +197,10 @@ export function VehicleMap({
         className="rounded-lg"
         attributionControl={false}
       >
-        {/* CartoDB raster tiles — Voyager (light) or Dark Matter (dark) */}
+        {/* OpenStreetMap raster tiles — dark mode is a CSS filter, not a separate style */}
         <TileLayer
           url={TILE_URLS[tileTheme]}
-          subdomains="abcd"
-          maxZoom={20}
+          maxZoom={19}
           className={tileTheme === "dark" ? "map-tiles-dark" : undefined}
         />
 
@@ -325,12 +330,10 @@ export function VehicleMap({
         </div>
       )}
 
-      {/* Minimal attribution — required by OSM & CartoDB licences */}
+      {/* Minimal attribution — required by the OSM tile usage policy */}
       <div className="absolute bottom-1 right-1 z-[500] pointer-events-none">
         <span className="text-[9px] text-muted-foreground/60 bg-background/70 px-1 rounded">
-          © <a href="https://carto.com/" className="hover:underline pointer-events-auto" target="_blank" rel="noopener noreferrer">CartoDB</a>
-          {" · "}
-          <a href="https://www.openstreetmap.org/copyright" className="hover:underline pointer-events-auto" target="_blank" rel="noopener noreferrer">OSM</a>
+          © <a href="https://www.openstreetmap.org/copyright" className="hover:underline pointer-events-auto" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>
         </span>
       </div>
     </div>
